@@ -1,0 +1,24 @@
+-cp src
+-main Main
+
+# External Libraries
+-lib hxcpp
+-lib haxeui-core
+-lib haxeui-hxwidgets
+-lib hxWidgets
+
+# Target C++
+-cpp bin/desktop
+
+# Optimizations and compiler flags
+-D HXCPP_M64
+-D no-deprecation-warnings
+
+# Embed style resources so they can be loaded across platforms without path resolution issues
+-resource assets/styles/main.css@main_style
+-resource assets/styles/platforms/windows.css@style_windows
+-resource assets/styles/platforms/mac.css@style_mac
+-resource assets/styles/platforms/linux.css@style_linux
+
+# Optional Windows GUI subsystem (uncomment to hide console window on Windows release)
+# -D HXCPP_WINGUI

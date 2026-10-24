@@ -1,0 +1,25 @@
+/* Platform Specific Overrides: macOS
+ * Addresses macOS Cocoa quirks (e.g. generous margins, Apple system font, rounder proportions)
+ */
+
+.root-container {
+    padding: 20px;
+    spacing: 14px;
+    font-name: ".AppleSystemUIFont", "SF Pro Display", "Helvetica Neue", sans-serif;
+}
+
+.header-title {
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.action-bar {
+    spacing: 12px;
+    margin-bottom: 16px;
+}
+
+.primary-button {
+    min-height: 30px;
+    padding-left: 18px;
+    padding-right: 18px;
+}

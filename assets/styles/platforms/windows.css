@@ -1,0 +1,25 @@
+/* Platform Specific Overrides: Windows
+ * Addresses Windows-specific wxWidgets metrics (e.g. tighter standard margins, Segoe UI)
+ */
+
+.root-container {
+    padding: 12px;
+    spacing: 8px;
+    font-name: "Segoe UI", sans-serif;
+}
+
+.header-title {
+    font-size: 19px;
+    margin-bottom: 6px;
+}
+
+.action-bar {
+    spacing: 8px;
+    margin-bottom: 10px;
+}
+
+.primary-button {
+    min-height: 26px;
+    padding-left: 14px;
+    padding-right: 14px;
+}

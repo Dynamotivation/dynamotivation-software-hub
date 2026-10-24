@@ -1,0 +1,25 @@
+/* Platform Specific Overrides: Linux (GTK)
+ * Addresses GTK3 wxWidgets metrics (e.g. standard GNOME/GTK spacing, Cantarell / Ubuntu font)
+ */
+
+.root-container {
+    padding: 14px;
+    spacing: 10px;
+    font-name: "Cantarell", "Ubuntu", "DejaVu Sans", sans-serif;
+}
+
+.header-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.action-bar {
+    spacing: 10px;
+    margin-bottom: 12px;
+}
+
+.primary-button {
+    min-height: 28px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
