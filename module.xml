@@ -1,9 +1,0 @@
-<module>
-    <!-- Resource paths for HaxeUI -->
-    <resource path="assets" />
-    
-    <!-- Automatic default stylesheet loading -->
-    <styles>
-        <style resource="assets/styles/main.css" />
-    </styles>
-</module>
