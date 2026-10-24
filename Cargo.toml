@@ -31,14 +31,14 @@ hub-application = { path = "crates/application" }
 hub-infrastructure = { path = "crates/infrastructure" }
 hub-ui = { path = "crates/ui" }
 
-slint = { version = "1.18.1", default-features = false, features = ["std", "compat-1-2"] }
+slint = { version = "1.18.1", default-features = false, features = ["std", "compat-1-2", "image-default-formats"] }
 slint-build = "1.18.1"
 directories = "6"
 rust-ini = "0.21"
 cargo_metadata = "0.23"
 
 [workspace.lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "deny"
 missing_debug_implementations = "warn"
 unused_qualifications = "warn"
 

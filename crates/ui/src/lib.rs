@@ -11,8 +11,10 @@ use hub_application::{ListPackages, PreferencesService, RegisterPackage};
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 #[allow(
+    unsafe_code,
     clippy::all,
     clippy::pedantic,
+    clippy::restriction,
     missing_debug_implementations,
     unused_qualifications
 )]

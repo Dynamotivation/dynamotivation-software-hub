@@ -32,8 +32,7 @@ pub fn color_scheme_from(theme: ThemePreference) -> ColorScheme {
     match theme {
         ThemePreference::Light => ColorScheme::Light,
         ThemePreference::Dark => ColorScheme::Dark,
-        // Slint enums are non-exhaustive across versions; default to System.
-        _ => ColorScheme::System,
+        ThemePreference::System => ColorScheme::System,
     }
 }
 
