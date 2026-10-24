@@ -42,7 +42,11 @@ class MainView extends VBox {
     }
 
     public function refreshItems():Void {
-        itemListView.dataSource.clear();
+        if (itemListView.dataSource == null) {
+            itemListView.dataSource = new haxe.ui.data.ArrayDataSource<Dynamic>();
+        } else {
+            itemListView.dataSource.clear();
+        }
         var items = viewModel.getItems();
         for (item in items) {
             itemListView.dataSource.add({

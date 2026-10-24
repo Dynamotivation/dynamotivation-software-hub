@@ -1,13 +1,13 @@
-<vbox styleClass="root-container">
-    <label text="Dynamotivation Software Hub" styleClass="header-title" />
-    <label text="Native Cross-Platform Desktop Management with HaxeUI &amp; wxWidgets" styleClass="header-subtitle" />
+<vbox styleNames="root-container">
+    <label text="Dynamotivation Software Hub" styleNames="header-title" />
+    <label text="Native Cross-Platform Desktop Management with HaxeUI &amp; wxWidgets" styleNames="header-subtitle" />
     
-    <hbox styleClass="action-bar">
-        <textfield id="itemNameInput" placeholder="Enter software package or service name..." styleClass="input-name" />
-        <button id="registerButton" text="Register Software" styleClass="primary-button" />
+    <hbox styleNames="action-bar">
+        <textfield id="itemNameInput" placeholder="Enter software package or service name..." styleNames="input-name" />
+        <button id="registerButton" text="Register Software" styleNames="primary-button" />
         <button id="refreshButton" text="Refresh" />
     </hbox>
 
     <label text="Registered Software Hub Items:" style="font-weight: bold; margin-top: 4px;" />
-    <listview id="itemListView" styleClass="content-list" />
+    <listview id="itemListView" styleNames="content-list" />
 </vbox>
