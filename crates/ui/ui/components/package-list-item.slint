@@ -1,0 +1,32 @@
+import { HorizontalBox, Palette } from "std-widgets.slint";
+import { PackageRow } from "../types.slint";
+import { Theme } from "../theme.slint";
+import { StatusBadge } from "status-badge.slint";
+
+export component PackageListItem inherits HorizontalBox {
+    in property <PackageRow> package;
+
+    padding: 10px;
+    spacing: 12px;
+
+    Text {
+        text: package.name;
+        font-size: 14px;
+        font-weight: 500;
+        color: Palette.foreground;
+        horizontal-stretch: 1;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+
+    StatusBadge {
+        status: package.status;
+    }
+
+    Text {
+        text: package.id;
+        font-size: 11px;
+        color: Theme.muted-foreground;
+        vertical-alignment: center;
+    }
+}

@@ -1,0 +1,23 @@
+import { Palette } from "std-widgets.slint";
+import { PackageStatus } from "../types.slint";
+
+export component StatusBadge inherits Rectangle {
+    in property <PackageStatus> status;
+
+    property <bool> highlighted: status == PackageStatus.update-available;
+
+    border-radius: 4px;
+    background: highlighted ? Palette.accent-background : Palette.alternate-background;
+    min-width: label.preferred-width + 16px;
+    height: 24px;
+
+    label := Text {
+        text: status == PackageStatus.installed ? @tr("Installed")
+            : status == PackageStatus.update-available ? @tr("Update available")
+            : @tr("Not installed");
+        font-size: 11px;
+        color: highlighted ? Palette.accent-foreground : Palette.alternate-foreground;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

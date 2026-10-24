@@ -1,0 +1,19 @@
+// Shared UI types. Mirrors hub-application DTOs; mapped in src/presenter.rs.
+
+export enum PackageStatus {
+    not-installed,
+    installed,
+    update-available,
+}
+
+export enum ThemePreference {
+    system,
+    light,
+    dark,
+}
+
+export struct PackageRow {
+    id: string,
+    name: string,
+    status: PackageStatus,
+}

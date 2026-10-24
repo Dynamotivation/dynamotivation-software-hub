@@ -1,0 +1,160 @@
+import { AboutSlint, Button, ComboBox, LineEdit, ListView, Palette, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { PackageRow, PackageStatus, ThemePreference } from "types.slint";
+import { Theme } from "theme.slint";
+import { PackageListItem } from "components/package-list-item.slint";
+
+// Re-export so the generated Rust API contains these types.
+export { PackageRow, PackageStatus, ThemePreference }
+
+export component AppWindow inherits Window {
+    title: @tr("Dynamotivation Software Hub");
+    preferred-width: 640px;
+    preferred-height: 480px;
+    min-width: 480px;
+    min-height: 360px;
+    background: Palette.background;
+
+    in property <[PackageRow]> packages: [];
+    in property <string> error-message;
+    in property <string> version;
+    in-out property <ThemePreference> theme: ThemePreference.system;
+
+    // Returns true on success; Rust sets `error-message` otherwise.
+    callback register-package(string) -> bool;
+    callback refresh-packages();
+    callback theme-selected(ThemePreference);
+
+    function apply-theme() {
+        Palette.color-scheme = root.theme == ThemePreference.dark ? ColorScheme.dark
+            : root.theme == ThemePreference.light ? ColorScheme.light
+            : ColorScheme.unknown;
+    }
+
+    function submit() {
+        if (root.register-package(name-input.text)) {
+            name-input.text = "";
+        }
+    }
+
+    init => { root.apply-theme(); }
+    changed theme => { root.apply-theme(); }
+
+    about-popup := PopupWindow {
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        width: 320px;
+
+        Rectangle {
+            background: Palette.alternate-background;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: Palette.border;
+
+            VerticalBox {
+                Text {
+                    text: @tr("Dynamotivation Software Hub {}", root.version);
+                    font-weight: 600;
+                    color: Palette.foreground;
+                    horizontal-alignment: center;
+                }
+                AboutSlint { }
+            }
+        }
+    }
+
+    VerticalBox {
+        padding: 20px;
+        spacing: 16px;
+
+        // Header
+        HorizontalBox {
+            padding: 0px;
+            spacing: 12px;
+
+            VerticalBox {
+                padding: 0px;
+                spacing: 4px;
+                horizontal-stretch: 1;
+
+                Text {
+                    text: @tr("Dynamotivation Software Hub");
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: Palette.foreground;
+                }
+
+                Text {
+                    text: @tr("Launcher and toolbox for Dynamotivation software on this device");
+                    font-size: 13px;
+                    color: Theme.muted-foreground;
+                    wrap: word-wrap;
+                }
+            }
+
+            ComboBox {
+                model: [@tr("System theme"), @tr("Light theme"), @tr("Dark theme")];
+                current-index: root.theme == ThemePreference.light ? 1 : root.theme == ThemePreference.dark ? 2 : 0;
+                selected => {
+                    root.theme = self.current-index == 1 ? ThemePreference.light
+                        : self.current-index == 2 ? ThemePreference.dark
+                        : ThemePreference.system;
+                    root.theme-selected(root.theme);
+                }
+            }
+
+            Button {
+                text: @tr("About");
+                clicked => { about-popup.show(); }
+            }
+        }
+
+        // Registration bar
+        VerticalBox {
+            padding: 0px;
+            spacing: 4px;
+
+            HorizontalBox {
+                padding: 0px;
+                spacing: 12px;
+
+                name-input := LineEdit {
+                    placeholder-text: @tr("Software package name…");
+                    horizontal-stretch: 1;
+                    accepted => { root.submit(); }
+                }
+
+                Button {
+                    text: @tr("Register");
+                    primary: true;
+                    clicked => { root.submit(); }
+                }
+
+                Button {
+                    text: @tr("Refresh");
+                    clicked => { root.refresh-packages(); }
+                }
+            }
+
+            if root.error-message != "": Text {
+                text: root.error-message;
+                font-size: 12px;
+                color: Theme.critical-foreground;
+                wrap: word-wrap;
+            }
+        }
+
+        Text {
+            text: @tr("Software packages");
+            font-size: 14px;
+            font-weight: 600;
+            color: Palette.foreground;
+        }
+
+        ListView {
+            vertical-stretch: 1;
+            for package in root.packages: PackageListItem {
+                package: package;
+            }
+        }
+    }
+}

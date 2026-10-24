@@ -1,0 +1,28 @@
+[package]
+name = "dynamotivation-software-hub"
+description = "Desktop shell (Windows, macOS, Linux) and composition root."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "dynamotivation-software-hub"
+path = "src/main.rs"
+
+[dependencies]
+hub-application.workspace = true
+hub-infrastructure.workspace = true
+hub-ui.workspace = true
+# Desktop backend/renderer selection. femtovg (OpenGL) with software fallback
+# for VMs/RDP sessions without GPU (`SLINT_BACKEND=winit-software`).
+slint = { workspace = true, features = [
+    "backend-winit",
+    "renderer-femtovg",
+    "renderer-software",
+    "accessibility",
+] }
+
+[lints]
+workspace = true

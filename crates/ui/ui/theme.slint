@@ -1,0 +1,9 @@
+import { Palette } from "std-widgets.slint";
+
+// Semantic colours that std-widgets' Palette does not provide.
+// Always derive from the active colour scheme; never hard-code elsewhere.
+export global Theme {
+    out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+    out property <brush> muted-foreground: Palette.foreground.transparentize(40%);
+    out property <brush> critical-foreground: dark ? #ff99a4 : #c42b1c;
+}
