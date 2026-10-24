@@ -1,0 +1,122 @@
+import { Button, LineEdit, ListView, VerticalBox, HorizontalBox } from "std-widgets.slint";
+
+export struct HubItemData {
+    name: string,
+    status: string,
+    id: string,
+}
+
+export component AppWindow inherits Window {
+    title: "Dynamotivation Software Hub";
+    preferred-width: 640px;
+    preferred-height: 480px;
+    min-width: 480px;
+    min-height: 360px;
+
+    in-out property <[HubItemData]> items: [];
+    callback register-software(string);
+    callback refresh-software();
+
+    VerticalBox {
+        padding: 20px;
+        spacing: 16px;
+
+        // Header Section
+        VerticalBox {
+            padding: 0px;
+            spacing: 4px;
+
+            Text {
+                text: "Dynamotivation Software Hub";
+                font-size: 22px;
+                font-weight: 700;
+            }
+
+            Text {
+                text: "Modern Native Cross-Platform Desktop Management (Slint & Fluent UI)";
+                font-size: 13px;
+                color: #707070;
+            }
+        }
+
+        // Action / Registration Bar
+        HorizontalBox {
+            padding: 0px;
+            spacing: 12px;
+
+            name_input := LineEdit {
+                placeholder-text: "Enter software package or service name...";
+                horizontal-stretch: 1;
+                accepted => {
+                    if (name_input.text != "") {
+                        root.register-software(name_input.text);
+                        name_input.text = "";
+                    }
+                }
+            }
+
+            Button {
+                text: "Register Software";
+                primary: true;
+                clicked => {
+                    if (name_input.text != "") {
+                        root.register-software(name_input.text);
+                        name_input.text = "";
+                    }
+                }
+            }
+
+            Button {
+                text: "Refresh";
+                clicked => {
+                    root.refresh-software();
+                }
+            }
+        }
+
+        Text {
+            text: "Registered Software Packages:";
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        // Items List View
+        ListView {
+            vertical-stretch: 1;
+            for item in root.items: HorizontalBox {
+                padding: 10px;
+                spacing: 12px;
+
+                Text {
+                    text: item.name;
+                    font-size: 14px;
+                    font-weight: 500;
+                    horizontal-stretch: 1;
+                    vertical-alignment: center;
+                }
+
+                Rectangle {
+                    border-radius: 4px;
+                    background: #e1dfdd;
+                    width: 70px;
+                    height: 24px;
+
+                    Text {
+                        text: item.status;
+                        font-size: 11px;
+                        color: #323130;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Text {
+                    text: item.id;
+                    font-size: 11px;
+                    color: #8a8886;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}
