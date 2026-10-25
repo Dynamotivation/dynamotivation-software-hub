@@ -1,0 +1,11 @@
+import { Theme } from "../theme.slint";
+
+export component SurfaceCard inherits Rectangle {
+    background: Theme.card-background;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: Theme.card-border;
+    clip: true;
+
+    @children
+}

@@ -1,32 +1,154 @@
-import { HorizontalBox, Palette } from "std-widgets.slint";
-import { PackageRow } from "../types.slint";
+import { Button, Palette } from "std-widgets.slint";
+import { PackageRow, PackageStatus } from "../types.slint";
 import { Theme } from "../theme.slint";
-import { StatusBadge } from "status-badge.slint";
 
-export component PackageListItem inherits HorizontalBox {
+export component PackageListItem inherits Rectangle {
     in property <PackageRow> package;
+    in property <bool> show-divider: false;
 
-    padding: 10px;
-    spacing: 12px;
-
-    Text {
-        text: package.name;
-        font-size: 14px;
-        font-weight: 500;
-        color: Palette.foreground;
-        horizontal-stretch: 1;
-        vertical-alignment: center;
-        overflow: elide;
+    function package-icon(id: string) -> image {
+        if id == "joins-the-battle-meme-generator" {
+            return @image-url("../assets/joins-the-battle.png");
+        }
+        if id == "geo-background-generator" {
+            return @image-url("../assets/geo-background-generator.png");
+        }
+        if id == "stellenwerttafel-plus" {
+            return @image-url("../assets/stellenwerttafel-plus.png");
+        }
+        if id == "unofficial-super-mario-bros-misfit-pack" {
+            return @image-url("../assets/misfit-pack.svg");
+        }
+        if id == "oss-space-adventure" {
+            return @image-url("../assets/oss-space-adventure.png");
+        }
+        if id == "benplaysgames-soundboard" {
+            return @image-url("../assets/benplaysgames-soundboard.png");
+        }
+        if id == "unofficial-sonic-mania-mobile-prototype" {
+            return @image-url("../assets/sonic-mania-mobile.png");
+        }
+        if id == "project-tortuga" {
+            return @image-url("../assets/project-tortuga.png");
+        }
+        if id == "germemz" {
+            return @image-url("../assets/germemz.png");
+        }
+        return @image-url("../assets/dynamotivation-logo-dark.svg");
     }
 
-    StatusBadge {
-        status: package.status;
+    border-radius: 10px;
+    background: row-touch.has-hover ? Theme.hover-background : Colors.transparent;
+
+    row-touch := TouchArea {
+        width: 100%;
+        height: 100%;
     }
 
-    Text {
-        text: package.id;
-        font-size: 11px;
-        color: Theme.muted-foreground;
-        vertical-alignment: center;
+    VerticalLayout {
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            spacing: 14px;
+            alignment: stretch;
+
+            // Full-bleed rounded logo cutout (20% radius like dynamotivation.com .logo)
+            VerticalLayout {
+                alignment: center;
+
+                Rectangle {
+                    width: 52px;
+                    height: 52px;
+                    border-radius: 11px;
+                    background: Colors.transparent;
+
+                    Image {
+                        width: 100%;
+                        height: 100%;
+                        source: root.package-icon(root.package.id);
+                        image-fit: contain;
+                    }
+
+                    // Subtle border ring overlaid on top of the rounded icon edge
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
+                        border-radius: 11px;
+                        border-width: 1px;
+                        border-color: Theme.icon-tile-border;
+                        background: Colors.transparent;
+                    }
+                }
+            }
+
+            // Software Details Column
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 3px;
+                alignment: center;
+
+                Text {
+                    text: root.package.name;
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: Palette.foreground;
+                    overflow: elide;
+                }
+
+                if root.package.status == PackageStatus.update-available: Text {
+                    text: @tr("{} → {}", root.package.version, root.package.latest-version);
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: Theme.brand-accent;
+                    overflow: elide;
+                }
+
+                if root.package.status == PackageStatus.installed: Text {
+                    text: root.package.version;
+                    font-size: 12px;
+                    color: Theme.muted-foreground;
+                    overflow: elide;
+                }
+
+                Text {
+                    text: root.package.description;
+                    font-size: 12px;
+                    color: root.package.status == PackageStatus.not-installed
+                        ? Theme.muted-foreground
+                        : Theme.subtle-foreground;
+                    wrap: word-wrap;
+                }
+            }
+
+            // Action Buttons
+            VerticalLayout {
+                alignment: center;
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    if root.package.status == PackageStatus.update-available: Button {
+                        text: @tr("Update");
+                        primary: true;
+                    }
+
+                    if root.package.status == PackageStatus.installed
+                        || root.package.status == PackageStatus.update-available: Button {
+                        text: @tr("Remove");
+                    }
+
+                    if root.package.status == PackageStatus.not-installed: Button {
+                        text: @tr("Install");
+                    }
+                }
+            }
+        }
+
+        if root.show-divider: Rectangle {
+            height: 1px;
+            background: Theme.divider;
+        }
     }
 }

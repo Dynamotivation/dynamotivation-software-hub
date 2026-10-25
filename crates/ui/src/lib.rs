@@ -90,7 +90,11 @@ fn refresh(services: &Services, ui: &AppWindow) {
     match services.list_packages.execute() {
         Ok(views) => {
             let rows: Vec<PackageRow> = views.iter().map(presenter::row_from).collect();
+            let (installed, available, updates_count) = presenter::partition_rows(&views);
             ui.set_packages(ModelRc::from(Rc::new(VecModel::from(rows))));
+            ui.set_installed_packages(ModelRc::from(Rc::new(VecModel::from(installed))));
+            ui.set_available_packages(ModelRc::from(Rc::new(VecModel::from(available))));
+            ui.set_updates_count(updates_count);
             ui.set_error_message(SharedString::new());
         }
         Err(e) => ui.set_error_message(e.to_string().into()),

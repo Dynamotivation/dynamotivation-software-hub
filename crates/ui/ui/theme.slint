@@ -1,9 +1,37 @@
 import { Palette } from "std-widgets.slint";
 
-// Semantic colours that std-widgets' Palette does not provide.
-// Always derive from the active colour scheme; never hard-code elsewhere.
+// Semantic colours derived from the Dynamotivation website palette:
+// - Main brand: #ff4c4a -> #893750 (light) / #963744 -> #411b23 (dark)
+// - Mint/cyan brand accent: #4aff83 -> #3dffe5
+// - Dark charcoal surfaces: #16181b, #232528, #2c2c2c
 export global Theme {
     out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
-    out property <brush> muted-foreground: Palette.foreground.transparentize(40%);
+
+    // Header banner & window background matching dynamotivation.com
+    out property <brush> header-background: dark
+        ? @linear-gradient(135deg, #963744 0%, #411b23 100%)
+        : @linear-gradient(135deg, #ff4c4a 0%, #893750 100%);
+    out property <brush> header-foreground: #ffffff;
+    out property <brush> header-muted-foreground: #ffffff.transparentize(22%);
+    out property <brush> header-hover-background: #ffffff.transparentize(84%);
+
+    // Signature Dynamotivation mint-to-cyan gradient accent
+    out property <brush> brand-gradient: @linear-gradient(45deg, #4aff83 0%, #3dffe5 100%);
+    out property <brush> brand-accent: dark ? #38e89f : #e22050;
+
+    // Main content canvas & elevated cards
+    out property <brush> window-background: dark
+        ? @linear-gradient(180deg, #1b181d 0%, #16181b 35%, #121417 100%)
+        : @linear-gradient(180deg, #faf4f6 0%, #f5f2f5 40%, #f2f0f4 100%);
+    out property <brush> card-background: dark ? #222428 : #ffffff;
+    out property <brush> card-border: dark ? #32353c : #e5dce1;
+    out property <brush> icon-tile-background: dark ? #2c2f36 : #2c2c2c;
+    out property <brush> icon-tile-border: dark ? #3c4049 : #ded6dc;
+    out property <brush> hover-background: dark
+        ? #38e89f.transparentize(92%)
+        : #ff4c4a.transparentize(94%);
+    out property <brush> divider: dark ? #2e3138 : #eee8ec;
+    out property <brush> muted-foreground: Palette.foreground.transparentize(35%);
+    out property <brush> subtle-foreground: Palette.foreground.transparentize(46%);
     out property <brush> critical-foreground: dark ? #ff99a4 : #c42b1c;
 }

@@ -6,7 +6,9 @@
 
 use std::sync::Arc;
 
-use hub_application::{ListPackages, PreferencesService, RegisterPackage};
+use hub_application::{
+    InstallationChange, ListPackages, PreferencesService, RecordInstallationChange, RegisterPackage,
+};
 use hub_infrastructure::{
     InMemorySoftwarePackageRepository, IniPreferencesStore, StderrEventPublisher, paths,
 };
@@ -21,6 +23,7 @@ fn main() -> Result<(), slint::PlatformError> {
     });
     let preferences = Arc::new(IniPreferencesStore::new(preferences_path));
 
+    let record_change = RecordInstallationChange::new(repo.clone(), events.clone());
     let services = Services {
         register_package: RegisterPackage::new(repo.clone(), events),
         list_packages: ListPackages::new(repo),
@@ -28,15 +31,49 @@ fn main() -> Result<(), slint::PlatformError> {
     };
 
     #[cfg(debug_assertions)]
-    seed_dev_data(&services);
+    seed_dev_data(&services, &record_change);
+
+    #[cfg(not(debug_assertions))]
+    let _ = record_change;
 
     hub_ui::run(services, env!("CARGO_PKG_VERSION"))
 }
 
-/// Sample packages for local development only; never shipped in release builds.
+/// Sample Dynamotivation packages for local development; never shipped in release builds.
 #[cfg(debug_assertions)]
-fn seed_dev_data(services: &Services) {
-    for name in ["Jumpmaster Engine Core", "Cross-Platform Asset Pipeline"] {
+fn seed_dev_data(services: &Services, record_change: &RecordInstallationChange) {
+    let installed = [
+        ("Joins the Battle Meme Generator", false),
+        ("Geo Background Generator", true),
+        ("Stellenwerttafel Plus", false),
+    ];
+
+    for (name, has_update) in installed {
+        match services.register_package.execute(name) {
+            Ok(view) => {
+                if let Err(e) = record_change.execute(&view.id, InstallationChange::Installed) {
+                    eprintln!("[seed] install {name}: {e}");
+                } else if has_update
+                    && let Err(e) =
+                        record_change.execute(&view.id, InstallationChange::UpdateAvailable)
+                {
+                    eprintln!("[seed] flag update {name}: {e}");
+                }
+            }
+            Err(e) => eprintln!("[seed] {name}: {e}"),
+        }
+    }
+
+    let available = [
+        "Unofficial Super Mario Bros. Misfit Pack",
+        "OSS Space Adventure",
+        "BenPlaysGames Soundboard",
+        "Unofficial Sonic Mania Mobile Prototype",
+        "Project Tortuga",
+        "GerMemz",
+    ];
+
+    for name in available {
         if let Err(e) = services.register_package.execute(name) {
             eprintln!("[seed] {name}: {e}");
         }
