@@ -14,10 +14,13 @@ export global Theme {
     out property <brush> header-foreground: #ffffff;
     out property <brush> header-muted-foreground: #ffffff.transparentize(22%);
     out property <brush> header-hover-background: #ffffff.transparentize(84%);
+    out property <brush> window-close-hover: #e81123;
+    out property <brush> window-frame-border: dark ? #3d2229 : #893750.transparentize(35%);
 
     // Signature Dynamotivation mint-to-cyan gradient accent
     out property <brush> brand-gradient: @linear-gradient(45deg, #4aff83 0%, #3dffe5 100%);
     out property <brush> brand-accent: dark ? #38e89f : #e22050;
+    out property <brush> badge-foreground: #111111;
 
     // Main content canvas & elevated cards
     out property <brush> window-background: dark
@@ -25,11 +28,21 @@ export global Theme {
         : @linear-gradient(180deg, #faf4f6 0%, #f5f2f5 40%, #f2f0f4 100%);
     out property <brush> card-background: dark ? #222428 : #ffffff;
     out property <brush> card-border: dark ? #32353c : #e5dce1;
+    out property <brush> detail-banner-background: dark
+        ? @linear-gradient(135deg, #2d1b22 0%, #1a2426 100%)
+        : @linear-gradient(135deg, #fff0f2 0%, #eefbf6 100%);
     out property <brush> icon-tile-background: dark ? #2c2f36 : #2c2c2c;
     out property <brush> icon-tile-border: dark ? #3c4049 : #ded6dc;
     out property <brush> hover-background: dark
         ? #38e89f.transparentize(92%)
         : #ff4c4a.transparentize(94%);
+    out property <brush> selected-background: dark
+        ? #38e89f.transparentize(84%)
+        : #ff4c4a.transparentize(88%);
+    out property <brush> selected-border: dark ? #38e89f : #ff4c4a;
+    out property <brush> scrollbar-track: dark ? #1e2024 : #ebe5ea;
+    out property <brush> scrollbar-thumb: dark ? #4e535e : #b8acb3;
+    out property <brush> scrollbar-thumb-hover: dark ? #38e89f : #893750;
     out property <brush> divider: dark ? #2e3138 : #eee8ec;
     out property <brush> muted-foreground: Palette.foreground.transparentize(35%);
     out property <brush> subtle-foreground: Palette.foreground.transparentize(46%);

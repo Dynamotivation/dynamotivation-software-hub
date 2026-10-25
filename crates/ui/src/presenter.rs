@@ -77,14 +77,30 @@ pub fn row_from(view: &PackageView) -> PackageRow {
     }
 }
 
-/// Splits package views into `(installed, available, updates_count)`.
-pub fn partition_rows(views: &[PackageView]) -> (Vec<PackageRow>, Vec<PackageRow>, i32) {
+fn matches_query(row: &PackageRow, query_lower: &str) -> bool {
+    if query_lower.is_empty() {
+        return true;
+    }
+    row.name.to_lowercase().contains(query_lower)
+        || row.description.to_lowercase().contains(query_lower)
+        || row.id.to_lowercase().contains(query_lower)
+}
+
+/// Splits package views into `(installed, available, updates_count)`, filtered by `query`.
+pub fn partition_rows_filtered(
+    views: &[PackageView],
+    query: &str,
+) -> (Vec<PackageRow>, Vec<PackageRow>, i32) {
+    let query_lower = query.trim().to_lowercase();
     let mut installed = Vec::new();
     let mut available = Vec::new();
     let mut updates_count: i32 = 0;
 
     for view in views {
         let row = row_from(view);
+        if !matches_query(&row, &query_lower) {
+            continue;
+        }
         match view.status {
             PackageStatusView::Installed => installed.push(row),
             PackageStatusView::UpdateAvailable => {
@@ -140,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn partitions_installed_and_available_rows() {
+    fn partitions_and_filters_installed_and_available_rows() {
         let views = vec![
             PackageView {
                 id: "geo-background-generator".into(),
@@ -158,10 +174,15 @@ mod tests {
                 status: PackageStatusView::NotInstalled,
             },
         ];
-        let (installed, available, updates) = partition_rows(&views);
+        let (installed, available, updates) = partition_rows_filtered(&views, "");
         assert_eq!(installed.len(), 2);
         assert_eq!(available.len(), 1);
         assert_eq!(updates, 1);
+
+        let (installed_q, available_q, updates_q) = partition_rows_filtered(&views, "space");
+        assert_eq!(installed_q.len(), 0);
+        assert_eq!(available_q.len(), 1);
+        assert_eq!(updates_q, 0);
     }
 
     #[test]

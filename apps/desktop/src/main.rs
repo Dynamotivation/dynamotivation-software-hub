@@ -1,8 +1,8 @@
 //! Desktop entry point and composition root: wires adapters into use cases.
 //! No business logic belongs here.
 
-// No console window for release builds on Windows.
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Never attach a console window on Windows.
+#![windows_subsystem = "windows"]
 
 use std::sync::Arc;
 

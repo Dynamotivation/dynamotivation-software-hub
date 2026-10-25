@@ -1,0 +1,352 @@
+import { Button, Palette } from "std-widgets.slint";
+import { PackageRow, PackageStatus } from "../types.slint";
+import { Theme } from "../theme.slint";
+import { SurfaceCard } from "card.slint";
+
+export component PackageDetailPane inherits SurfaceCard {
+    in property <PackageRow> package;
+
+    function package-icon(id: string) -> image {
+        if id == "joins-the-battle-meme-generator" {
+            return @image-url("../assets/joins-the-battle.png");
+        }
+        if id == "geo-background-generator" {
+            return @image-url("../assets/geo-background-generator.png");
+        }
+        if id == "stellenwerttafel-plus" {
+            return @image-url("../assets/stellenwerttafel-plus.png");
+        }
+        if id == "unofficial-super-mario-bros-misfit-pack" {
+            return @image-url("../assets/misfit-pack.svg");
+        }
+        if id == "oss-space-adventure" {
+            return @image-url("../assets/oss-space-adventure.png");
+        }
+        if id == "benplaysgames-soundboard" {
+            return @image-url("../assets/benplaysgames-soundboard.png");
+        }
+        if id == "unofficial-sonic-mania-mobile-prototype" {
+            return @image-url("../assets/sonic-mania-mobile.png");
+        }
+        if id == "project-tortuga" {
+            return @image-url("../assets/project-tortuga.png");
+        }
+        if id == "germemz" {
+            return @image-url("../assets/germemz.png");
+        }
+        return @image-url("../assets/dynamotivation-logo-dark.svg");
+    }
+
+    function long-description(id: string, fallback: string) -> string {
+        if id == "joins-the-battle-meme-generator" {
+            return @tr("Design custom Super Smash Bros.-style 'Joins the Battle!' splash screens and memes in seconds. Customize character renders, splash titles, subtitles, background colors, and export high-resolution images or animations.");
+        }
+        if id == "geo-background-generator" {
+            return @tr("Generate crisp, procedural low-poly and geometric pattern wallpapers. Fine-tune color palettes, gradient angles, cell density, and lighting to export desktop and mobile backgrounds.");
+        }
+        if id == "stellenwerttafel-plus" {
+            return @tr("An interactive educational place-value chart supporting decimal, binary, and hexadecimal number systems. Drag and group tokens across columns to visualize number representation and base conversions.");
+        }
+        if id == "unofficial-super-mario-bros-misfit-pack" {
+            return @tr("A community-crafted enhancement pack featuring widescreen support, refreshed pixel-art sprites, custom levels, and quality-of-life improvements while staying true to classic 8-bit platforming.");
+        }
+        if id == "oss-space-adventure" {
+            return @tr("An open-source retro arcade space shooter. Pilot your ship through dense asteroid fields, defend your home planet, unlock weapon upgrades, and chase high scores.");
+        }
+        if id == "benplaysgames-soundboard" {
+            return @tr("The official community soundboard featuring iconic reactions, catchphrases, and stream highlights from YouTuber and Twitch streamer BenPlaysGames.");
+        }
+        if id == "unofficial-sonic-mania-mobile-prototype" {
+            return @tr("An experimental fan-made mobile prototype built with GameMaker: Studio and the Sonic MAX framework, bringing classic high-speed 2D momentum physics to touch and controller setups.");
+        }
+        if id == "project-tortuga" {
+            return @tr("A custom Call of Duty: Black Ops 3 Zombies experience set on a cursed pirate island, complete with custom GSC/CSC gameplay scripts, Easter eggs, and atmospheric arenas.");
+        }
+        if id == "germemz" {
+            return @tr("A curated soundboard of 45 legendary German TV commercial quotes and internet memes with instant playback and favorites support.");
+        }
+        return fallback;
+    }
+
+    VerticalLayout {
+        spacing: 0px;
+        alignment: start;
+
+        // Top Hero Banner inside the Detail Card
+        Rectangle {
+            border-radius: 11px;
+            background: Theme.detail-banner-background;
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 18px;
+
+                HorizontalLayout {
+                    spacing: 20px;
+                    alignment: start;
+
+                    // Large 84x84 rounded logo cutout
+                    VerticalLayout {
+                        alignment: center;
+
+                        Rectangle {
+                            width: 84px;
+                            height: 84px;
+                            border-radius: 18px;
+                            background: Colors.transparent;
+
+                            Image {
+                                width: 100%;
+                                height: 100%;
+                                source: root.package-icon(root.package.id);
+                                image-fit: contain;
+                            }
+
+                            Rectangle {
+                                width: 100%;
+                                height: 100%;
+                                border-radius: 18px;
+                                border-width: 1px;
+                                border-color: Theme.icon-tile-border;
+                                background: Colors.transparent;
+                            }
+                        }
+                    }
+
+                    // Title + Status + Version metadata
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 6px;
+                        alignment: center;
+
+                        Text {
+                            text: root.package.name;
+                            font-size: 22px;
+                            font-weight: 700;
+                            color: Palette.foreground;
+                            wrap: word-wrap;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: start;
+
+                            // Status pill badge
+                            Rectangle {
+                                height: 22px;
+                                border-radius: 11px;
+                                background: root.package.status == PackageStatus.update-available
+                                    ? Theme.brand-gradient
+                                    : Theme.hover-background;
+                                border-width: root.package.status == PackageStatus.update-available ? 0px : 1px;
+                                border-color: Theme.card-border;
+
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+
+                                    Text {
+                                        text: root.package.status == PackageStatus.update-available
+                                            ? @tr("Update available")
+                                            : root.package.status == PackageStatus.installed
+                                            ? @tr("Installed")
+                                            : @tr("Available to install");
+                                        font-size: 11px;
+                                        font-weight: 700;
+                                        color: root.package.status == PackageStatus.update-available
+                                            ? Theme.badge-foreground
+                                            : Palette.foreground;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+
+                                Text {
+                                    text: root.package.status == PackageStatus.update-available
+                                        ? @tr("v{} → v{}", root.package.version, root.package.latest-version)
+                                        : @tr("v{}", root.package.version);
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: root.package.status == PackageStatus.update-available
+                                        ? Theme.brand-accent
+                                        : Theme.muted-foreground;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Steam-style Action Bar
+                Rectangle {
+                    height: 54px;
+                    border-radius: 10px;
+                    background: Theme.card-background;
+                    border-width: 1px;
+                    border-color: Theme.card-border;
+
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        spacing: 10px;
+                        alignment: stretch;
+
+                        if root.package.status == PackageStatus.update-available: VerticalLayout {
+                            alignment: center;
+
+                            Button {
+                                text: @tr("Update to v{}", root.package.latest-version);
+                                primary: true;
+                            }
+                        }
+
+                        if root.package.status == PackageStatus.installed: VerticalLayout {
+                            alignment: center;
+
+                            Button {
+                                text: @tr("Launch");
+                                primary: true;
+                            }
+                        }
+
+                        if root.package.status == PackageStatus.not-installed: VerticalLayout {
+                            alignment: center;
+
+                            Button {
+                                text: @tr("Install");
+                                primary: true;
+                            }
+                        }
+
+                        if root.package.status == PackageStatus.installed
+                            || root.package.status == PackageStatus.update-available: VerticalLayout {
+                            alignment: center;
+
+                            Button {
+                                text: @tr("Remove");
+                            }
+                        }
+
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            Text {
+                                text: @tr("Publisher: Dynamotivation");
+                                font-size: 12px;
+                                color: Theme.muted-foreground;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Accent divider line
+        Rectangle {
+            height: 2px;
+            background: Theme.brand-gradient;
+        }
+
+        // Description & Package Details Section
+        VerticalLayout {
+            padding: 24px;
+            spacing: 16px;
+
+            Text {
+                text: @tr("About this software");
+                font-size: 14px;
+                font-weight: 700;
+                color: Palette.foreground;
+            }
+
+            Text {
+                text: root.package.description;
+                font-size: 14px;
+                font-weight: 600;
+                color: Palette.foreground;
+                wrap: word-wrap;
+            }
+
+            Text {
+                text: root.long-description(root.package.id, root.package.description);
+                font-size: 13px;
+                color: Theme.muted-foreground;
+                wrap: word-wrap;
+            }
+
+            Rectangle {
+                height: 1px;
+                background: Theme.divider;
+            }
+
+            // Metadata Grid
+            HorizontalLayout {
+                spacing: 24px;
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 4px;
+
+                    Text {
+                        text: @tr("Package ID");
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: Theme.subtle-foreground;
+                    }
+
+                    Text {
+                        text: root.package.id;
+                        font-size: 12px;
+                        color: Palette.foreground;
+                        overflow: elide;
+                    }
+                }
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 4px;
+
+                    Text {
+                        text: @tr("Installed Version");
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: Theme.subtle-foreground;
+                    }
+
+                    Text {
+                        text: root.package.status == PackageStatus.not-installed
+                            ? @tr("—")
+                            : root.package.version;
+                        font-size: 12px;
+                        color: Palette.foreground;
+                    }
+                }
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 4px;
+
+                    Text {
+                        text: @tr("Latest Release");
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: Theme.subtle-foreground;
+                    }
+
+                    Text {
+                        text: root.package.latest-version;
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: Theme.brand-accent;
+                    }
+                }
+            }
+        }
+    }
+}

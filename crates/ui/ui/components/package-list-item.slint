@@ -5,6 +5,10 @@ import { Theme } from "../theme.slint";
 export component PackageListItem inherits Rectangle {
     in property <PackageRow> package;
     in property <bool> show-divider: false;
+    in property <bool> compact: false;
+    in property <bool> selected: false;
+
+    callback clicked();
 
     function package-icon(id: string) -> image {
         if id == "joins-the-battle-meme-generator" {
@@ -38,30 +42,49 @@ export component PackageListItem inherits Rectangle {
     }
 
     border-radius: 10px;
-    background: row-touch.has-hover ? Theme.hover-background : Colors.transparent;
+    border-width: root.compact && root.selected ? 1px : 0px;
+    border-color: root.compact && root.selected ? Theme.selected-border : Colors.transparent;
+    background: root.compact && root.selected
+        ? Theme.selected-background
+        : row-touch.has-hover ? Theme.hover-background : Colors.transparent;
 
     row-touch := TouchArea {
         width: 100%;
         height: 100%;
+        clicked => {
+            root.clicked();
+        }
     }
 
     VerticalLayout {
         HorizontalLayout {
-            padding-left: 14px;
-            padding-right: 14px;
-            padding-top: 12px;
-            padding-bottom: 12px;
-            spacing: 14px;
+            padding-left: root.compact ? 10px : 14px;
+            padding-right: root.compact ? 12px : 14px;
+            padding-top: root.compact ? 8px : 12px;
+            padding-bottom: root.compact ? 8px : 12px;
+            spacing: root.compact ? 11px : 14px;
             alignment: stretch;
+
+            // Left accent indicator bar when selected in Steam sidebar mode
+            if root.compact: VerticalLayout {
+                alignment: center;
+
+                Rectangle {
+                    width: 3px;
+                    height: root.selected ? 24px : 0px;
+                    border-radius: 1.5px;
+                    background: Theme.brand-gradient;
+                }
+            }
 
             // Full-bleed rounded logo cutout (20% radius like dynamotivation.com .logo)
             VerticalLayout {
                 alignment: center;
 
                 Rectangle {
-                    width: 52px;
-                    height: 52px;
-                    border-radius: 11px;
+                    width: root.compact ? 38px : 52px;
+                    height: root.compact ? 38px : 52px;
+                    border-radius: root.compact ? 8px : 11px;
                     background: Colors.transparent;
 
                     Image {
@@ -75,7 +98,7 @@ export component PackageListItem inherits Rectangle {
                     Rectangle {
                         width: 100%;
                         height: 100%;
-                        border-radius: 11px;
+                        border-radius: root.compact ? 8px : 11px;
                         border-width: 1px;
                         border-color: Theme.icon-tile-border;
                         background: Colors.transparent;
@@ -86,20 +109,20 @@ export component PackageListItem inherits Rectangle {
             // Software Details Column
             VerticalLayout {
                 horizontal-stretch: 1;
-                spacing: 3px;
+                spacing: root.compact ? 2px : 3px;
                 alignment: center;
 
                 Text {
                     text: root.package.name;
-                    font-size: 15px;
-                    font-weight: 700;
+                    font-size: root.compact ? 13px : 15px;
+                    font-weight: root.compact && !root.selected ? 600 : 700;
                     color: Palette.foreground;
                     overflow: elide;
                 }
 
                 if root.package.status == PackageStatus.update-available: Text {
                     text: @tr("{} → {}", root.package.version, root.package.latest-version);
-                    font-size: 12px;
+                    font-size: root.compact ? 11px : 12px;
                     font-weight: 600;
                     color: Theme.brand-accent;
                     overflow: elide;
@@ -107,12 +130,19 @@ export component PackageListItem inherits Rectangle {
 
                 if root.package.status == PackageStatus.installed: Text {
                     text: root.package.version;
-                    font-size: 12px;
+                    font-size: root.compact ? 11px : 12px;
                     color: Theme.muted-foreground;
                     overflow: elide;
                 }
 
-                Text {
+                if root.compact && root.package.status == PackageStatus.not-installed: Text {
+                    text: @tr("Not installed · v{}", root.package.latest-version);
+                    font-size: 11px;
+                    color: Theme.subtle-foreground;
+                    overflow: elide;
+                }
+
+                if !root.compact: Text {
                     text: root.package.description;
                     font-size: 12px;
                     color: root.package.status == PackageStatus.not-installed
@@ -122,8 +152,20 @@ export component PackageListItem inherits Rectangle {
                 }
             }
 
-            // Action Buttons
-            VerticalLayout {
+            // Compact update indicator dot on the right of sidebar items
+            if root.compact && root.package.status == PackageStatus.update-available: VerticalLayout {
+                alignment: center;
+
+                Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background: Theme.brand-gradient;
+                }
+            }
+
+            // Action Buttons (shown in toolbox list mode; in wide mode they live in the right detail pane)
+            if !root.compact: VerticalLayout {
                 alignment: center;
 
                 HorizontalLayout {
@@ -146,7 +188,7 @@ export component PackageListItem inherits Rectangle {
             }
         }
 
-        if root.show-divider: Rectangle {
+        if root.show-divider && !root.compact: Rectangle {
             height: 1px;
             background: Theme.divider;
         }
