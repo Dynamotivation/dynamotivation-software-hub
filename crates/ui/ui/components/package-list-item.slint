@@ -120,12 +120,32 @@ export component PackageListItem inherits Rectangle {
                     overflow: elide;
                 }
 
-                if root.package.status == PackageStatus.update-available: Text {
-                    text: @tr("{} → {}", root.package.version, root.package.latest-version);
-                    font-size: root.compact ? 11px : 12px;
-                    font-weight: 600;
-                    color: Theme.brand-accent;
-                    overflow: elide;
+                if root.package.status == PackageStatus.update-available: HorizontalLayout {
+                    spacing: 4px;
+                    alignment: start;
+
+                    Text {
+                        text: root.compact ? root.package.version : @tr("v{}", root.package.version);
+                        font-size: root.compact ? 11px : 12px;
+                        font-weight: 500;
+                        color: Theme.muted-foreground;
+                        overflow: elide;
+                    }
+
+                    Text {
+                        text: "→";
+                        font-size: root.compact ? 11px : 12px;
+                        font-weight: 500;
+                        color: Theme.muted-foreground;
+                    }
+
+                    Text {
+                        text: root.compact ? root.package.latest-version : @tr("v{}", root.package.latest-version);
+                        font-size: root.compact ? 11px : 12px;
+                        font-weight: 700;
+                        color: Theme.brand-red;
+                        overflow: elide;
+                    }
                 }
 
                 if root.package.status == PackageStatus.installed: Text {
@@ -160,7 +180,7 @@ export component PackageListItem inherits Rectangle {
                     width: 8px;
                     height: 8px;
                     border-radius: 4px;
-                    background: Theme.brand-gradient;
+                    background: Theme.brand-red;
                 }
             }
 

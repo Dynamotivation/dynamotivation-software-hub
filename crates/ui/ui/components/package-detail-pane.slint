@@ -1,4 +1,4 @@
-import { Button, Palette } from "std-widgets.slint";
+import { Button, ComboBox, Palette } from "std-widgets.slint";
 import { PackageRow, PackageStatus } from "../types.slint";
 import { Theme } from "../theme.slint";
 import { SurfaceCard } from "card.slint";
@@ -161,18 +161,40 @@ export component PackageDetailPane inherits SurfaceCard {
                                 }
                             }
 
-                            VerticalLayout {
+                            if root.package.status == PackageStatus.update-available: HorizontalLayout {
+                                spacing: 4px;
                                 alignment: center;
 
                                 Text {
-                                    text: root.package.status == PackageStatus.update-available
-                                        ? @tr("v{} → v{}", root.package.version, root.package.latest-version)
-                                        : @tr("v{}", root.package.version);
+                                    text: @tr("v{}", root.package.version);
                                     font-size: 13px;
-                                    font-weight: 600;
-                                    color: root.package.status == PackageStatus.update-available
-                                        ? Theme.brand-accent
-                                        : Theme.muted-foreground;
+                                    font-weight: 500;
+                                    color: Theme.muted-foreground;
+                                }
+
+                                Text {
+                                    text: "→";
+                                    font-size: 13px;
+                                    font-weight: 500;
+                                    color: Theme.muted-foreground;
+                                }
+
+                                Text {
+                                    text: @tr("v{}", root.package.latest-version);
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Theme.brand-red;
+                                }
+                            }
+
+                            if root.package.status != PackageStatus.update-available: VerticalLayout {
+                                alignment: center;
+
+                                Text {
+                                    text: @tr("v{}", root.package.version);
+                                    font-size: 13px;
+                                    font-weight: 500;
+                                    color: Theme.muted-foreground;
                                 }
                             }
                         }
@@ -275,65 +297,55 @@ export component PackageDetailPane inherits SurfaceCard {
                 background: Theme.divider;
             }
 
-            // Metadata Grid
+            // Version Selector Section (replaces the technical Package ID section)
             HorizontalLayout {
-                spacing: 24px;
+                spacing: 16px;
+                alignment: stretch;
 
                 VerticalLayout {
                     horizontal-stretch: 1;
                     spacing: 4px;
+                    alignment: center;
 
                     Text {
-                        text: @tr("Package ID");
-                        font-size: 11px;
-                        font-weight: 600;
-                        color: Theme.subtle-foreground;
+                        text: @tr("Version");
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: Palette.foreground;
                     }
 
                     Text {
-                        text: root.package.id;
-                        font-size: 12px;
-                        color: Palette.foreground;
-                        overflow: elide;
+                        text: root.package.status == PackageStatus.update-available
+                            ? @tr("An update is available (v{} → v{}). Select a version to run or install.", root.package.version, root.package.latest-version)
+                            : root.package.status == PackageStatus.installed
+                            ? @tr("Currently installed on v{}. Select an alternative release if available.", root.package.version)
+                            : @tr("Select a version to install.");
+                        font-size: 11px;
+                        color: Theme.muted-foreground;
                     }
                 }
 
                 VerticalLayout {
-                    horizontal-stretch: 1;
-                    spacing: 4px;
+                    alignment: center;
 
-                    Text {
-                        text: @tr("Installed Version");
-                        font-size: 11px;
-                        font-weight: 600;
-                        color: Theme.subtle-foreground;
-                    }
-
-                    Text {
-                        text: root.package.status == PackageStatus.not-installed
-                            ? @tr("—")
-                            : root.package.version;
-                        font-size: 12px;
-                        color: Palette.foreground;
-                    }
-                }
-
-                VerticalLayout {
-                    horizontal-stretch: 1;
-                    spacing: 4px;
-
-                    Text {
-                        text: @tr("Latest Release");
-                        font-size: 11px;
-                        font-weight: 600;
-                        color: Theme.subtle-foreground;
-                    }
-
-                    Text {
-                        text: root.package.latest-version;
-                        font-size: 12px;
-                        font-weight: 600;
-                        color: Theme.brand-accent;
+                    ComboBox {
+                        width: 170px;
+                        model: root.package.status == PackageStatus.update-available
+                            ? [
+                                @tr("v{} (Latest)", root.package.latest-version),
+                                @tr("v{} (Installed)", root.package.version),
+                                @tr("v1.0.0"),
+                            ]
+                            : root.package.status == PackageStatus.installed
+                            ? [
+                                @tr("v{} (Installed)", root.package.version),
+                                @tr("v1.0.0"),
+                            ]
+                            : [
+                                @tr("v{} (Latest)", root.package.latest-version),
+                                @tr("v1.0.0"),
+                            ];
+                        current-index: 0;
                     }
                 }
             }
