@@ -35,6 +35,7 @@ pub struct Services {
 /// Creates the main window, wires callbacks and runs the event loop.
 pub fn run(services: Services, version: &str) -> Result<(), slint::PlatformError> {
     let ui = AppWindow::new()?;
+    ui.show()?;
     ui.set_version(version.into());
 
     match services.preferences.load() {
