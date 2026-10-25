@@ -12,40 +12,58 @@ export global Theme {
         ? @linear-gradient(135deg, #963744 0%, #411b23 100%)
         : @linear-gradient(135deg, #ff4c4a 0%, #893750 100%);
     out property <brush> header-foreground: #ffffff;
-    out property <brush> header-muted-foreground: #ffffff.transparentize(22%);
+    out property <brush> header-muted-foreground: #ffffff.transparentize(10%);
     out property <brush> header-hover-background: #ffffff.transparentize(84%);
-    out property <brush> window-close-hover: #e81123;
+    out property <brush> header-pill-background: #ffffff.transparentize(82%);
+    out property <brush> window-close-hover: #c42b1c;
+    out property <brush> window-close-pressed: #b82415;
     out property <brush> window-frame-border: dark ? #3d2229 : #893750.transparentize(35%);
 
     // Signature Dynamotivation mint-to-cyan gradient accent
     out property <brush> brand-gradient: @linear-gradient(45deg, #4aff83 0%, #3dffe5 100%);
+    out property <brush> brand-mint: #4aff83;
     out property <brush> brand-accent: dark ? #38e89f : #e22050;
-    out property <brush> brand-red: dark ? #ff5c5c : #e22050;
-    out property <brush> badge-foreground: #111111;
+    out property <brush> brand-red: dark ? #ff6b6b : #d61f45;
+
+    // Branded buttons (replace the stock blue accent of the Fluent style)
+    out property <brush> primary-background: dark ? #e5484d : #e22050;
+    out property <brush> primary-hover: dark ? #f05a5f : #c91a45;
+    out property <brush> primary-pressed: dark ? #cf3a40 : #b0163c;
+    out property <brush> primary-foreground: #ffffff;
+    out property <brush> secondary-background: dark ? #2c2f36 : #ffffff;
+    out property <brush> secondary-hover: dark ? #363a42 : #f7f1f4;
+    out property <brush> secondary-pressed: dark ? #3f434c : #efe6eb;
+    out property <brush> secondary-border: dark ? #3f434c : #ddd2d8;
+
+    // Soft tinted "update available" badge
+    out property <brush> update-badge-background: dark
+        ? #ff6b6b.transparentize(84%)
+        : #e22050.transparentize(90%);
+    out property <brush> update-badge-foreground: brand-red;
+    out property <brush> neutral-badge-background: dark ? #2c2f36 : #f3eef1;
 
     // Main content canvas & elevated cards
-    out property <brush> window-background: dark
-        ? @linear-gradient(180deg, #1b181d 0%, #16181b 35%, #121417 100%)
-        : @linear-gradient(180deg, #faf4f6 0%, #f5f2f5 40%, #f2f0f4 100%);
+    out property <color> window-background-solid: dark ? #16181b : #f5f2f5;
+    out property <brush> window-background: window-background-solid;
     out property <brush> card-background: dark ? #222428 : #ffffff;
     out property <brush> card-border: dark ? #32353c : #e5dce1;
-    out property <brush> detail-banner-background: dark
-        ? @linear-gradient(135deg, #2d1b22 0%, #1a2426 100%)
-        : @linear-gradient(135deg, #fff0f2 0%, #eefbf6 100%);
-    out property <brush> icon-tile-background: dark ? #2c2f36 : #2c2c2c;
-    out property <brush> icon-tile-border: dark ? #3c4049 : #ded6dc;
+    out property <brush> popup-background: dark ? #2a2d33 : #ffffff;
+    out property <brush> icon-tile-border: dark ? #ffffff.transparentize(90%) : #000000.transparentize(91%);
     out property <brush> hover-background: dark
-        ? #38e89f.transparentize(92%)
-        : #ff4c4a.transparentize(94%);
+        ? #ffffff.transparentize(95%)
+        : #893750.transparentize(95%);
     out property <brush> selected-background: dark
-        ? #38e89f.transparentize(84%)
-        : #ff4c4a.transparentize(88%);
-    out property <brush> selected-border: dark ? #38e89f : #ff4c4a;
+        ? #ffffff.transparentize(91%)
+        : #893750.transparentize(91%);
     out property <brush> scrollbar-track: dark ? #1e2024 : #ebe5ea;
     out property <brush> scrollbar-thumb: dark ? #4e535e : #b8acb3;
     out property <brush> scrollbar-thumb-hover: dark ? #38e89f : #893750;
     out property <brush> divider: dark ? #2e3138 : #eee8ec;
-    out property <brush> muted-foreground: Palette.foreground.transparentize(35%);
-    out property <brush> subtle-foreground: Palette.foreground.transparentize(46%);
+    out property <brush> progress-track: dark ? #ffffff.transparentize(88%) : #893750.transparentize(88%);
+    out property <brush> progress-foreground: dark ? #38e89f : #e22050;
+    out property <brush> tooltip-background: dark ? #3a3d44 : #2b2d31;
+    out property <brush> tooltip-foreground: #ffffff;
+    out property <brush> muted-foreground: Palette.foreground.transparentize(32%);
+    out property <brush> subtle-foreground: Palette.foreground.transparentize(45%);
     out property <brush> critical-foreground: dark ? #ff99a4 : #c42b1c;
 }

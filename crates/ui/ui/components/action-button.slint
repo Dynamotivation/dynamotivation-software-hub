@@ -1,0 +1,61 @@
+import { Palette } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+
+// Branded text button with optional leading icon. Replaces the stock Fluent
+// `Button`, whose primary variant uses the system blue accent.
+export component ActionButton inherits Rectangle {
+    in property <string> text;
+    in property <image> icon;
+    in property <bool> has-icon: false;
+    in property <bool> primary: false;
+    in property <bool> enabled: true;
+
+    callback clicked();
+
+    height: 34px;
+    min-width: layout.preferred-width;
+    border-radius: 8px;
+    opacity: root.enabled ? 1.0 : 0.5;
+    border-width: root.primary ? 0px : 1px;
+    border-color: Theme.secondary-border;
+    background: root.primary
+        ? (touch.pressed ? Theme.primary-pressed : touch.has-hover ? Theme.primary-hover : Theme.primary-background)
+        : (touch.pressed ? Theme.secondary-pressed : touch.has-hover ? Theme.secondary-hover : Theme.secondary-background);
+    animate background { duration: 100ms; }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        accessible-role: button;
+        accessible-label: root.text;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    layout := HorizontalLayout {
+        padding-left: root.has-icon ? 12px : 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        alignment: center;
+
+        if root.has-icon: VerticalLayout {
+            alignment: center;
+
+            Image {
+                width: 15px;
+                height: 15px;
+                source: root.icon;
+                colorize: root.primary ? Theme.primary-foreground : Theme.brand-red;
+            }
+        }
+
+        Text {
+            text: root.text;
+            font-size: 13px;
+            font-weight: 600;
+            color: root.primary ? Theme.primary-foreground : Palette.foreground;
+            vertical-alignment: center;
+        }
+    }
+}

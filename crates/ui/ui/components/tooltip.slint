@@ -1,0 +1,60 @@
+import { Theme } from "../theme.slint";
+
+// Single shared tooltip: hoverable controls publish their text and window-absolute
+// anchor here, and one `TooltipOverlay` at the top of the window renders it above
+// all other content.
+export global TooltipState {
+    in-out property <string> text;
+    in-out property <bool> active;
+    // Anchor rectangle of the hovered control, in window coordinates.
+    in-out property <length> anchor-x;
+    in-out property <length> anchor-y;
+    in-out property <length> anchor-width;
+    in-out property <length> anchor-height;
+}
+
+export component TooltipOverlay inherits Rectangle {
+    // Delayed so tooltips don't flash while the pointer just passes by.
+    property <bool> shown: false;
+
+    Timer {
+        interval: 450ms;
+        running: TooltipState.active && !root.shown;
+        triggered => {
+            root.shown = true;
+        }
+    }
+
+    // Track the source state so moving between controls hides immediately.
+    property <bool> active: TooltipState.active;
+    changed active => {
+        if (!self.active) {
+            root.shown = false;
+        }
+    }
+
+    bubble := Rectangle {
+        property <length> below-y: TooltipState.anchor-y + TooltipState.anchor-height + 6px;
+        width: label.preferred-width + 20px;
+        height: label.preferred-height + 10px;
+        x: clamp(TooltipState.anchor-x + (TooltipState.anchor-width - self.width) / 2, 6px, max(6px, root.width - self.width - 6px));
+        y: self.below-y + self.height > root.height - 6px
+            ? TooltipState.anchor-y - self.height - 6px
+            : self.below-y;
+        visible: root.shown && TooltipState.text != "";
+        border-radius: 6px;
+        background: Theme.tooltip-background;
+        drop-shadow-blur: 8px;
+        drop-shadow-offset-y: 2px;
+        drop-shadow-color: #00000040;
+
+        label := Text {
+            text: TooltipState.text;
+            font-size: 12px;
+            font-weight: 500;
+            color: Theme.tooltip-foreground;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}

@@ -1,12 +1,116 @@
-import { Button, Palette, ScrollView, LineEdit } from "std-widgets.slint";
+import { LineEdit, Palette, ScrollView } from "std-widgets.slint";
 import { Theme } from "../theme.slint";
 import { ThemePreference } from "../types.slint";
 import { SurfaceCard } from "card.slint";
+import { ActionButton } from "action-button.slint";
+import { IconButton } from "icon-button.slint";
 import { PlatformToggle } from "toggle.slint";
 
-export component SettingsView inherits VerticalLayout {
+component SectionTitle inherits Text {
+    font-size: 14px;
+    font-weight: 700;
+    color: Palette.foreground;
+}
+
+component Divider inherits Rectangle {
+    height: 1px;
+    background: Theme.divider;
+}
+
+// Selectable theme tile.
+component ThemeOption inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle;
+    in property <bool> selected;
+
+    callback clicked();
+
+    horizontal-stretch: 1;
+    height: 64px;
+    border-radius: 10px;
+    border-width: root.selected ? 2px : 1px;
+    border-color: root.selected ? Theme.brand-accent : Theme.card-border;
+    background: root.selected
+        ? Theme.selected-background
+        : touch.has-hover ? Theme.hover-background : Colors.transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        accessible-role: button;
+        accessible-label: root.title;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 3px;
+        padding-left: 12px;
+        padding-right: 12px;
+
+        Text {
+            text: root.title;
+            font-size: 13px;
+            font-weight: 700;
+            color: Palette.foreground;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: root.subtitle;
+            font-size: 12px;
+            color: Theme.muted-foreground;
+            horizontal-alignment: center;
+            overflow: elide;
+        }
+    }
+}
+
+// Label + description on the left, toggle on the right.
+component ToggleRow inherits HorizontalLayout {
+    in property <string> title;
+    in property <string> description;
+    in-out property <bool> checked;
+
+    callback toggled(bool);
+
+    spacing: 16px;
+
+    VerticalLayout {
+        horizontal-stretch: 1;
+        spacing: 2px;
+        alignment: center;
+
+        Text {
+            text: root.title;
+            font-size: 13px;
+            font-weight: 600;
+            color: Palette.foreground;
+        }
+
+        Text {
+            text: root.description;
+            font-size: 12px;
+            color: Theme.muted-foreground;
+            wrap: word-wrap;
+        }
+    }
+
+    VerticalLayout {
+        alignment: center;
+
+        PlatformToggle {
+            checked <=> root.checked;
+            toggled(val) => {
+                root.toggled(val);
+            }
+        }
+    }
+}
+
+export component SettingsView inherits Rectangle {
     in-out property <ThemePreference> theme: ThemePreference.system;
-    in property <bool> system-dark: false;
     in property <string> version;
     in property <string> error-message;
 
@@ -27,521 +131,261 @@ export component SettingsView inherits VerticalLayout {
     callback refresh-packages();
     callback show-about();
 
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 16px;
-    padding-bottom: 20px;
-    spacing: 14px;
-    alignment: start;
+    function select-theme(value: ThemePreference) {
+        root.theme = value;
+        root.theme-selected(value);
+    }
 
-    // View Header with Back button and Breadcrumb / Title
-    HorizontalLayout {
-        spacing: 12px;
-        alignment: stretch;
-        padding-bottom: 2px;
-
-        Rectangle {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            background: back-touch.has-hover ? Theme.hover-background : Colors.transparent;
-
-            back-touch := TouchArea {
-                accessible-role: button;
-                accessible-label: @tr("Back to software catalog");
-                mouse-cursor: pointer;
-                clicked => { root.back-clicked(); }
-            }
-
-            Image {
-                width: 16px;
-                height: 16px;
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
-                source: @image-url("../assets/chevron-left.svg");
-                colorize: Theme.brand-accent;
-            }
+    function submit-registration() {
+        if (root.register-package(root.draft-package-name)) {
+            root.draft-package-name = "";
         }
+    }
 
-        VerticalLayout {
-            alignment: center;
-            horizontal-stretch: 1;
+    VerticalLayout {
+        padding-top: 16px;
+        spacing: 10px;
+
+        // Header
+        HorizontalLayout {
+            padding-left: 20px;
+            padding-right: 20px;
+            spacing: 8px;
+
+            IconButton {
+                icon: @image-url("../assets/chevron-left.svg");
+                icon-color: Palette.foreground;
+                tooltip: @tr("Back to software");
+                clicked => {
+                    root.back-clicked();
+                }
+            }
 
             Text {
                 text: @tr("Settings");
                 font-size: 20px;
                 font-weight: 700;
                 color: Palette.foreground;
+                vertical-alignment: center;
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
             }
         }
 
-        VerticalLayout {
-            alignment: center;
+        ScrollView {
+            vertical-stretch: 1;
+            horizontal-scrollbar-policy: always-off;
 
-            Button {
-                text: @tr("Done");
-                primary: true;
-                clicked => { root.back-clicked(); }
-            }
-        }
-    }
+            HorizontalLayout {
+                alignment: center;
 
-    ScrollView {
-        vertical-stretch: 1;
-        horizontal-scrollbar-policy: always-off;
-
-        VerticalLayout {
-            spacing: 16px;
-            padding-bottom: 16px;
-            alignment: start;
-
-            // SECTION 1: Appearance & Theme
-            SurfaceCard {
                 VerticalLayout {
-                    padding: 18px;
-                    spacing: 14px;
+                    max-width: 760px;
+                    horizontal-stretch: 1;
+                    padding-left: 20px;
+                    padding-right: 20px;
+                    padding-top: 4px;
+                    padding-bottom: 20px;
+                    spacing: 16px;
+                    alignment: start;
 
-                    HorizontalLayout {
-                        spacing: 8px;
-                        alignment: stretch;
-
-                        Text {
-                            text: @tr("Appearance");
-                            font-size: 14px;
-                            font-weight: 700;
-                            color: Palette.foreground;
-                        }
-                    }
-
-                    Rectangle {
-                        height: 1px;
-                        background: Theme.divider;
-                    }
-
-                    HorizontalLayout {
-                        spacing: 14px;
-                        alignment: stretch;
-
-                        // System Theme Card Option
-                        Rectangle {
-                            horizontal-stretch: 1;
-                            height: 68px;
-                            border-radius: 10px;
-                            border-width: root.theme == ThemePreference.system ? 2px : 1px;
-                            border-color: root.theme == ThemePreference.system
-                                ? Theme.brand-accent
-                                : Theme.card-border;
-                            background: root.theme == ThemePreference.system
-                                ? Theme.selected-background
-                                : sys-touch.has-hover
-                                    ? Theme.hover-background
-                                    : Colors.transparent;
-
-                            sys-touch := TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => {
-                                    root.theme = ThemePreference.system;
-                                    root.theme-selected(ThemePreference.system);
-                                }
-                            }
-
-                            VerticalLayout {
-                                alignment: center;
-                                spacing: 4px;
-                                padding-left: 12px;
-                                padding-right: 12px;
-
-                                Text {
-                                    text: @tr("System");
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    color: Palette.foreground;
-                                    horizontal-alignment: center;
-                                }
-
-                                Text {
-                                    text: @tr("Matches OS mode");
-                                    font-size: 11px;
-                                    color: Theme.muted-foreground;
-                                    horizontal-alignment: center;
-                                }
-                            }
-                        }
-
-                        // Light Theme Card Option
-                        Rectangle {
-                            horizontal-stretch: 1;
-                            height: 68px;
-                            border-radius: 10px;
-                            border-width: root.theme == ThemePreference.light ? 2px : 1px;
-                            border-color: root.theme == ThemePreference.light
-                                ? Theme.brand-accent
-                                : Theme.card-border;
-                            background: root.theme == ThemePreference.light
-                                ? Theme.selected-background
-                                : light-touch.has-hover
-                                    ? Theme.hover-background
-                                    : Colors.transparent;
-
-                            light-touch := TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => {
-                                    root.theme = ThemePreference.light;
-                                    root.theme-selected(ThemePreference.light);
-                                }
-                            }
-
-                            VerticalLayout {
-                                alignment: center;
-                                spacing: 4px;
-                                padding-left: 12px;
-                                padding-right: 12px;
-
-                                Text {
-                                    text: @tr("Light");
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    color: Palette.foreground;
-                                    horizontal-alignment: center;
-                                }
-
-                                Text {
-                                    text: @tr("Vibrant coral");
-                                    font-size: 11px;
-                                    color: Theme.muted-foreground;
-                                    horizontal-alignment: center;
-                                }
-                            }
-                        }
-
-                        // Dark Theme Card Option
-                        Rectangle {
-                            horizontal-stretch: 1;
-                            height: 68px;
-                            border-radius: 10px;
-                            border-width: root.theme == ThemePreference.dark ? 2px : 1px;
-                            border-color: root.theme == ThemePreference.dark
-                                ? Theme.brand-accent
-                                : Theme.card-border;
-                            background: root.theme == ThemePreference.dark
-                                ? Theme.selected-background
-                                : dark-touch.has-hover
-                                    ? Theme.hover-background
-                                    : Colors.transparent;
-
-                            dark-touch := TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => {
-                                    root.theme = ThemePreference.dark;
-                                    root.theme-selected(ThemePreference.dark);
-                                }
-                            }
-
-                            VerticalLayout {
-                                alignment: center;
-                                spacing: 4px;
-                                padding-left: 12px;
-                                padding-right: 12px;
-
-                                Text {
-                                    text: @tr("Dark");
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    color: Palette.foreground;
-                                    horizontal-alignment: center;
-                                }
-
-                                Text {
-                                    text: @tr("Deep maroon & charcoal");
-                                    font-size: 11px;
-                                    color: Theme.muted-foreground;
-                                    horizontal-alignment: center;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // SECTION 2: Background & System Integration
-            SurfaceCard {
-                VerticalLayout {
-                    padding: 18px;
-                    spacing: 14px;
-
-                    HorizontalLayout {
-                        spacing: 8px;
-                        alignment: stretch;
-
-                        Text {
-                            text: @tr("System Integration");
-                            font-size: 14px;
-                            font-weight: 700;
-                            color: Palette.foreground;
-                        }
-                    }
-
-                    Rectangle {
-                        height: 1px;
-                        background: Theme.divider;
-                    }
-
-                    // Autostart in background
-                    HorizontalLayout {
-                        spacing: 16px;
-                        alignment: stretch;
-
+                    // Appearance
+                    SurfaceCard {
                         VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 2px;
-                            alignment: center;
+                            padding: 18px;
+                            spacing: 14px;
 
-                            Text {
-                                text: @tr("Autostart in background");
-                                font-size: 13px;
-                                font-weight: 600;
-                                color: Palette.foreground;
+                            SectionTitle {
+                                text: @tr("Appearance");
                             }
 
-                            Text {
-                                text: @tr("Start the Dynamotivation Hub silently on Windows login");
-                                font-size: 11px;
-                                color: Theme.muted-foreground;
+                            Divider { }
+
+                            HorizontalLayout {
+                                spacing: 12px;
+
+                                ThemeOption {
+                                    title: @tr("System");
+                                    subtitle: @tr("Matches OS mode");
+                                    selected: root.theme == ThemePreference.system;
+                                    clicked => {
+                                        root.select-theme(ThemePreference.system);
+                                    }
+                                }
+
+                                ThemeOption {
+                                    title: @tr("Light");
+                                    subtitle: @tr("Vibrant coral");
+                                    selected: root.theme == ThemePreference.light;
+                                    clicked => {
+                                        root.select-theme(ThemePreference.light);
+                                    }
+                                }
+
+                                ThemeOption {
+                                    title: @tr("Dark");
+                                    subtitle: @tr("Deep maroon & charcoal");
+                                    selected: root.theme == ThemePreference.dark;
+                                    clicked => {
+                                        root.select-theme(ThemePreference.dark);
+                                    }
+                                }
                             }
                         }
+                    }
 
+                    // System integration
+                    SurfaceCard {
                         VerticalLayout {
-                            alignment: center;
+                            padding: 18px;
+                            spacing: 14px;
 
-                            PlatformToggle {
+                            SectionTitle {
+                                text: @tr("System Integration");
+                            }
+
+                            Divider { }
+
+                            ToggleRow {
+                                title: @tr("Autostart in background");
+                                description: @tr("Start the Software Hub silently when you log in");
                                 checked <=> root.autostart-in-background;
-                                toggled(val) => { root.autostart-toggled(val); }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        height: 1px;
-                        background: Theme.divider;
-                    }
-
-                    // Keep running in background
-                    HorizontalLayout {
-                        spacing: 16px;
-                        alignment: stretch;
-
-                        VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 2px;
-                            alignment: center;
-
-                            Text {
-                                text: @tr("Keep running in background");
-                                font-size: 13px;
-                                font-weight: 600;
-                                color: Palette.foreground;
+                                toggled(val) => {
+                                    root.autostart-toggled(val);
+                                }
                             }
 
-                            Text {
-                                text: @tr("Stay minimized in system tray when the window is closed");
-                                font-size: 11px;
-                                color: Theme.muted-foreground;
-                            }
-                        }
+                            Divider { }
 
-                        VerticalLayout {
-                            alignment: center;
-
-                            PlatformToggle {
+                            ToggleRow {
+                                title: @tr("Keep running in background");
+                                description: @tr("Stay in the system tray when the window is closed");
                                 checked <=> root.keep-running-in-background;
-                                toggled(val) => { root.background-running-toggled(val); }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        height: 1px;
-                        background: Theme.divider;
-                    }
-
-                    // Automatically check for updates
-                    HorizontalLayout {
-                        spacing: 16px;
-                        alignment: stretch;
-
-                        VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 2px;
-                            alignment: center;
-
-                            Text {
-                                text: @tr("Automatically check for updates");
-                                font-size: 13px;
-                                font-weight: 600;
-                                color: Palette.foreground;
+                                toggled(val) => {
+                                    root.background-running-toggled(val);
+                                }
                             }
 
-                            Text {
-                                text: @tr("Periodically verify whether installed packages or the Hub have newer versions");
-                                font-size: 11px;
-                                color: Theme.muted-foreground;
-                            }
-                        }
+                            Divider { }
 
-                        VerticalLayout {
-                            alignment: center;
-
-                            PlatformToggle {
+                            ToggleRow {
+                                title: @tr("Automatically check for updates");
+                                description: @tr("Periodically check whether installed software or the Hub has a newer version");
                                 checked <=> root.auto-check-updates;
-                                toggled(val) => { root.auto-updates-toggled(val); }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        height: 1px;
-                        background: Theme.divider;
-                    }
-
-                    // Show notifications
-                    HorizontalLayout {
-                        spacing: 16px;
-                        alignment: stretch;
-
-                        VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 2px;
-                            alignment: center;
-
-                            Text {
-                                text: @tr("Show notifications");
-                                font-size: 13px;
-                                font-weight: 600;
-                                color: Palette.foreground;
+                                toggled(val) => {
+                                    root.auto-updates-toggled(val);
+                                }
                             }
 
-                            Text {
-                                text: @tr("Display desktop notifications when package updates or downloads complete");
-                                font-size: 11px;
-                                color: Theme.muted-foreground;
-                            }
-                        }
+                            Divider { }
 
-                        VerticalLayout {
-                            alignment: center;
-
-                            PlatformToggle {
+                            ToggleRow {
+                                title: @tr("Show notifications");
+                                description: @tr("Notify me when updates or downloads complete");
                                 checked <=> root.show-notifications;
-                                toggled(val) => { root.notifications-toggled(val); }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // SECTION 3: Package Management & Development Tools
-            SurfaceCard {
-                VerticalLayout {
-                    padding: 18px;
-                    spacing: 14px;
-
-                    HorizontalLayout {
-                        spacing: 8px;
-                        alignment: stretch;
-
-                        Text {
-                            text: @tr("Software Registration");
-                            font-size: 14px;
-                            font-weight: 700;
-                            color: Palette.foreground;
-                        }
-                    }
-
-                    Rectangle {
-                        height: 1px;
-                        background: Theme.divider;
-                    }
-
-                    Text {
-                        text: @tr("Register custom software packages or manually trigger a catalog sync.");
-                        font-size: 12px;
-                        color: Theme.muted-foreground;
-                    }
-
-                    HorizontalLayout {
-                        spacing: 8px;
-
-                        LineEdit {
-                            text <=> root.draft-package-name;
-                            placeholder-text: @tr("Register custom software package…");
-                            horizontal-stretch: 1;
-                            accepted => {
-                                if (root.register-package(root.draft-package-name)) {
-                                    root.draft-package-name = "";
+                                toggled(val) => {
+                                    root.notifications-toggled(val);
                                 }
                             }
                         }
-
-                        Button {
-                            text: @tr("Register");
-                            primary: true;
-                            clicked => {
-                                if (root.register-package(root.draft-package-name)) {
-                                    root.draft-package-name = "";
-                                }
-                            }
-                        }
-
-                        Button {
-                            text: @tr("Refresh Catalog");
-                            clicked => { root.refresh-packages(); }
-                        }
                     }
 
-                    if root.error-message != "": Text {
-                        text: root.error-message;
-                        font-size: 12px;
-                        color: Theme.critical-foreground;
-                        wrap: word-wrap;
-                    }
-                }
-            }
-
-            // SECTION 4: About & System Info
-            SurfaceCard {
-                VerticalLayout {
-                    padding: 18px;
-                    spacing: 12px;
-
-                    HorizontalLayout {
-                        spacing: 12px;
-                        alignment: stretch;
-
+                    // Software registration
+                    SurfaceCard {
                         VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 3px;
-                            alignment: center;
+                            padding: 18px;
+                            spacing: 14px;
 
-                            Text {
-                                text: @tr("Dynamotivation Software Hub");
-                                font-size: 14px;
-                                font-weight: 700;
-                                color: Palette.foreground;
+                            SectionTitle {
+                                text: @tr("Software Registration");
                             }
 
+                            Divider { }
+
                             Text {
-                                text: @tr("Version {}", root.version);
+                                text: @tr("Register custom software packages or manually trigger a catalog sync.");
                                 font-size: 12px;
                                 color: Theme.muted-foreground;
+                                wrap: word-wrap;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+
+                                LineEdit {
+                                    horizontal-stretch: 1;
+                                    text <=> root.draft-package-name;
+                                    placeholder-text: @tr("Software name…");
+                                    accepted => {
+                                        root.submit-registration();
+                                    }
+                                }
+
+                                ActionButton {
+                                    text: @tr("Register");
+                                    primary: true;
+                                    clicked => {
+                                        root.submit-registration();
+                                    }
+                                }
+
+                                ActionButton {
+                                    text: @tr("Refresh catalog");
+                                    icon: @image-url("../assets/refresh.svg");
+                                    has-icon: true;
+                                    clicked => {
+                                        root.refresh-packages();
+                                    }
+                                }
+                            }
+
+                            if root.error-message != "": Text {
+                                text: root.error-message;
+                                font-size: 12px;
+                                color: Theme.critical-foreground;
+                                wrap: word-wrap;
                             }
                         }
+                    }
 
-                        VerticalLayout {
-                            alignment: center;
+                    // About
+                    SurfaceCard {
+                        HorizontalLayout {
+                            padding: 18px;
+                            spacing: 12px;
 
-                            Button {
-                                text: @tr("About Slint");
-                                clicked => { root.show-about(); }
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                spacing: 3px;
+                                alignment: center;
+
+                                Text {
+                                    text: @tr("Dynamotivation Software Hub");
+                                    font-size: 14px;
+                                    font-weight: 700;
+                                    color: Palette.foreground;
+                                }
+
+                                Text {
+                                    text: @tr("v{}", root.version);
+                                    font-size: 12px;
+                                    color: Theme.muted-foreground;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+
+                                ActionButton {
+                                    text: @tr("About Slint");
+                                    icon: @image-url("../assets/info.svg");
+                                    has-icon: true;
+                                    clicked => {
+                                        root.show-about();
+                                    }
+                                }
                             }
                         }
                     }

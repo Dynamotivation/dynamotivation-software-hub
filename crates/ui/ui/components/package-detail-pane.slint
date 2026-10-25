@@ -1,40 +1,127 @@
-import { Button, ComboBox, Palette } from "std-widgets.slint";
-import { PackageRow, PackageStatus } from "../types.slint";
+import { ComboBox, Palette, ScrollView } from "std-widgets.slint";
+import { PackageRow, PackageStatus, ReleaseNote } from "../types.slint";
 import { Theme } from "../theme.slint";
 import { SurfaceCard } from "card.slint";
+import { ActionButton } from "action-button.slint";
+import { IconButton } from "icon-button.slint";
+import { PackageIcon } from "package-icon.slint";
+import { ProgressRing } from "progress-ring.slint";
+
+// Small rounded status pill with a leading icon.
+component StatusPill inherits Rectangle {
+    in property <string> text;
+    in property <image> icon;
+    in property <brush> foreground;
+
+    height: 22px;
+    border-radius: 11px;
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 10px;
+        spacing: 5px;
+
+        VerticalLayout {
+            alignment: center;
+
+            Image {
+                width: 12px;
+                height: 12px;
+                source: root.icon;
+                colorize: root.foreground;
+            }
+        }
+
+        Text {
+            text: root.text;
+            font-size: 12px;
+            font-weight: 600;
+            color: root.foreground;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// Version, date and bullet highlights of one release.
+component ReleaseNotesBlock inherits VerticalLayout {
+    in property <ReleaseNote> note;
+    in property <bool> emphasized: false;
+
+    spacing: 8px;
+
+    HorizontalLayout {
+        height: 20px;
+        spacing: 8px;
+        alignment: start;
+
+        Text {
+            text: @tr("v{}", root.note.version);
+            font-size: root.emphasized ? 14px : 13px;
+            font-weight: 700;
+            color: Palette.foreground;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.note.date;
+            font-size: 12px;
+            color: Theme.subtle-foreground;
+            vertical-alignment: center;
+        }
+    }
+
+    for highlight in root.note.highlights: HorizontalLayout {
+        spacing: 10px;
+        padding-left: 2px;
+
+        VerticalLayout {
+            alignment: start;
+            padding-top: 7px;
+
+            Rectangle {
+                width: 5px;
+                height: 5px;
+                border-radius: 2.5px;
+                background: root.emphasized ? Theme.brand-red : Theme.subtle-foreground;
+            }
+        }
+
+        Text {
+            horizontal-stretch: 1;
+            text: highlight;
+            font-size: 13px;
+            color: Theme.muted-foreground;
+            wrap: word-wrap;
+        }
+    }
+}
 
 export component PackageDetailPane inherits SurfaceCard {
     in property <PackageRow> package;
+    in property <float> download-progress;
+    // Narrow layout shows the detail on its own page with a back button.
+    in property <bool> show-back: false;
 
-    function package-icon(id: string) -> image {
-        if id == "joins-the-battle-meme-generator" {
-            return @image-url("../assets/joins-the-battle.png");
-        }
-        if id == "geo-background-generator" {
-            return @image-url("../assets/geo-background-generator.png");
-        }
-        if id == "stellenwerttafel-plus" {
-            return @image-url("../assets/stellenwerttafel-plus.png");
-        }
-        if id == "unofficial-super-mario-bros-misfit-pack" {
-            return @image-url("../assets/misfit-pack.svg");
-        }
-        if id == "oss-space-adventure" {
-            return @image-url("../assets/oss-space-adventure.png");
-        }
-        if id == "benplaysgames-soundboard" {
-            return @image-url("../assets/benplaysgames-soundboard.png");
-        }
-        if id == "unofficial-sonic-mania-mobile-prototype" {
-            return @image-url("../assets/sonic-mania-mobile.png");
-        }
-        if id == "project-tortuga" {
-            return @image-url("../assets/project-tortuga.png");
-        }
-        if id == "germemz" {
-            return @image-url("../assets/germemz.png");
-        }
-        return @image-url("../assets/dynamotivation-logo-dark.svg");
+    callback back-clicked();
+    // Installer actions. No installer adapter exists yet (see AGENTS.md), so
+    // these are not wired to use cases.
+    callback launch-clicked();
+    callback update-clicked();
+    callback install-clicked(string);
+    callback uninstall-clicked();
+    callback cancel-download-clicked();
+
+    property <bool> is-installed: root.package.status != PackageStatus.not-installed;
+    property <bool> has-update: root.package.status == PackageStatus.update-available;
+    property <bool> older-expanded: false;
+    property <int> selected-version-index: 0;
+
+    // Collapse older notes and reset the version choice when switching packages.
+    property <string> package-id: root.package.id;
+    changed package-id => {
+        root.older-expanded = false;
+        root.selected-version-index = 0;
+        details-scroll.content-y = 0;
     }
 
     function long-description(id: string, fallback: string) -> string {
@@ -69,283 +156,400 @@ export component PackageDetailPane inherits SurfaceCard {
     }
 
     VerticalLayout {
-        spacing: 0px;
-        alignment: start;
-
-        // Top Hero Banner inside the Detail Card
-        Rectangle {
-            border-radius: 11px;
-            background: Theme.detail-banner-background;
-
-            VerticalLayout {
-                padding: 24px;
-                spacing: 18px;
-
-                HorizontalLayout {
-                    spacing: 20px;
-                    alignment: start;
-
-                    // Large 84x84 rounded logo cutout
-                    VerticalLayout {
-                        alignment: center;
-
-                        Rectangle {
-                            width: 84px;
-                            height: 84px;
-                            border-radius: 18px;
-                            background: Colors.transparent;
-
-                            Image {
-                                width: 100%;
-                                height: 100%;
-                                source: root.package-icon(root.package.id);
-                                image-fit: contain;
-                            }
-
-                            Rectangle {
-                                width: 100%;
-                                height: 100%;
-                                border-radius: 18px;
-                                border-width: 1px;
-                                border-color: Theme.icon-tile-border;
-                                background: Colors.transparent;
-                            }
-                        }
-                    }
-
-                    // Title + Status + Version metadata
-                    VerticalLayout {
-                        horizontal-stretch: 1;
-                        spacing: 6px;
-                        alignment: center;
-
-                        Text {
-                            text: root.package.name;
-                            font-size: 22px;
-                            font-weight: 700;
-                            color: Palette.foreground;
-                            wrap: word-wrap;
-                        }
-
-                        HorizontalLayout {
-                            spacing: 10px;
-                            alignment: start;
-
-                            // Status pill badge
-                            Rectangle {
-                                height: 22px;
-                                border-radius: 11px;
-                                background: root.package.status == PackageStatus.update-available
-                                    ? Theme.brand-gradient
-                                    : Theme.hover-background;
-                                border-width: root.package.status == PackageStatus.update-available ? 0px : 1px;
-                                border-color: Theme.card-border;
-
-                                HorizontalLayout {
-                                    padding-left: 10px;
-                                    padding-right: 10px;
-
-                                    Text {
-                                        text: root.package.status == PackageStatus.update-available
-                                            ? @tr("Update available")
-                                            : root.package.status == PackageStatus.installed
-                                            ? @tr("Installed")
-                                            : @tr("Available to install");
-                                        font-size: 11px;
-                                        font-weight: 700;
-                                        color: root.package.status == PackageStatus.update-available
-                                            ? Theme.badge-foreground
-                                            : Palette.foreground;
-                                        vertical-alignment: center;
-                                    }
-                                }
-                            }
-
-                            if root.package.status == PackageStatus.update-available: HorizontalLayout {
-                                spacing: 4px;
-                                alignment: center;
-
-                                Text {
-                                    text: @tr("v{}", root.package.version);
-                                    font-size: 13px;
-                                    font-weight: 500;
-                                    color: Theme.muted-foreground;
-                                }
-
-                                Text {
-                                    text: "→";
-                                    font-size: 13px;
-                                    font-weight: 500;
-                                    color: Theme.muted-foreground;
-                                }
-
-                                Text {
-                                    text: @tr("v{}", root.package.latest-version);
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    color: Theme.brand-red;
-                                }
-                            }
-
-                            if root.package.status != PackageStatus.update-available: VerticalLayout {
-                                alignment: center;
-
-                                Text {
-                                    text: @tr("v{}", root.package.version);
-                                    font-size: 13px;
-                                    font-weight: 500;
-                                    color: Theme.muted-foreground;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Steam-style Action Bar
-                Rectangle {
-                    height: 54px;
-                    border-radius: 10px;
-                    background: Theme.card-background;
-                    border-width: 1px;
-                    border-color: Theme.card-border;
-
-                    HorizontalLayout {
-                        padding-left: 16px;
-                        padding-right: 16px;
-                        spacing: 10px;
-                        alignment: stretch;
-
-                        if root.package.status == PackageStatus.update-available: VerticalLayout {
-                            alignment: center;
-
-                            Button {
-                                text: @tr("Update to v{}", root.package.latest-version);
-                                primary: true;
-                            }
-                        }
-
-                        if root.package.status == PackageStatus.installed: VerticalLayout {
-                            alignment: center;
-
-                            Button {
-                                text: @tr("Launch");
-                                primary: true;
-                            }
-                        }
-
-                        if root.package.status == PackageStatus.not-installed: VerticalLayout {
-                            alignment: center;
-
-                            Button {
-                                text: @tr("Install");
-                                primary: true;
-                            }
-                        }
-
-                        if root.package.status == PackageStatus.installed
-                            || root.package.status == PackageStatus.update-available: VerticalLayout {
-                            alignment: center;
-
-                            Button {
-                                text: @tr("Remove");
-                            }
-                        }
-
-                        Rectangle {
-                            horizontal-stretch: 1;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Accent divider line
-        Rectangle {
-            height: 2px;
-            background: Theme.brand-gradient;
-        }
-
-        // Description & Package Details Section
+        // Hero: logo, name, status and actions (stays put while details scroll).
         VerticalLayout {
             padding: 24px;
-            spacing: 16px;
+            padding-bottom: 20px;
+            spacing: 18px;
 
-            Text {
-                text: @tr("About this software");
-                font-size: 14px;
-                font-weight: 700;
-                color: Palette.foreground;
-            }
-
-            Text {
-                text: root.package.description;
-                font-size: 14px;
-                font-weight: 600;
-                color: Palette.foreground;
-                wrap: word-wrap;
-            }
-
-            Text {
-                text: root.long-description(root.package.id, root.package.description);
-                font-size: 13px;
-                color: Theme.muted-foreground;
-                wrap: word-wrap;
-            }
-
-            Rectangle {
-                height: 1px;
-                background: Theme.divider;
-            }
-
-            // Version Selector Section (replaces the technical Package ID section)
             HorizontalLayout {
-                spacing: 16px;
-                alignment: stretch;
+                spacing: 18px;
+
+                if root.show-back: VerticalLayout {
+                    alignment: center;
+
+                    IconButton {
+                        icon: @image-url("../assets/chevron-left.svg");
+                        tooltip: @tr("Back to software list");
+                        icon-color: Palette.foreground;
+                        clicked => {
+                            root.back-clicked();
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+
+                    PackageIcon {
+                        width: 72px;
+                        height: 72px;
+                        package-id: root.package.id;
+                    }
+                }
 
                 VerticalLayout {
                     horizontal-stretch: 1;
-                    spacing: 4px;
+                    spacing: 8px;
                     alignment: center;
 
                     Text {
-                        text: @tr("Version");
-                        font-size: 13px;
+                        text: root.package.name;
+                        font-size: 22px;
                         font-weight: 700;
                         color: Palette.foreground;
+                        wrap: word-wrap;
                     }
 
-                    Text {
-                        text: root.package.status == PackageStatus.update-available
-                            ? @tr("An update is available (v{} → v{}). Select a version to run or install.", root.package.version, root.package.latest-version)
-                            : root.package.status == PackageStatus.installed
-                            ? @tr("Currently installed on v{}. Select an alternative release if available.", root.package.version)
-                            : @tr("Select a version to install.");
-                        font-size: 11px;
-                        color: Theme.muted-foreground;
+                    HorizontalLayout {
+                        height: 22px;
+                        spacing: 10px;
+                        alignment: start;
+
+                        if root.has-update: StatusPill {
+                            text: @tr("Update available");
+                            icon: @image-url("../assets/arrow-up.svg");
+                            foreground: Theme.update-badge-foreground;
+                            background: Theme.update-badge-background;
+                        }
+
+                        if root.package.status == PackageStatus.installed: StatusPill {
+                            text: @tr("Installed");
+                            icon: @image-url("../assets/check.svg");
+                            foreground: Theme.muted-foreground;
+                            background: Theme.neutral-badge-background;
+                        }
+
+                        Text {
+                            text: @tr("v{}", root.is-installed ? root.package.version : root.package.latest-version);
+                            font-size: 13px;
+                            color: Theme.muted-foreground;
+                            vertical-alignment: center;
+                        }
+
+                        if root.has-update: VerticalLayout {
+                            alignment: center;
+
+                            Image {
+                                width: 12px;
+                                height: 12px;
+                                source: @image-url("../assets/arrow-right.svg");
+                                colorize: Theme.muted-foreground;
+                            }
+                        }
+
+                        if root.has-update: Text {
+                            text: @tr("v{}", root.package.latest-version);
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Theme.brand-red;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Actions
+            HorizontalLayout {
+                height: 34px;
+                spacing: 10px;
+
+                if root.has-update: ActionButton {
+                    text: @tr("Update to v{}", root.package.latest-version);
+                    icon: @image-url("../assets/update.svg");
+                    has-icon: true;
+                    primary: true;
+                    clicked => {
+                        root.update-clicked();
                     }
                 }
 
-                VerticalLayout {
+                if root.is-installed: ActionButton {
+                    text: @tr("Launch");
+                    icon: @image-url("../assets/play.svg");
+                    has-icon: true;
+                    primary: !root.has-update;
+                    clicked => {
+                        root.launch-clicked();
+                    }
+                }
+
+                if !root.is-installed && !root.package.downloading: ActionButton {
+                    text: @tr("Install");
+                    icon: @image-url("../assets/download.svg");
+                    has-icon: true;
+                    primary: true;
+                    clicked => {
+                        root.install-clicked(root.package.versions[root.selected-version-index]);
+                    }
+                }
+
+                // Sample in-progress download
+                if !root.is-installed && root.package.downloading: HorizontalLayout {
+                    spacing: 10px;
+
+                    VerticalLayout {
+                        alignment: center;
+
+                        ProgressRing {
+                            width: 24px;
+                            height: 24px;
+                            thickness: 3px;
+                            progress: root.download-progress;
+                        }
+                    }
+
+                    Text {
+                        text: @tr("Downloading… {}%", Math.round(root.download-progress * 100));
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: Palette.foreground;
+                        vertical-alignment: center;
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+
+                        IconButton {
+                            width: 28px;
+                            height: 28px;
+                            icon: @image-url("../assets/close.svg");
+                            icon-size: 14px;
+                            tooltip: @tr("Cancel download");
+                            clicked => {
+                                root.cancel-download-clicked();
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                }
+
+                if root.is-installed: VerticalLayout {
                     alignment: center;
 
-                    ComboBox {
-                        width: 170px;
-                        model: root.package.status == PackageStatus.update-available
-                            ? [
-                                @tr("v{} (Latest)", root.package.latest-version),
-                                @tr("v{} (Installed)", root.package.version),
-                                @tr("v1.0.0"),
-                            ]
-                            : root.package.status == PackageStatus.installed
-                            ? [
-                                @tr("v{} (Installed)", root.package.version),
-                                @tr("v1.0.0"),
-                            ]
-                            : [
-                                @tr("v{} (Latest)", root.package.latest-version),
-                                @tr("v1.0.0"),
-                            ];
-                        current-index: 0;
+                    more-button := IconButton {
+                        width: 34px;
+                        height: 34px;
+                        icon: @image-url("../assets/more-horizontal.svg");
+                        icon-size: 18px;
+                        tooltip: @tr("More options");
+                        clicked => {
+                            root.menu-x = self.absolute-position.x - root.absolute-position.x + self.width;
+                            root.menu-y = self.absolute-position.y - root.absolute-position.y + self.height + 4px;
+                            more-menu.show();
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Theme.divider;
+        }
+
+        // Details below the fold: description, release notes, version picker.
+        details-scroll := ScrollView {
+            vertical-stretch: 1;
+            horizontal-scrollbar-policy: always-off;
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 14px;
+                alignment: start;
+
+                Text {
+                    text: @tr("About this software");
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: Palette.foreground;
+                }
+
+                Text {
+                    text: root.package.description;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: Palette.foreground;
+                    wrap: word-wrap;
+                }
+
+                Text {
+                    text: root.long-description(root.package.id, root.package.description);
+                    font-size: 13px;
+                    color: Theme.muted-foreground;
+                    wrap: word-wrap;
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.divider;
+                }
+
+                Text {
+                    text: @tr("What's new");
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: Palette.foreground;
+                }
+
+                ReleaseNotesBlock {
+                    note: root.package.latest-release;
+                    emphasized: true;
+                }
+
+                if root.package.older-releases.length > 0: Rectangle {
+                    height: 32px;
+                    border-radius: 6px;
+                    background: older-touch.has-hover ? Theme.hover-background : Colors.transparent;
+
+                    older-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.older-expanded = !root.older-expanded;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        padding-left: 6px;
+                        spacing: 6px;
+                        alignment: start;
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            Image {
+                                width: 12px;
+                                height: 12px;
+                                source: root.older-expanded
+                                    ? @image-url("../assets/chevron-down.svg")
+                                    : @image-url("../assets/chevron-right.svg");
+                                colorize: Theme.muted-foreground;
+                            }
+                        }
+
+                        Text {
+                            text: @tr("Older releases ({})", root.package.older-releases.length);
+                            font-size: 13px;
+                            font-weight: 600;
+                            color: Theme.muted-foreground;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                if root.older-expanded: VerticalLayout {
+                    spacing: 18px;
+                    padding-left: 6px;
+
+                    for note in root.package.older-releases: ReleaseNotesBlock {
+                        note: note;
+                    }
+                }
+
+                // Version choice only matters before installing.
+                if !root.is-installed: Rectangle {
+                    height: 1px;
+                    background: Theme.divider;
+                }
+
+                if !root.is-installed: HorizontalLayout {
+                    spacing: 16px;
+
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 2px;
+                        alignment: center;
+
+                        Text {
+                            text: @tr("Version to install");
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Palette.foreground;
+                        }
+
+                        Text {
+                            text: @tr("Older versions remain available if you need them.");
+                            font-size: 12px;
+                            color: Theme.muted-foreground;
+                            wrap: word-wrap;
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+
+                        ComboBox {
+                            width: 160px;
+                            model: root.package.versions;
+                            current-index <=> root.selected-version-index;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    property <length> menu-x;
+    property <length> menu-y;
+
+    more-menu := PopupWindow {
+        x: root.menu-x - self.width;
+        y: root.menu-y;
+        width: 190px;
+
+        Rectangle {
+            background: Theme.popup-background;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: Theme.card-border;
+            drop-shadow-blur: 14px;
+            drop-shadow-offset-y: 4px;
+            drop-shadow-color: #00000030;
+
+            VerticalLayout {
+                padding: 4px;
+
+                Rectangle {
+                    height: 34px;
+                    border-radius: 6px;
+                    background: uninstall-touch.has-hover ? Theme.hover-background : Colors.transparent;
+
+                    uninstall-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        accessible-role: button;
+                        accessible-label: @tr("Uninstall");
+                        clicked => {
+                            root.uninstall-clicked();
+                        }
+                    }
+
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        spacing: 10px;
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            Image {
+                                width: 15px;
+                                height: 15px;
+                                source: @image-url("../assets/trash.svg");
+                                colorize: Theme.critical-foreground;
+                            }
+                        }
+
+                        Text {
+                            horizontal-stretch: 1;
+                            text: @tr("Uninstall");
+                            font-size: 13px;
+                            font-weight: 500;
+                            color: Theme.critical-foreground;
+                            vertical-alignment: center;
+                        }
                     }
                 }
             }

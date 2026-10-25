@@ -1,0 +1,245 @@
+import { LineEdit, Palette, ScrollView } from "std-widgets.slint";
+import { PackageRow, PackageStatus } from "../types.slint";
+import { Theme } from "../theme.slint";
+import { SurfaceCard } from "card.slint";
+import { IconButton } from "icon-button.slint";
+import { PackageListItem } from "package-list-item.slint";
+
+// Section title row used for the sticky "Installed" / "Available" headers.
+component SectionHeader inherits Rectangle {
+    in property <string> title;
+    in property <int> count;
+    in property <bool> collapsible: false;
+    in property <bool> expanded: true;
+    in property <bool> show-top-divider: false;
+
+    callback toggled();
+
+    height: 34px;
+    background: Theme.card-background;
+
+    if root.collapsible: TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.toggled();
+        }
+    }
+
+    if root.show-top-divider: Rectangle {
+        x: 12px;
+        y: 0px;
+        width: parent.width - 24px;
+        height: 1px;
+        background: Theme.divider;
+    }
+
+    HorizontalLayout {
+        padding-left: 18px;
+        padding-right: 10px;
+        spacing: 6px;
+
+        if root.collapsible: VerticalLayout {
+            alignment: center;
+
+            Image {
+                width: 12px;
+                height: 12px;
+                source: root.expanded
+                    ? @image-url("../assets/chevron-down.svg")
+                    : @image-url("../assets/chevron-right.svg");
+                colorize: Theme.muted-foreground;
+            }
+        }
+
+        Text {
+            text: root.title;
+            font-size: 12px;
+            font-weight: 700;
+            color: Theme.muted-foreground;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.count;
+            font-size: 12px;
+            font-weight: 600;
+            color: Theme.subtle-foreground;
+            vertical-alignment: center;
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        @children
+    }
+}
+
+// Search field plus the installed/available software list with sticky headers.
+export component PackageSidebar inherits SurfaceCard {
+    in property <[PackageRow]> installed-packages;
+    in property <[PackageRow]> available-packages;
+    in property <string> selected-id;
+    in property <bool> highlight-selection: true;
+    in property <float> download-progress;
+    in-out property <string> search-query;
+
+    callback package-selected(PackageRow);
+    callback search-edited(string);
+    callback check-for-updates();
+
+    property <bool> available-expanded: true;
+    property <bool> checking: false;
+    property <length> header-height: 34px;
+
+    // Mock latency so the spinning "check for updates" icon is visible.
+    Timer {
+        interval: 1200ms;
+        running: root.checking;
+        triggered => {
+            root.checking = false;
+            root.check-for-updates();
+        }
+    }
+
+    VerticalLayout {
+        // Search
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 12px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            spacing: 8px;
+
+            VerticalLayout {
+                alignment: center;
+
+                Image {
+                    width: 15px;
+                    height: 15px;
+                    source: @image-url("../assets/search.svg");
+                    colorize: Theme.muted-foreground;
+                }
+            }
+
+            LineEdit {
+                horizontal-stretch: 1;
+                text <=> root.search-query;
+                placeholder-text: @tr("Search software…");
+                edited => {
+                    root.search-edited(self.text);
+                }
+            }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Theme.divider;
+        }
+
+        // List area. Headers are overlaid so they stay pinned while scrolling;
+        // the "Available" header pushes "Installed" out when it reaches the top.
+        list-area := Rectangle {
+            vertical-stretch: 1;
+            clip: true;
+
+            list-scroll := ScrollView {
+                y: root.header-height;
+                width: parent.width;
+                height: parent.height - root.header-height;
+                horizontal-scrollbar-policy: always-off;
+
+                VerticalLayout {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    padding-bottom: 10px;
+                    spacing: 2px;
+                    alignment: start;
+
+                    for package in root.installed-packages: PackageListItem {
+                        package: package;
+                        selected: root.highlight-selection && root.selected-id == package.id;
+                        download-progress: root.download-progress;
+                        clicked => {
+                            root.package-selected(package);
+                        }
+                    }
+
+                    if root.installed-packages.length == 0: Text {
+                        height: 40px;
+                        text: @tr("No matching installed software.");
+                        font-size: 12px;
+                        color: Theme.muted-foreground;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+
+                    // Placeholder the sticky "Available" header is drawn over.
+                    available-anchor := Rectangle {
+                        height: root.header-height;
+                    }
+
+                    if root.available-expanded: VerticalLayout {
+                        spacing: 2px;
+
+                        for package in root.available-packages: PackageListItem {
+                            package: package;
+                            selected: root.highlight-selection && root.selected-id == package.id;
+                            download-progress: root.download-progress;
+                            clicked => {
+                                root.package-selected(package);
+                            }
+                        }
+
+                        if root.available-packages.length == 0: Text {
+                            height: 40px;
+                            text: @tr("No matching available software.");
+                            font-size: 12px;
+                            color: Theme.muted-foreground;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            property <length> available-y: root.header-height + available-anchor.y + list-scroll.content-y;
+
+            SectionHeader {
+                y: min(0px, list-area.available-y - root.header-height);
+                width: parent.width;
+                title: @tr("Installed");
+                count: root.installed-packages.length;
+
+                VerticalLayout {
+                    alignment: center;
+
+                    IconButton {
+                        width: 28px;
+                        height: 28px;
+                        icon: @image-url("../assets/refresh.svg");
+                        icon-size: 14px;
+                        spinning: root.checking;
+                        tooltip: root.checking ? @tr("Checking for updates…") : @tr("Check for updates");
+                        clicked => {
+                            root.checking = true;
+                        }
+                    }
+                }
+            }
+
+            SectionHeader {
+                y: max(0px, list-area.available-y);
+                width: parent.width;
+                title: @tr("Available");
+                count: root.available-packages.length;
+                collapsible: true;
+                expanded: root.available-expanded;
+                show-top-divider: self.y > 0px;
+                toggled => {
+                    root.available-expanded = !root.available-expanded;
+                }
+            }
+        }
+    }
+}

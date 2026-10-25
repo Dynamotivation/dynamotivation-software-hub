@@ -12,11 +12,26 @@ export enum ThemePreference {
     dark,
 }
 
+// One entry of a package's changelog.
+export struct ReleaseNote {
+    version: string,
+    date: string,
+    highlights: [string],
+}
+
 export struct PackageRow {
     id: string,
     name: string,
     description: string,
+    // Bare semantic versions ("1.8.2"); the UI adds the "v" prefix consistently.
     version: string,
     latest-version: string,
     status: PackageStatus,
+    // Sample download in progress (progress itself is animated by the UI mock).
+    downloading: bool,
+    latest-release: ReleaseNote,
+    // Previous releases, newest first.
+    older-releases: [ReleaseNote],
+    // Selectable versions for installing, newest first, already "v"-prefixed.
+    versions: [string],
 }

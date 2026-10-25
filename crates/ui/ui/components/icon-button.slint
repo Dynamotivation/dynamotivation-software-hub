@@ -1,0 +1,55 @@
+import { Theme } from "../theme.slint";
+import { TooltipArea } from "tooltip-area.slint";
+
+// Square, borderless icon button with hover tint and tooltip.
+export component IconButton inherits Rectangle {
+    in property <image> icon;
+    in property <string> tooltip;
+    in property <length> icon-size: 16px;
+    in property <brush> icon-color: Theme.muted-foreground;
+    in property <brush> hover-background: Theme.hover-background;
+    in property <bool> active: false;
+    // Spins the icon (e.g. while checking for updates).
+    in property <bool> spinning: false;
+    out property <bool> has-hover: touch.has-hover;
+
+    callback clicked();
+
+    property <angle> spin-angle: 0deg;
+
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: touch.pressed || root.active
+        ? root.hover-background
+        : touch.has-hover ? root.hover-background : Colors.transparent;
+    animate background { duration: 100ms; }
+
+    Timer {
+        interval: 16ms;
+        running: root.spinning;
+        triggered => {
+            root.spin-angle = root.spin-angle + 9deg;
+        }
+    }
+
+    Image {
+        width: root.icon-size;
+        height: root.icon-size;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        source: root.icon;
+        colorize: root.icon-color;
+        transform-rotation: root.spinning ? root.spin-angle : 0deg;
+    }
+
+    touch := TooltipArea {
+        tooltip: root.tooltip;
+        accessible-role: button;
+        accessible-label: root.tooltip;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}

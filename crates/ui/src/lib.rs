@@ -39,7 +39,13 @@ pub fn run(services: Services, version: &str) -> Result<(), slint::PlatformError
     ui.set_version(version.into());
 
     #[cfg(windows)]
-    apply_windows_11_rounded_corners();
+    {
+        apply_windows_11_rounded_corners();
+        ui.set_native_corners(true);
+    }
+
+    #[cfg(debug_assertions)]
+    ui.set_hub_update_version("0.2.0".into());
 
     match services.preferences.load() {
         Ok(prefs) => {
@@ -266,6 +272,20 @@ fn wire_window_chrome(ui: &AppWindow) {
     });
 
     let weak = ui.as_weak();
+    ui.on_resize_window_west(move |dx| {
+        if let Some(ui) = weak.upgrade() {
+            let scale = ui.window().scale_factor();
+            let size = ui.window().size().to_logical(scale);
+            let pos = ui.window().position().to_logical(scale);
+            let new_w = (size.width - dx).max(440.0);
+            let actual_dx = size.width - new_w;
+            ui.window().set_size(LogicalSize::new(new_w, size.height));
+            ui.window()
+                .set_position(LogicalPosition::new(pos.x + actual_dx, pos.y));
+        }
+    });
+
+    let weak = ui.as_weak();
     ui.on_resize_window_south(move |dy| {
         if let Some(ui) = weak.upgrade() {
             let scale = ui.window().scale_factor();
@@ -285,14 +305,35 @@ fn wire_window_chrome(ui: &AppWindow) {
             ui.window().set_size(LogicalSize::new(new_w, new_h));
         }
     });
+
+    let weak = ui.as_weak();
+    ui.on_resize_window_southwest(move |dx, dy| {
+        if let Some(ui) = weak.upgrade() {
+            let scale = ui.window().scale_factor();
+            let size = ui.window().size().to_logical(scale);
+            let pos = ui.window().position().to_logical(scale);
+            let new_w = (size.width - dx).max(440.0);
+            let new_h = (size.height + dy).max(520.0);
+            let actual_dx = size.width - new_w;
+            ui.window().set_size(LogicalSize::new(new_w, new_h));
+            ui.window()
+                .set_position(LogicalPosition::new(pos.x + actual_dx, pos.y));
+        }
+    });
+
+    let weak = ui.as_weak();
+    ui.on_hub_update_requested(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_error_message("Software Hub update downloading in background…".into());
+        }
+    });
 }
 
 fn refresh(services: &Services, ui: &AppWindow) {
     match services.list_packages.execute() {
         Ok(views) => {
             let query = ui.get_search_query();
-            let rows: Vec<PackageRow> = views.iter().map(presenter::row_from).collect();
-            let (installed, available, updates_count) =
+            let (installed, available, _updates_count) =
                 presenter::partition_rows_filtered(&views, query.as_str());
             let current_selected_id = ui.get_selected_package().id;
             if let Some(updated_sel) = installed
@@ -304,10 +345,8 @@ fn refresh(services: &Services, ui: &AppWindow) {
             } else if let Some(first) = installed.first().or_else(|| available.first()) {
                 ui.set_selected_package(first.clone());
             }
-            ui.set_packages(ModelRc::from(Rc::new(VecModel::from(rows))));
             ui.set_installed_packages(ModelRc::from(Rc::new(VecModel::from(installed))));
             ui.set_available_packages(ModelRc::from(Rc::new(VecModel::from(available))));
-            ui.set_updates_count(updates_count);
             ui.set_error_message(SharedString::new());
         }
         Err(e) => ui.set_error_message(e.to_string().into()),

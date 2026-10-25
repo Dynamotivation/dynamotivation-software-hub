@@ -1,0 +1,62 @@
+import { Theme } from "../theme.slint";
+
+// Rounded app logo tile. The source artwork has its own baked, anti-aliased
+// rounded corners; clipping with a slightly larger radius trims that edge so
+// no light fringe or square corner shows through.
+export component PackageIcon inherits Rectangle {
+    in property <string> package-id;
+
+    function icon-for(id: string) -> image {
+        if id == "joins-the-battle-meme-generator" {
+            return @image-url("../assets/joins-the-battle.png");
+        }
+        if id == "geo-background-generator" {
+            return @image-url("../assets/geo-background-generator.png");
+        }
+        if id == "stellenwerttafel-plus" {
+            return @image-url("../assets/stellenwerttafel-plus.png");
+        }
+        if id == "unofficial-super-mario-bros-misfit-pack" {
+            return @image-url("../assets/misfit-pack.svg");
+        }
+        if id == "oss-space-adventure" {
+            return @image-url("../assets/oss-space-adventure.png");
+        }
+        if id == "benplaysgames-soundboard" {
+            return @image-url("../assets/benplaysgames-soundboard.png");
+        }
+        if id == "unofficial-sonic-mania-mobile-prototype" {
+            return @image-url("../assets/sonic-mania-mobile.png");
+        }
+        if id == "project-tortuga" {
+            return @image-url("../assets/project-tortuga.png");
+        }
+        if id == "germemz" {
+            return @image-url("../assets/germemz.png");
+        }
+        return @image-url("../assets/dynamotivation-logo-dark.svg");
+    }
+
+    width: 40px;
+    height: 40px;
+    border-radius: self.width * 0.24;
+    clip: true;
+
+    Image {
+        // Overscan by 1px on each side so the baked edge is fully clipped away.
+        x: -1px;
+        y: -1px;
+        width: parent.width + 2px;
+        height: parent.height + 2px;
+        source: root.icon-for(root.package-id);
+        image-fit: cover;
+        image-rendering: smooth;
+    }
+
+    // Hairline inner ring for light artwork on light cards; drawn exactly on the clip edge.
+    Rectangle {
+        border-radius: parent.border-radius;
+        border-width: 1px;
+        border-color: Theme.icon-tile-border;
+    }
+}

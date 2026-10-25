@@ -1,13 +1,60 @@
-import { AboutSlint, Button, LineEdit, Palette, ScrollView, VerticalBox } from "std-widgets.slint";
-import { PackageRow, PackageStatus, ThemePreference } from "types.slint";
+import { AboutSlint, Palette, VerticalBox } from "std-widgets.slint";
+import { PackageRow, PackageStatus, ReleaseNote, ThemePreference } from "types.slint";
 import { Theme } from "theme.slint";
-import { SurfaceCard } from "components/card.slint";
-import { PackageListItem } from "components/package-list-item.slint";
+import { IconButton } from "components/icon-button.slint";
+import { PackageSidebar } from "components/package-sidebar.slint";
 import { PackageDetailPane } from "components/package-detail-pane.slint";
+import { ProgressRing } from "components/progress-ring.slint";
 import { SettingsView } from "components/settings-view.slint";
+import { TooltipArea } from "components/tooltip-area.slint";
+import { TooltipOverlay } from "components/tooltip.slint";
 
 // Re-export so the generated Rust API contains these types.
-export { PackageRow, PackageStatus, ThemePreference }
+export { PackageRow, PackageStatus, ReleaseNote, ThemePreference }
+
+// Windows 11 style caption button (minimize / maximize / close).
+component CaptionButton inherits Rectangle {
+    in property <image> icon;
+    in property <string> label;
+    in property <bool> is-close: false;
+
+    callback clicked();
+
+    width: 46px;
+    height: 32px;
+    border-radius: 4px;
+    background: root.is-close
+        ? (touch.pressed ? Theme.window-close-pressed : touch.has-hover ? Theme.window-close-hover : Colors.transparent)
+        : (touch.has-hover ? Theme.header-hover-background : Colors.transparent);
+
+    touch := TouchArea {
+        accessible-role: button;
+        accessible-label: root.label;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    Image {
+        width: 10px;
+        height: 10px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        source: root.icon;
+        colorize: Theme.header-foreground;
+    }
+}
+
+// Invisible edge strip that resizes the frameless window.
+component ResizeGrip inherits TouchArea {
+    callback dragged(length, length);
+
+    moved => {
+        if (self.pressed) {
+            root.dragged(self.mouse-x - self.pressed-x, self.mouse-y - self.pressed-y);
+        }
+    }
+}
 
 export component AppWindow inherits Window {
     title: @tr("Dynamotivation Software Hub");
@@ -16,12 +63,11 @@ export component AppWindow inherits Window {
     preferred-height: 760px;
     min-width: 440px;
     min-height: 520px;
-    background: Palette.background;
+    // Matches the canvas so nothing light shows outside the rounded frame.
+    background: Theme.window-background-solid;
 
-    in property <[PackageRow]> packages: [];
     in property <[PackageRow]> installed-packages: [];
     in property <[PackageRow]> available-packages: [];
-    in property <int> updates-count: 0;
     in property <string> error-message;
     in property <string> version;
     in-out property <string> search-query: "";
@@ -29,6 +75,10 @@ export component AppWindow inherits Window {
     // Resolved OS dark-mode flag so "System theme" sets an explicit scheme.
     in property <bool> system-dark: false;
     in-out property <bool> is-maximized: false;
+    // The OS already rounds and outlines the window (Windows 11 DWM).
+    in property <bool> native-corners: false;
+    // Newer Software Hub release, if any ("" = up to date).
+    in property <string> hub-update-version: "";
 
     // Platform and background settings properties
     in-out property <bool> autostart-in-background: false;
@@ -36,25 +86,30 @@ export component AppWindow inherits Window {
     in-out property <bool> show-notifications: true;
     in-out property <bool> keep-running-in-background: true;
 
-    // Currently selected package for the wide Steam-like master-detail layout.
-    in-out property <PackageRow> selected-package: {
-        id: "geo-background-generator",
-        name: "Geo Background Generator",
-        description: "Geometric pattern background generator with customizable gradients",
-        version: "1.8.2",
-        latest-version: "2.0.0",
-        status: PackageStatus.update-available,
-    };
+    // Currently selected package; Rust fills in the full row on refresh.
+    in-out property <PackageRow> selected-package: { id: "geo-background-generator" };
 
-    property <bool> wide-layout: true;
-    property <bool> available-expanded: true;
+    property <bool> wide-layout: self.width >= 760px;
     property <bool> settings-open: false;
+    // Narrow layout: list and detail are separate pages.
+    property <bool> narrow-detail-open: false;
+
+    // Sample download progress for packages flagged as downloading (UI mock).
+    property <float> download-progress: 0;
+    Timer {
+        interval: 40ms;
+        running: true;
+        triggered => {
+            root.download-progress = root.download-progress >= 1 ? 0 : root.download-progress + 0.004;
+        }
+    }
 
     // Returns true on success; Rust sets `error-message` otherwise.
     callback register-package(string) -> bool;
     callback refresh-packages();
     callback search-edited(string);
     callback theme-selected(ThemePreference);
+    callback hub-update-requested();
 
     // Settings callbacks
     callback autostart-toggled(bool);
@@ -68,8 +123,10 @@ export component AppWindow inherits Window {
     callback toggle-maximize-window();
     callback close-window();
     callback resize-window-east(length);
+    callback resize-window-west(length);
     callback resize-window-south(length);
     callback resize-window-southeast(length, length);
+    callback resize-window-southwest(length, length);
 
     function apply-theme() {
         Palette.color-scheme = root.theme == ThemePreference.dark ? ColorScheme.dark
@@ -77,17 +134,20 @@ export component AppWindow inherits Window {
             : root.system-dark ? ColorScheme.dark : ColorScheme.light;
     }
 
-    function update-responsive-layout() {
-        root.wide-layout = root.width >= 760px;
+    function select-package(package: PackageRow) {
+        root.selected-package = package;
+        root.narrow-detail-open = true;
     }
 
     init => {
         root.apply-theme();
-        root.update-responsive-layout();
     }
-    changed width => { root.update-responsive-layout(); }
-    changed theme => { root.apply-theme(); }
-    changed system-dark => { root.apply-theme(); }
+    changed theme => {
+        root.apply-theme();
+    }
+    changed system-dark => {
+        root.apply-theme();
+    }
 
     about-popup := PopupWindow {
         x: (root.width - self.width) / 2;
@@ -102,38 +162,33 @@ export component AppWindow inherits Window {
 
             VerticalBox {
                 Text {
-                    text: @tr("Dynamotivation Software Hub {}", root.version);
+                    text: @tr("Dynamotivation Software Hub v{}", root.version);
                     font-weight: 600;
                     color: Palette.foreground;
                     horizontal-alignment: center;
                 }
+
                 AboutSlint { }
             }
         }
     }
 
-    Rectangle {
-        width: 100%;
-        height: 100%;
+    frame := Rectangle {
+        property <bool> square: root.is-maximized || root.native-corners;
+
         background: Theme.window-background;
-        border-radius: root.is-maximized ? 0px : 12px;
-        border-width: root.is-maximized ? 0px : 1px;
+        border-radius: self.square ? 0px : 10px;
+        border-width: self.square ? 0px : 1px;
         border-color: Theme.window-frame-border;
         clip: true;
 
         VerticalLayout {
-            spacing: 0px;
-
-            // Custom Integrated Top Title Bar + Brand Header Banner (no stock OS titlebar)
+            // Integrated title bar + brand header (no stock OS titlebar)
             Rectangle {
                 height: 82px;
-                vertical-stretch: 0;
                 background: Theme.header-background;
 
-                // Drag region covering the custom title/header bar
-                header-drag-touch := TouchArea {
-                    width: 100%;
-                    height: 100%;
+                TouchArea {
                     moved => {
                         if (self.pressed) {
                             root.move-window(self.mouse-x - self.pressed-x, self.mouse-y - self.pressed-y);
@@ -148,18 +203,14 @@ export component AppWindow inherits Window {
                     HorizontalLayout {
                         vertical-stretch: 1;
                         padding-left: 20px;
-                        padding-right: 0px;
                         spacing: 12px;
 
-                        // Brand Logo + Title Stack
+                        // Brand logo + title
                         HorizontalLayout {
                             horizontal-stretch: 1;
-                            padding-top: 12px;
-                            padding-bottom: 12px;
                             spacing: 14px;
                             alignment: start;
 
-                            // Brand Logo (Mint/Cyan 'D' with white inner counter on coral/maroon banner)
                             VerticalLayout {
                                 alignment: center;
 
@@ -171,15 +222,15 @@ export component AppWindow inherits Window {
                                 }
                             }
 
-                            // Brand Title Stack
                             VerticalLayout {
-                                spacing: 1px;
+                                spacing: 0px;
                                 alignment: center;
 
                                 Text {
                                     text: @tr("Dynamotivation");
-                                    font-size: 12px;
+                                    font-size: 13px;
                                     font-weight: 600;
+                                    letter-spacing: 0.2px;
                                     color: Theme.header-muted-foreground;
                                 }
 
@@ -192,93 +243,38 @@ export component AppWindow inherits Window {
                             }
                         }
 
-                        // Right-side Stack: Window Caption Controls at top-right, Settings button bottom-right
+                        // Caption buttons on top, hub actions below
                         VerticalLayout {
-                            alignment: stretch;
-
-                            // Top-right Window Control Buttons (Windows 11 Fluent style)
                             HorizontalLayout {
                                 alignment: end;
                                 spacing: 2px;
                                 padding-right: 6px;
                                 padding-top: 4px;
 
-                                // Minimize (Windows 11 Fluent)
-                                Rectangle {
-                                    width: 46px;
-                                    height: 32px;
-                                    border-radius: 4px;
-                                    background: min-touch.has-hover
-                                        ? Theme.header-hover-background
-                                        : Colors.transparent;
-
-                                    min-touch := TouchArea {
-                                        accessible-role: button;
-                                        accessible-label: @tr("Minimize");
-                                        clicked => { root.minimize-window(); }
-                                    }
-
-                                    Image {
-                                        width: 10px;
-                                        height: 10px;
-                                        x: (parent.width - self.width) / 2;
-                                        y: (parent.height - self.height) / 2;
-                                        source: @image-url("assets/window-minimize.svg");
-                                        colorize: Theme.header-foreground;
+                                CaptionButton {
+                                    icon: @image-url("assets/window-minimize.svg");
+                                    label: @tr("Minimize");
+                                    clicked => {
+                                        root.minimize-window();
                                     }
                                 }
 
-                                // Maximize / Restore (Windows 11 Fluent)
-                                Rectangle {
-                                    width: 46px;
-                                    height: 32px;
-                                    border-radius: 4px;
-                                    background: max-touch.has-hover
-                                        ? Theme.header-hover-background
-                                        : Colors.transparent;
-
-                                    max-touch := TouchArea {
-                                        accessible-role: button;
-                                        accessible-label: root.is-maximized ? @tr("Restore") : @tr("Maximize");
-                                        clicked => { root.toggle-maximize-window(); }
-                                    }
-
-                                    Image {
-                                        width: 10px;
-                                        height: 10px;
-                                        x: (parent.width - self.width) / 2;
-                                        y: (parent.height - self.height) / 2;
-                                        source: root.is-maximized
-                                            ? @image-url("assets/window-restore.svg")
-                                            : @image-url("assets/window-maximize.svg");
-                                        colorize: Theme.header-foreground;
+                                CaptionButton {
+                                    icon: root.is-maximized
+                                        ? @image-url("assets/window-restore.svg")
+                                        : @image-url("assets/window-maximize.svg");
+                                    label: root.is-maximized ? @tr("Restore") : @tr("Maximize");
+                                    clicked => {
+                                        root.toggle-maximize-window();
                                     }
                                 }
 
-                                // Close (Windows 11 Fluent)
-                                Rectangle {
-                                    width: 46px;
-                                    height: 32px;
-                                    border-radius: 4px;
-                                    background: close-touch.pressed
-                                        ? #b82415
-                                        : close-touch.has-hover
-                                            ? #c42b1c
-                                            : Colors.transparent;
-
-                                    close-touch := TouchArea {
-                                        accessible-role: button;
-                                        accessible-label: @tr("Close");
-                                        clicked => { root.close-window(); }
-                                    }
-
-                                    Image {
-                                        width: 10px;
-                                        height: 10px;
-                                        x: (parent.width - self.width) / 2;
-                                        y: (parent.height - self.height) / 2;
-                                        source: @image-url("assets/window-close.svg");
-                                        colorize: close-touch.has-hover ? #ffffff : Theme.header-foreground;
+                                CaptionButton {
+                                    icon: @image-url("assets/window-close.svg");
+                                    label: @tr("Close");
+                                    is-close: true;
+                                    clicked => {
+                                        root.close-window();
                                     }
                                 }
                             }
@@ -287,37 +283,74 @@ export component AppWindow inherits Window {
                                 vertical-stretch: 1;
                             }
 
-                            // Bottom-right Settings Button with margin to window border and separation line
                             HorizontalLayout {
                                 alignment: end;
+                                spacing: 8px;
                                 padding-right: 12px;
                                 padding-bottom: 8px;
 
-                                Rectangle {
-                                    width: 32px;
-                                    height: 32px;
-                                    border-radius: 8px;
-                                    background: settings-touch.has-hover || root.settings-open
+                                // Software Hub self-update indicator
+                                if root.hub-update-version != "": Rectangle {
+                                    height: 30px;
+                                    border-radius: 15px;
+                                    background: hub-update-touch.pressed
                                         ? Theme.header-hover-background
-                                        : Colors.transparent;
+                                        : hub-update-touch.has-hover ? Theme.header-hover-background : Theme.header-pill-background;
 
-                                    settings-touch := TouchArea {
+                                    hub-update-touch := TooltipArea {
+                                        tooltip: @tr("Software Hub v{} is available. Restart to update.", root.hub-update-version);
                                         accessible-role: button;
-                                        accessible-label: root.settings-open ? @tr("Back to software catalog") : @tr("Settings");
+                                        accessible-label: @tr("Update Software Hub");
+                                        mouse-cursor: pointer;
                                         clicked => {
-                                            root.settings-open = !root.settings-open;
+                                            root.hub-update-requested();
                                         }
                                     }
 
-                                    Image {
-                                        width: 18px;
-                                        height: 18px;
-                                        x: (parent.width - self.width) / 2;
-                                        y: (parent.height - self.height) / 2;
-                                        source: root.settings-open
-                                            ? @image-url("assets/chevron-left.svg")
-                                            : @image-url("assets/settings.svg");
-                                        colorize: Theme.header-foreground;
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 12px;
+                                        spacing: 6px;
+
+                                        VerticalLayout {
+                                            alignment: center;
+
+                                            Rectangle {
+                                                width: 16px;
+                                                height: 16px;
+                                                border-radius: 8px;
+                                                background: Theme.brand-gradient;
+
+                                                Image {
+                                                    width: 10px;
+                                                    height: 10px;
+                                                    x: (parent.width - self.width) / 2;
+                                                    y: (parent.height - self.height) / 2;
+                                                    source: @image-url("assets/arrow-up.svg");
+                                                    colorize: #111111;
+                                                }
+                                            }
+                                        }
+
+                                        Text {
+                                            text: @tr("Update Hub");
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: Theme.header-foreground;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                IconButton {
+                                    icon: @image-url("assets/settings.svg");
+                                    icon-size: 18px;
+                                    icon-color: Theme.header-foreground;
+                                    hover-background: Theme.header-hover-background;
+                                    active: root.settings-open;
+                                    tooltip: @tr("Settings");
+                                    clicked => {
+                                        root.settings-open = !root.settings-open;
                                     }
                                 }
                             }
@@ -327,596 +360,198 @@ export component AppWindow inherits Window {
                     // Signature mint-to-cyan gradient accent bar at bottom of header
                     Rectangle {
                         height: 3px;
-                        vertical-stretch: 0;
                         background: Theme.brand-gradient;
                     }
                 }
             }
 
-            // DEDICATED SETTINGS PAGE VIEW
-            if root.settings-open: SettingsView {
-                vertical-stretch: 1;
-                theme <=> root.theme;
-                system-dark: root.system-dark;
-                version: root.version;
-                error-message: root.error-message;
-                autostart-in-background <=> root.autostart-in-background;
-                auto-check-updates <=> root.auto-check-updates;
-                show-notifications <=> root.show-notifications;
-                keep-running-in-background <=> root.keep-running-in-background;
-
-                back-clicked => {
-                    root.settings-open = false;
-                }
-                theme-selected(th) => {
-                    root.apply-theme();
-                    root.theme-selected(th);
-                }
-                autostart-toggled(val) => { root.autostart-toggled(val); }
-                auto-updates-toggled(val) => { root.auto-updates-toggled(val); }
-                notifications-toggled(val) => { root.notifications-toggled(val); }
-                background-running-toggled(val) => { root.background-running-toggled(val); }
-                register-package(name) => { root.register-package(name) }
-                refresh-packages => { root.refresh-packages(); }
-                show-about => { about-popup.show(); }
-            }
-
-            // NARROW TOOLBOX LAYOUT (< 760px) — Scrollbar on the far left edge of the window
-            if !root.settings-open && !root.wide-layout: HorizontalLayout {
+            // Content: catalog and settings cross-fade instead of popping.
+            Rectangle {
                 vertical-stretch: 1;
 
-                // Far-left custom vertical scrollbar
-                VerticalLayout {
-                    width: 14px;
-                    horizontal-stretch: 0;
-                    padding-left: 5px;
-                    padding-right: 3px;
-                    padding-top: 16px;
-                    padding-bottom: 16px;
+                catalog := Rectangle {
+                    opacity: root.settings-open ? 0 : 1;
+                    visible: self.opacity > 0;
+                    animate opacity { duration: 180ms; easing: ease-in-out; }
 
-                    slim-scroll-track := Rectangle {
-                        width: 6px;
-                        vertical-stretch: 1;
-                        border-radius: 3px;
-                        background: Theme.scrollbar-track;
+                    // Wide: list on the left, detail on the right
+                    if root.wide-layout: HorizontalLayout {
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        padding-top: 16px;
+                        padding-bottom: 16px;
+                        spacing: 16px;
 
-                        property <length> max-scroll: max(0px, narrow-content.preferred-height - narrow-flick.height);
-                        property <length> thumb-height: narrow-content.preferred-height > narrow-flick.height
-                            ? max(36px, self.height * (narrow-flick.height / narrow-content.preferred-height))
-                            : self.height;
-                        property <length> thumb-y: self.max-scroll > 0px
-                            ? (self.height - self.thumb-height) * (-narrow-flick.content-y / self.max-scroll)
-                            : 0px;
-
-                        Rectangle {
-                            x: 0px;
-                            y: clamp(parent.thumb-y, 0px, max(0px, parent.height - self.height));
-                            width: parent.width;
-                            height: parent.thumb-height;
-                            border-radius: 3px;
-                            background: slim-scroll-touch.has-hover || slim-scroll-touch.pressed
-                                ? Theme.scrollbar-thumb-hover
-                                : Theme.scrollbar-thumb;
+                        PackageSidebar {
+                            width: 320px;
+                            installed-packages: root.installed-packages;
+                            available-packages: root.available-packages;
+                            selected-id: root.selected-package.id;
+                            download-progress: root.download-progress;
+                            search-query <=> root.search-query;
+                            search-edited(text) => {
+                                root.search-edited(text);
+                            }
+                            package-selected(package) => {
+                                root.select-package(package);
+                            }
+                            check-for-updates => {
+                                root.refresh-packages();
+                            }
                         }
 
-                        slim-scroll-touch := TouchArea {
-                            width: 100%;
-                            height: 100%;
-                            moved => {
-                                if (self.pressed && parent.max-scroll > 0px && parent.height > parent.thumb-height) {
-                                    narrow-flick.content-y = clamp(
-                                        -parent.max-scroll * ((self.mouse-y - parent.thumb-height / 2) / (parent.height - parent.thumb-height)),
-                                        -parent.max-scroll,
-                                        0px
-                                    );
-                                }
+                        PackageDetailPane {
+                            horizontal-stretch: 1;
+                            package: root.selected-package;
+                            download-progress: root.download-progress;
+                        }
+                    }
+
+                    // Narrow: list page, then detail page with a back button
+                    if !root.wide-layout && !root.narrow-detail-open: HorizontalLayout {
+                        padding: 16px;
+                        alignment: center;
+
+                        PackageSidebar {
+                            max-width: 560px;
+                            horizontal-stretch: 1;
+                            installed-packages: root.installed-packages;
+                            available-packages: root.available-packages;
+                            selected-id: root.selected-package.id;
+                            highlight-selection: false;
+                            download-progress: root.download-progress;
+                            search-query <=> root.search-query;
+                            search-edited(text) => {
+                                root.search-edited(text);
                             }
-                            clicked => {
-                                if (parent.max-scroll > 0px && parent.height > parent.thumb-height) {
-                                    narrow-flick.content-y = clamp(
-                                        -parent.max-scroll * ((self.mouse-y - parent.thumb-height / 2) / (parent.height - parent.thumb-height)),
-                                        -parent.max-scroll,
-                                        0px
-                                    );
-                                }
+                            package-selected(package) => {
+                                root.select-package(package);
+                            }
+                            check-for-updates => {
+                                root.refresh-packages();
+                            }
+                        }
+                    }
+
+                    if !root.wide-layout && root.narrow-detail-open: HorizontalLayout {
+                        padding: 16px;
+
+                        PackageDetailPane {
+                            package: root.selected-package;
+                            download-progress: root.download-progress;
+                            show-back: true;
+                            back-clicked => {
+                                root.narrow-detail-open = false;
                             }
                         }
                     }
                 }
 
-                Rectangle {
-                    horizontal-stretch: 1;
-                }
+                SettingsView {
+                    y: root.settings-open ? 0px : 16px;
+                    height: parent.height;
+                    opacity: root.settings-open ? 1 : 0;
+                    visible: self.opacity > 0;
+                    animate opacity { duration: 180ms; easing: ease-in-out; }
+                    animate y { duration: 220ms; easing: ease-out; }
 
-                VerticalLayout {
-                    max-width: 560px;
-                    horizontal-stretch: 10;
-                    padding-left: 10px;
-                    padding-right: 20px;
-                    padding-top: 16px;
-                    padding-bottom: 16px;
-                    spacing: 14px;
+                    theme <=> root.theme;
+                    version: root.version;
+                    error-message: root.error-message;
+                    autostart-in-background <=> root.autostart-in-background;
+                    auto-check-updates <=> root.auto-check-updates;
+                    show-notifications <=> root.show-notifications;
+                    keep-running-in-background <=> root.keep-running-in-background;
 
-                    // Search Bar Card (filters both Installed & Available)
-                    SurfaceCard {
-                        height: 44px;
-                        vertical-stretch: 0;
-
-                        HorizontalLayout {
-                            padding-left: 14px;
-                            padding-right: 10px;
-                            spacing: 10px;
-                            alignment: stretch;
-
-                            VerticalLayout {
-                                alignment: center;
-
-                                Image {
-                                    width: 16px;
-                                    height: 16px;
-                                    source: @image-url("assets/search.svg");
-                                    colorize: Theme.muted-foreground;
-                                }
-                            }
-
-                            VerticalLayout {
-                                horizontal-stretch: 1;
-                                alignment: center;
-
-                                LineEdit {
-                                    text <=> root.search-query;
-                                    placeholder-text: @tr("Search software…");
-                                    edited => {
-                                        root.search-edited(self.text);
-                                    }
-                                }
-                            }
-                        }
+                    back-clicked => {
+                        root.settings-open = false;
                     }
-
-                    // Scrollable Software Cards driven by narrow-flick
-                    narrow-flick := Flickable {
-                        vertical-stretch: 1;
-                        interactive: true;
-                        content-width: self.width;
-                        content-height: narrow-content.preferred-height;
-
-                        narrow-content := VerticalLayout {
-                            width: parent.width;
-                            spacing: 14px;
-                            padding-bottom: 8px;
-                            alignment: start;
-
-                            // Installed Software Card
-                            SurfaceCard {
-                                VerticalLayout {
-                                    padding-top: 14px;
-                                    padding-bottom: 8px;
-                                    padding-left: 6px;
-                                    padding-right: 6px;
-                                    spacing: 4px;
-
-                                    // Card Header with Installed Count + Updates Button
-                                    HorizontalLayout {
-                                        padding-left: 14px;
-                                        padding-right: 14px;
-                                        padding-bottom: 4px;
-                                        spacing: 8px;
-                                        alignment: stretch;
-
-                                        VerticalLayout {
-                                            alignment: center;
-
-                                            Text {
-                                                text: @tr("Installed");
-                                                font-size: 13px;
-                                                font-weight: 700;
-                                                color: Theme.muted-foreground;
-                                            }
-                                        }
-
-                                        VerticalLayout {
-                                            alignment: center;
-
-                                            Text {
-                                                text: root.installed-packages.length;
-                                                font-size: 12px;
-                                                font-weight: 600;
-                                                color: Theme.subtle-foreground;
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            horizontal-stretch: 1;
-                                        }
-
-                                        if root.updates-count > 0: Button {
-                                            text: @tr("Update all ({})", root.updates-count);
-                                        }
-                                    }
-
-                                    for package[idx] in root.installed-packages: PackageListItem {
-                                        package: package;
-                                        show-divider: idx < root.installed-packages.length - 1;
-                                        clicked => { root.selected-package = package; }
-                                    }
-
-                                    if root.installed-packages.length == 0: VerticalLayout {
-                                        padding: 16px;
-
-                                        Text {
-                                            text: @tr("No matching installed software.");
-                                            font-size: 13px;
-                                            color: Theme.muted-foreground;
-                                            horizontal-alignment: center;
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Available Software Card
-                            SurfaceCard {
-                                VerticalLayout {
-                                    padding-top: 12px;
-                                    padding-bottom: root.available-expanded ? 8px : 12px;
-                                    padding-left: 6px;
-                                    padding-right: 6px;
-                                    spacing: 4px;
-
-                                    // Collapsible Card Header with Available Count
-                                    Rectangle {
-                                        height: 30px;
-                                        border-radius: 6px;
-                                        background: available-header-touch.has-hover
-                                            ? Theme.hover-background
-                                            : Colors.transparent;
-
-                                        available-header-touch := TouchArea {
-                                            clicked => {
-                                                root.available-expanded = !root.available-expanded;
-                                            }
-                                        }
-
-                                        HorizontalLayout {
-                                            padding-left: 12px;
-                                            padding-right: 14px;
-                                            spacing: 8px;
-                                            alignment: stretch;
-
-                                            VerticalLayout {
-                                                alignment: center;
-
-                                                Image {
-                                                    width: 14px;
-                                                    height: 14px;
-                                                    source: root.available-expanded
-                                                        ? @image-url("assets/chevron-down.svg")
-                                                        : @image-url("assets/chevron-right.svg");
-                                                    colorize: Theme.muted-foreground;
-                                                }
-                                            }
-
-                                            VerticalLayout {
-                                                alignment: center;
-
-                                                Text {
-                                                    text: @tr("Available software");
-                                                    font-size: 13px;
-                                                    font-weight: 700;
-                                                    color: Theme.muted-foreground;
-                                                }
-                                            }
-
-                                            VerticalLayout {
-                                                alignment: center;
-
-                                                Text {
-                                                    text: root.available-packages.length;
-                                                    font-size: 12px;
-                                                    font-weight: 600;
-                                                    color: Theme.subtle-foreground;
-                                                }
-                                            }
-
-                                            Rectangle {
-                                                horizontal-stretch: 1;
-                                            }
-                                        }
-                                    }
-
-                                    if root.available-expanded: VerticalLayout {
-                                        spacing: 0px;
-
-                                        for package[idx] in root.available-packages: PackageListItem {
-                                            package: package;
-                                            show-divider: idx < root.available-packages.length - 1;
-                                            clicked => { root.selected-package = package; }
-                                        }
-
-                                        if root.available-packages.length == 0: VerticalLayout {
-                                            padding: 16px;
-
-                                            Text {
-                                                text: @tr("No matching available software.");
-                                                font-size: 13px;
-                                                color: Theme.muted-foreground;
-                                                horizontal-alignment: center;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    theme-selected(th) => {
+                        root.apply-theme();
+                        root.theme-selected(th);
                     }
-                }
-
-                Rectangle {
-                    horizontal-stretch: 1;
-                }
-            }
-
-            // WIDE STEAM-STYLE SPLIT VIEW (>= 760px): Software List + Search on Left, Detail & Actions on Right
-            if !root.settings-open && root.wide-layout: VerticalLayout {
-                vertical-stretch: 1;
-                padding-left: 20px;
-                padding-right: 20px;
-                padding-top: 16px;
-                padding-bottom: 16px;
-                spacing: 14px;
-
-                HorizontalLayout {
-                    vertical-stretch: 1;
-                    spacing: 16px;
-
-                    // Left Sidebar: Search Bar + Installed & Available Software List
-                    SurfaceCard {
-                        width: 330px;
-                        horizontal-stretch: 0;
-
-                        VerticalLayout {
-                            spacing: 0px;
-
-                            // Sidebar Search Bar at Top of Left Column
-                            HorizontalLayout {
-                                padding-left: 14px;
-                                padding-right: 12px;
-                                padding-top: 10px;
-                                padding-bottom: 10px;
-                                spacing: 8px;
-                                alignment: stretch;
-
-                                VerticalLayout {
-                                    alignment: center;
-
-                                    Image {
-                                        width: 15px;
-                                        height: 15px;
-                                        source: @image-url("assets/search.svg");
-                                        colorize: Theme.muted-foreground;
-                                    }
-                                }
-
-                                VerticalLayout {
-                                    horizontal-stretch: 1;
-                                    alignment: center;
-
-                                    LineEdit {
-                                        text <=> root.search-query;
-                                        placeholder-text: @tr("Search software…");
-                                        edited => {
-                                            root.search-edited(self.text);
-                                        }
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                height: 1px;
-                                background: Theme.divider;
-                            }
-
-                            ScrollView {
-                                vertical-stretch: 1;
-                                width: 100%;
-                                horizontal-scrollbar-policy: always-off;
-
-                                VerticalLayout {
-                                    padding-top: 10px;
-                                    padding-bottom: 12px;
-                                    padding-left: 8px;
-                                    padding-right: 8px;
-                                    spacing: 4px;
-                                    alignment: start;
-
-                                    // Installed Section Header with Count
-                                    HorizontalLayout {
-                                        padding-left: 10px;
-                                        padding-right: 10px;
-                                        padding-bottom: 4px;
-                                        spacing: 6px;
-                                        alignment: stretch;
-
-                                        VerticalLayout {
-                                            alignment: center;
-
-                                            Text {
-                                                text: @tr("Installed");
-                                                font-size: 12px;
-                                                font-weight: 700;
-                                                color: Theme.muted-foreground;
-                                            }
-                                        }
-
-                                        VerticalLayout {
-                                            alignment: center;
-
-                                            Text {
-                                                text: root.installed-packages.length;
-                                                font-size: 12px;
-                                                font-weight: 600;
-                                                color: Theme.subtle-foreground;
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            horizontal-stretch: 1;
-                                        }
-
-                                        if root.updates-count > 0: Button {
-                                            text: @tr("Update all ({})", root.updates-count);
-                                        }
-                                    }
-
-                                    for package in root.installed-packages: PackageListItem {
-                                        package: package;
-                                        compact: true;
-                                        selected: root.selected-package.id == package.id;
-                                        clicked => {
-                                            root.selected-package = package;
-                                        }
-                                    }
-
-                                    Rectangle {
-                                        height: 1px;
-                                        background: Theme.divider;
-                                    }
-
-                                    // Available Software Section Header with Count
-                                    Rectangle {
-                                        height: 28px;
-                                        border-radius: 6px;
-                                        background: sidebar-available-touch.has-hover
-                                            ? Theme.hover-background
-                                            : Colors.transparent;
-
-                                        sidebar-available-touch := TouchArea {
-                                            clicked => {
-                                                root.available-expanded = !root.available-expanded;
-                                            }
-                                        }
-
-                                        HorizontalLayout {
-                                            padding-left: 10px;
-                                            padding-right: 10px;
-                                            spacing: 6px;
-                                            alignment: stretch;
-
-                                            VerticalLayout {
-                                                alignment: center;
-
-                                                Image {
-                                                    width: 12px;
-                                                    height: 12px;
-                                                    source: root.available-expanded
-                                                        ? @image-url("assets/chevron-down.svg")
-                                                        : @image-url("assets/chevron-right.svg");
-                                                    colorize: Theme.muted-foreground;
-                                                }
-                                            }
-
-                                            VerticalLayout {
-                                                alignment: center;
-
-                                                Text {
-                                                    text: @tr("Available software");
-                                                    font-size: 12px;
-                                                    font-weight: 700;
-                                                    color: Theme.muted-foreground;
-                                                }
-                                            }
-
-                                            VerticalLayout {
-                                                alignment: center;
-
-                                                Text {
-                                                    text: root.available-packages.length;
-                                                    font-size: 12px;
-                                                    font-weight: 600;
-                                                    color: Theme.subtle-foreground;
-                                                }
-                                            }
-
-                                            Rectangle {
-                                                horizontal-stretch: 1;
-                                            }
-                                        }
-                                    }
-
-                                    if root.available-expanded: VerticalLayout {
-                                        spacing: 2px;
-
-                                        for package in root.available-packages: PackageListItem {
-                                            package: package;
-                                            compact: true;
-                                            selected: root.selected-package.id == package.id;
-                                            clicked => {
-                                                root.selected-package = package;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    autostart-toggled(val) => {
+                        root.autostart-toggled(val);
                     }
-
-                    // Right Detail Pane: Selected Software Hero, Actions & Description
-                    PackageDetailPane {
-                        horizontal-stretch: 1;
-                        package: root.selected-package;
+                    auto-updates-toggled(val) => {
+                        root.auto-updates-toggled(val);
+                    }
+                    notifications-toggled(val) => {
+                        root.notifications-toggled(val);
+                    }
+                    background-running-toggled(val) => {
+                        root.background-running-toggled(val);
+                    }
+                    register-package(name) => {
+                        root.register-package(name)
+                    }
+                    refresh-packages => {
+                        root.refresh-packages();
+                    }
+                    show-about => {
+                        about-popup.show();
                     }
                 }
             }
         }
 
-        // Right-edge resize grip for frameless window
-        if !root.is-maximized: Rectangle {
+        // Resize grips for the frameless window (left, right, bottom and corners)
+        if !root.is-maximized: ResizeGrip {
+            x: 0px;
+            y: 0px;
+            width: 5px;
+            height: parent.height - 10px;
+            mouse-cursor: ew-resize;
+            dragged(dx, dy) => {
+                root.resize-window-west(dx);
+            }
+        }
+
+        if !root.is-maximized: ResizeGrip {
             x: parent.width - 5px;
             y: 36px;
             width: 5px;
-            height: parent.height - 44px;
-
-            TouchArea {
-                mouse-cursor: ew-resize;
-                moved => {
-                    if (self.pressed) {
-                        root.resize-window-east(self.mouse-x - self.pressed-x);
-                    }
-                }
+            height: parent.height - 46px;
+            mouse-cursor: ew-resize;
+            dragged(dx, dy) => {
+                root.resize-window-east(dx);
             }
         }
 
-        // Bottom-edge resize grip for frameless window
-        if !root.is-maximized: Rectangle {
-            x: 0px;
+        if !root.is-maximized: ResizeGrip {
+            x: 10px;
             y: parent.height - 5px;
-            width: parent.width - 10px;
+            width: parent.width - 20px;
             height: 5px;
-
-            TouchArea {
-                mouse-cursor: ns-resize;
-                moved => {
-                    if (self.pressed) {
-                        root.resize-window-south(self.mouse-y - self.pressed-y);
-                    }
-                }
+            mouse-cursor: ns-resize;
+            dragged(dx, dy) => {
+                root.resize-window-south(dy);
             }
         }
 
-        // Bottom-right corner resize grip for frameless window
-        if !root.is-maximized: Rectangle {
+        if !root.is-maximized: ResizeGrip {
+            x: 0px;
+            y: parent.height - 10px;
+            width: 10px;
+            height: 10px;
+            mouse-cursor: nesw-resize;
+            dragged(dx, dy) => {
+                root.resize-window-southwest(dx, dy);
+            }
+        }
+
+        if !root.is-maximized: ResizeGrip {
             x: parent.width - 10px;
             y: parent.height - 10px;
             width: 10px;
             height: 10px;
-
-            TouchArea {
-                mouse-cursor: nwse-resize;
-                moved => {
-                    if (self.pressed) {
-                        root.resize-window-southeast(self.mouse-x - self.pressed-x, self.mouse-y - self.pressed-y);
-                    }
-                }
+            mouse-cursor: nwse-resize;
+            dragged(dx, dy) => {
+                root.resize-window-southeast(dx, dy);
             }
         }
+
+        // Shared tooltip, drawn above everything else
+        TooltipOverlay { }
     }
 }

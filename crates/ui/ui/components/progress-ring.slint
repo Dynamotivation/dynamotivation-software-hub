@@ -1,0 +1,40 @@
+import { Theme } from "../theme.slint";
+
+// Circular "filling wheel" progress indicator (0.0 – 1.0).
+export component ProgressRing inherits Rectangle {
+    in property <float> progress: 0;
+    in property <length> thickness: 3px;
+    in property <brush> track-color: Theme.progress-track;
+    in property <brush> fill-color: Theme.progress-foreground;
+
+    // Arc geometry in a 100×100 viewbox; the radius runs along the stroke centre
+    // so the arc sits exactly on the track ring.
+    property <float> p: clamp(root.progress, 0, 0.9999);
+    property <float> r: 50 - (root.thickness / root.width) * 50;
+    property <angle> sweep: root.p * 360deg;
+    property <float> end-x: 50 + root.r * Math.sin(root.sweep);
+    property <float> end-y: 50 - root.r * Math.cos(root.sweep);
+
+    width: 20px;
+    height: 20px;
+
+    // Track
+    Rectangle {
+        border-radius: self.width / 2;
+        border-width: root.thickness;
+        border-color: root.track-color;
+    }
+
+    if root.p > 0.001: Path {
+        width: 100%;
+        height: 100%;
+        viewbox-width: 100;
+        viewbox-height: 100;
+        stroke: root.fill-color;
+        stroke-width: root.thickness;
+        stroke-line-cap: round;
+        commands: "M 50 " + (50 - root.r)
+            + " A " + root.r + " " + root.r + " 0 " + (root.p > 0.5 ? "1" : "0") + " 1 "
+            + root.end-x + " " + root.end-y;
+    }
+}
