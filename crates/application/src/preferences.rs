@@ -4,9 +4,26 @@ use crate::error::ApplicationError;
 use crate::ports::PreferencesStore;
 
 /// Launcher preferences (generic subdomain, not part of the core domain).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[allow(clippy::struct_excessive_bools)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Preferences {
     pub color_scheme: ColorScheme,
+    pub autostart_in_background: bool,
+    pub auto_check_updates: bool,
+    pub show_notifications: bool,
+    pub keep_running_in_background: bool,
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            color_scheme: ColorScheme::System,
+            autostart_in_background: false,
+            auto_check_updates: true,
+            show_notifications: true,
+            keep_running_in_background: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -66,6 +83,43 @@ impl PreferencesService {
         self.store.save(&prefs)?;
         Ok(prefs)
     }
+
+    pub fn set_autostart_in_background(
+        &self,
+        autostart: bool,
+    ) -> Result<Preferences, ApplicationError> {
+        let mut prefs = self.store.load().unwrap_or_default();
+        prefs.autostart_in_background = autostart;
+        self.store.save(&prefs)?;
+        Ok(prefs)
+    }
+
+    pub fn set_auto_check_updates(
+        &self,
+        auto_check: bool,
+    ) -> Result<Preferences, ApplicationError> {
+        let mut prefs = self.store.load().unwrap_or_default();
+        prefs.auto_check_updates = auto_check;
+        self.store.save(&prefs)?;
+        Ok(prefs)
+    }
+
+    pub fn set_show_notifications(&self, show: bool) -> Result<Preferences, ApplicationError> {
+        let mut prefs = self.store.load().unwrap_or_default();
+        prefs.show_notifications = show;
+        self.store.save(&prefs)?;
+        Ok(prefs)
+    }
+
+    pub fn set_keep_running_in_background(
+        &self,
+        keep_running: bool,
+    ) -> Result<Preferences, ApplicationError> {
+        let mut prefs = self.store.load().unwrap_or_default();
+        prefs.keep_running_in_background = keep_running;
+        self.store.save(&prefs)?;
+        Ok(prefs)
+    }
 }
 
 #[cfg(test)]
@@ -85,8 +139,24 @@ mod tests {
     #[test]
     fn set_color_scheme_persists() {
         let store = Arc::new(MemoryPreferences::default());
-        let service = PreferencesService::new(store.clone());
+        let service = PreferencesService::new(store);
         service.set_color_scheme(ColorScheme::Dark).unwrap();
         assert_eq!(service.load().unwrap().color_scheme, ColorScheme::Dark);
+    }
+
+    #[test]
+    fn general_settings_persist() {
+        let store = Arc::new(MemoryPreferences::default());
+        let service = PreferencesService::new(store);
+        service.set_autostart_in_background(true).unwrap();
+        service.set_auto_check_updates(false).unwrap();
+        service.set_show_notifications(false).unwrap();
+        service.set_keep_running_in_background(false).unwrap();
+
+        let loaded = service.load().unwrap();
+        assert!(loaded.autostart_in_background);
+        assert!(!loaded.auto_check_updates);
+        assert!(!loaded.show_notifications);
+        assert!(!loaded.keep_running_in_background);
     }
 }

@@ -1,9 +1,10 @@
-import { AboutSlint, Button, ComboBox, LineEdit, Palette, ScrollView, VerticalBox } from "std-widgets.slint";
+import { AboutSlint, Button, LineEdit, Palette, ScrollView, VerticalBox } from "std-widgets.slint";
 import { PackageRow, PackageStatus, ThemePreference } from "types.slint";
 import { Theme } from "theme.slint";
 import { SurfaceCard } from "components/card.slint";
 import { PackageListItem } from "components/package-list-item.slint";
 import { PackageDetailPane } from "components/package-detail-pane.slint";
+import { SettingsView } from "components/settings-view.slint";
 
 // Re-export so the generated Rust API contains these types.
 export { PackageRow, PackageStatus, ThemePreference }
@@ -29,6 +30,12 @@ export component AppWindow inherits Window {
     in property <bool> system-dark: false;
     in-out property <bool> is-maximized: false;
 
+    // Platform and background settings properties
+    in-out property <bool> autostart-in-background: false;
+    in-out property <bool> auto-check-updates: true;
+    in-out property <bool> show-notifications: true;
+    in-out property <bool> keep-running-in-background: true;
+
     // Currently selected package for the wide Steam-like master-detail layout.
     in-out property <PackageRow> selected-package: {
         id: "geo-background-generator",
@@ -42,13 +49,18 @@ export component AppWindow inherits Window {
     property <bool> wide-layout: true;
     property <bool> available-expanded: true;
     property <bool> settings-open: false;
-    property <string> draft-package-name: "";
 
     // Returns true on success; Rust sets `error-message` otherwise.
     callback register-package(string) -> bool;
     callback refresh-packages();
     callback search-edited(string);
     callback theme-selected(ThemePreference);
+
+    // Settings callbacks
+    callback autostart-toggled(bool);
+    callback auto-updates-toggled(bool);
+    callback notifications-toggled(bool);
+    callback background-running-toggled(bool);
 
     // Custom frameless window chrome callbacks
     callback move-window(length, length);
@@ -67,12 +79,6 @@ export component AppWindow inherits Window {
 
     function update-responsive-layout() {
         root.wide-layout = root.width >= 760px;
-    }
-
-    function submit() {
-        if (root.register-package(root.draft-package-name)) {
-            root.draft-package-name = "";
-        }
     }
 
     init => {
@@ -297,7 +303,7 @@ export component AppWindow inherits Window {
 
                                     settings-touch := TouchArea {
                                         accessible-role: button;
-                                        accessible-label: @tr("Settings");
+                                        accessible-label: root.settings-open ? @tr("Back to software catalog") : @tr("Settings");
                                         clicked => {
                                             root.settings-open = !root.settings-open;
                                         }
@@ -308,7 +314,9 @@ export component AppWindow inherits Window {
                                         height: 18px;
                                         x: (parent.width - self.width) / 2;
                                         y: (parent.height - self.height) / 2;
-                                        source: @image-url("assets/settings.svg");
+                                        source: root.settings-open
+                                            ? @image-url("assets/chevron-left.svg")
+                                            : @image-url("assets/settings.svg");
                                         colorize: Theme.header-foreground;
                                     }
                                 }
@@ -325,8 +333,36 @@ export component AppWindow inherits Window {
                 }
             }
 
+            // DEDICATED SETTINGS PAGE VIEW
+            if root.settings-open: SettingsView {
+                vertical-stretch: 1;
+                theme <=> root.theme;
+                system-dark: root.system-dark;
+                version: root.version;
+                error-message: root.error-message;
+                autostart-in-background <=> root.autostart-in-background;
+                auto-check-updates <=> root.auto-check-updates;
+                show-notifications <=> root.show-notifications;
+                keep-running-in-background <=> root.keep-running-in-background;
+
+                back-clicked => {
+                    root.settings-open = false;
+                }
+                theme-selected(th) => {
+                    root.apply-theme();
+                    root.theme-selected(th);
+                }
+                autostart-toggled(val) => { root.autostart-toggled(val); }
+                auto-updates-toggled(val) => { root.auto-updates-toggled(val); }
+                notifications-toggled(val) => { root.notifications-toggled(val); }
+                background-running-toggled(val) => { root.background-running-toggled(val); }
+                register-package(name) => { root.register-package(name) }
+                refresh-packages => { root.refresh-packages(); }
+                show-about => { about-popup.show(); }
+            }
+
             // NARROW TOOLBOX LAYOUT (< 760px) — Scrollbar on the far left edge of the window
-            if !root.wide-layout: HorizontalLayout {
+            if !root.settings-open && !root.wide-layout: HorizontalLayout {
                 vertical-stretch: 1;
 
                 // Far-left custom vertical scrollbar
@@ -401,83 +437,7 @@ export component AppWindow inherits Window {
                     padding-bottom: 16px;
                     spacing: 14px;
 
-                    // Collapsible Settings Drawer Card
-                    if root.settings-open: SurfaceCard {
-                        VerticalLayout {
-                            padding: 16px;
-                            spacing: 12px;
-
-                            HorizontalLayout {
-                                spacing: 12px;
-                                alignment: stretch;
-
-                                VerticalLayout {
-                                    horizontal-stretch: 1;
-                                    alignment: center;
-
-                                    Text {
-                                        text: @tr("Appearance");
-                                        font-size: 13px;
-                                        font-weight: 600;
-                                        color: Palette.foreground;
-                                    }
-                                }
-
-                                ComboBox {
-                                    model: [@tr("System theme"), @tr("Light theme"), @tr("Dark theme")];
-                                    current-index: root.theme == ThemePreference.light ? 1 : root.theme == ThemePreference.dark ? 2 : 0;
-                                    selected => {
-                                        root.theme = self.current-index == 1 ? ThemePreference.light
-                                            : self.current-index == 2 ? ThemePreference.dark
-                                            : ThemePreference.system;
-                                        root.apply-theme();
-                                        root.theme-selected(root.theme);
-                                    }
-                                }
-
-                                Button {
-                                    text: @tr("About");
-                                    clicked => { about-popup.show(); }
-                                }
-                            }
-
-                            Rectangle {
-                                height: 1px;
-                                background: Theme.divider;
-                            }
-
-                            HorizontalLayout {
-                                spacing: 8px;
-
-                                LineEdit {
-                                    text <=> root.draft-package-name;
-                                    placeholder-text: @tr("Register custom software package…");
-                                    horizontal-stretch: 1;
-                                    accepted => { root.submit(); }
-                                }
-
-                                Button {
-                                    text: @tr("Register");
-                                    primary: true;
-                                    clicked => { root.submit(); }
-                                }
-
-                                Button {
-                                    text: @tr("Refresh");
-                                    clicked => { root.refresh-packages(); }
-                                }
-                            }
-
-                            if root.error-message != "": Text {
-                                text: root.error-message;
-                                font-size: 12px;
-                                color: Theme.critical-foreground;
-                                wrap: word-wrap;
-                            }
-                        }
-                    }
-
-                    // Search Bar Card (replaces single-tab bar; filters both Installed & Available)
+                    // Search Bar Card (filters both Installed & Available)
                     SurfaceCard {
                         height: 44px;
                         vertical-stretch: 0;
@@ -696,89 +656,13 @@ export component AppWindow inherits Window {
             }
 
             // WIDE STEAM-STYLE SPLIT VIEW (>= 760px): Software List + Search on Left, Detail & Actions on Right
-            if root.wide-layout: VerticalLayout {
+            if !root.settings-open && root.wide-layout: VerticalLayout {
                 vertical-stretch: 1;
                 padding-left: 20px;
                 padding-right: 20px;
                 padding-top: 16px;
                 padding-bottom: 16px;
                 spacing: 14px;
-
-                // Collapsible Settings Drawer Card
-                if root.settings-open: SurfaceCard {
-                    VerticalLayout {
-                        padding: 16px;
-                        spacing: 12px;
-
-                        HorizontalLayout {
-                            spacing: 12px;
-                            alignment: stretch;
-
-                            VerticalLayout {
-                                horizontal-stretch: 1;
-                                alignment: center;
-
-                                Text {
-                                    text: @tr("Appearance");
-                                    font-size: 13px;
-                                    font-weight: 600;
-                                    color: Palette.foreground;
-                                }
-                            }
-
-                            ComboBox {
-                                model: [@tr("System theme"), @tr("Light theme"), @tr("Dark theme")];
-                                current-index: root.theme == ThemePreference.light ? 1 : root.theme == ThemePreference.dark ? 2 : 0;
-                                selected => {
-                                    root.theme = self.current-index == 1 ? ThemePreference.light
-                                        : self.current-index == 2 ? ThemePreference.dark
-                                        : ThemePreference.system;
-                                    root.apply-theme();
-                                    root.theme-selected(root.theme);
-                                }
-                            }
-
-                            Button {
-                                text: @tr("About");
-                                clicked => { about-popup.show(); }
-                            }
-                        }
-
-                        Rectangle {
-                            height: 1px;
-                            background: Theme.divider;
-                        }
-
-                        HorizontalLayout {
-                            spacing: 8px;
-
-                            LineEdit {
-                                text <=> root.draft-package-name;
-                                placeholder-text: @tr("Register custom software package…");
-                                horizontal-stretch: 1;
-                                accepted => { root.submit(); }
-                            }
-
-                            Button {
-                                text: @tr("Register");
-                                primary: true;
-                                clicked => { root.submit(); }
-                            }
-
-                            Button {
-                                text: @tr("Refresh");
-                                clicked => { root.refresh-packages(); }
-                            }
-                        }
-
-                        if root.error-message != "": Text {
-                            text: root.error-message;
-                            font-size: 12px;
-                            color: Theme.critical-foreground;
-                            wrap: word-wrap;
-                        }
-                    }
-                }
 
                 HorizontalLayout {
                     vertical-stretch: 1;

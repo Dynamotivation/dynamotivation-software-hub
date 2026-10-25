@@ -42,7 +42,13 @@ pub fn run(services: Services, version: &str) -> Result<(), slint::PlatformError
     apply_windows_11_rounded_corners();
 
     match services.preferences.load() {
-        Ok(prefs) => ui.set_theme(presenter::theme_from(prefs.color_scheme)),
+        Ok(prefs) => {
+            ui.set_theme(presenter::theme_from(prefs.color_scheme));
+            ui.set_autostart_in_background(prefs.autostart_in_background);
+            ui.set_auto_check_updates(prefs.auto_check_updates);
+            ui.set_show_notifications(prefs.show_notifications);
+            ui.set_keep_running_in_background(prefs.keep_running_in_background);
+        }
         Err(e) => eprintln!("[preferences] using defaults: {e}"),
     }
 
@@ -84,13 +90,49 @@ pub fn run(services: Services, version: &str) -> Result<(), slint::PlatformError
     });
 
     let weak = ui.as_weak();
-    let s = services;
+    let s = services.clone();
     ui.on_theme_selected(move |theme| {
         let Some(ui) = weak.upgrade() else { return };
         if let Err(e) = s
             .preferences
             .set_color_scheme(presenter::color_scheme_from(theme))
         {
+            ui.set_error_message(e.to_string().into());
+        }
+    });
+
+    let weak = ui.as_weak();
+    let s = services.clone();
+    ui.on_autostart_toggled(move |val| {
+        let Some(ui) = weak.upgrade() else { return };
+        if let Err(e) = s.preferences.set_autostart_in_background(val) {
+            ui.set_error_message(e.to_string().into());
+        }
+    });
+
+    let weak = ui.as_weak();
+    let s = services.clone();
+    ui.on_auto_updates_toggled(move |val| {
+        let Some(ui) = weak.upgrade() else { return };
+        if let Err(e) = s.preferences.set_auto_check_updates(val) {
+            ui.set_error_message(e.to_string().into());
+        }
+    });
+
+    let weak = ui.as_weak();
+    let s = services.clone();
+    ui.on_notifications_toggled(move |val| {
+        let Some(ui) = weak.upgrade() else { return };
+        if let Err(e) = s.preferences.set_show_notifications(val) {
+            ui.set_error_message(e.to_string().into());
+        }
+    });
+
+    let weak = ui.as_weak();
+    let s = services;
+    ui.on_background_running_toggled(move |val| {
+        let Some(ui) = weak.upgrade() else { return };
+        if let Err(e) = s.preferences.set_keep_running_in_background(val) {
             ui.set_error_message(e.to_string().into());
         }
     });

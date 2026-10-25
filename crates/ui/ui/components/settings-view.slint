@@ -1,0 +1,552 @@
+import { Button, Palette, ScrollView, LineEdit } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+import { ThemePreference } from "../types.slint";
+import { SurfaceCard } from "card.slint";
+import { PlatformToggle } from "toggle.slint";
+
+export component SettingsView inherits VerticalLayout {
+    in-out property <ThemePreference> theme: ThemePreference.system;
+    in property <bool> system-dark: false;
+    in property <string> version;
+    in property <string> error-message;
+
+    in-out property <bool> autostart-in-background: false;
+    in-out property <bool> auto-check-updates: true;
+    in-out property <bool> show-notifications: true;
+    in-out property <bool> keep-running-in-background: true;
+
+    in-out property <string> draft-package-name: "";
+
+    callback back-clicked();
+    callback theme-selected(ThemePreference);
+    callback autostart-toggled(bool);
+    callback auto-updates-toggled(bool);
+    callback notifications-toggled(bool);
+    callback background-running-toggled(bool);
+    callback register-package(string) -> bool;
+    callback refresh-packages();
+    callback show-about();
+
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 16px;
+    padding-bottom: 20px;
+    spacing: 14px;
+    alignment: start;
+
+    // View Header with Back button and Breadcrumb / Title
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: stretch;
+        padding-bottom: 2px;
+
+        Rectangle {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: back-touch.has-hover ? Theme.hover-background : Colors.transparent;
+
+            back-touch := TouchArea {
+                accessible-role: button;
+                accessible-label: @tr("Back to software catalog");
+                mouse-cursor: pointer;
+                clicked => { root.back-clicked(); }
+            }
+
+            Image {
+                width: 16px;
+                height: 16px;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                source: @image-url("../assets/chevron-left.svg");
+                colorize: Theme.brand-accent;
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 1;
+
+            Text {
+                text: @tr("Settings");
+                font-size: 20px;
+                font-weight: 700;
+                color: Palette.foreground;
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+
+            Button {
+                text: @tr("Done");
+                primary: true;
+                clicked => { root.back-clicked(); }
+            }
+        }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        horizontal-scrollbar-policy: always-off;
+
+        VerticalLayout {
+            spacing: 16px;
+            padding-bottom: 16px;
+            alignment: start;
+
+            // SECTION 1: Appearance & Theme
+            SurfaceCard {
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: stretch;
+
+                        Text {
+                            text: @tr("Appearance");
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Palette.foreground;
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.divider;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 14px;
+                        alignment: stretch;
+
+                        // System Theme Card Option
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            height: 68px;
+                            border-radius: 10px;
+                            border-width: root.theme == ThemePreference.system ? 2px : 1px;
+                            border-color: root.theme == ThemePreference.system
+                                ? Theme.brand-accent
+                                : Theme.card-border;
+                            background: root.theme == ThemePreference.system
+                                ? Theme.selected-background
+                                : sys-touch.has-hover
+                                    ? Theme.hover-background
+                                    : Colors.transparent;
+
+                            sys-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.theme = ThemePreference.system;
+                                    root.theme-selected(ThemePreference.system);
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                padding-left: 12px;
+                                padding-right: 12px;
+
+                                Text {
+                                    text: @tr("System");
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Palette.foreground;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: @tr("Matches OS mode");
+                                    font-size: 11px;
+                                    color: Theme.muted-foreground;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+
+                        // Light Theme Card Option
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            height: 68px;
+                            border-radius: 10px;
+                            border-width: root.theme == ThemePreference.light ? 2px : 1px;
+                            border-color: root.theme == ThemePreference.light
+                                ? Theme.brand-accent
+                                : Theme.card-border;
+                            background: root.theme == ThemePreference.light
+                                ? Theme.selected-background
+                                : light-touch.has-hover
+                                    ? Theme.hover-background
+                                    : Colors.transparent;
+
+                            light-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.theme = ThemePreference.light;
+                                    root.theme-selected(ThemePreference.light);
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                padding-left: 12px;
+                                padding-right: 12px;
+
+                                Text {
+                                    text: @tr("Light");
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Palette.foreground;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: @tr("Vibrant coral");
+                                    font-size: 11px;
+                                    color: Theme.muted-foreground;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+
+                        // Dark Theme Card Option
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            height: 68px;
+                            border-radius: 10px;
+                            border-width: root.theme == ThemePreference.dark ? 2px : 1px;
+                            border-color: root.theme == ThemePreference.dark
+                                ? Theme.brand-accent
+                                : Theme.card-border;
+                            background: root.theme == ThemePreference.dark
+                                ? Theme.selected-background
+                                : dark-touch.has-hover
+                                    ? Theme.hover-background
+                                    : Colors.transparent;
+
+                            dark-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.theme = ThemePreference.dark;
+                                    root.theme-selected(ThemePreference.dark);
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                padding-left: 12px;
+                                padding-right: 12px;
+
+                                Text {
+                                    text: @tr("Dark");
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Palette.foreground;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: @tr("Deep maroon & charcoal");
+                                    font-size: 11px;
+                                    color: Theme.muted-foreground;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // SECTION 2: Background & System Integration
+            SurfaceCard {
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: stretch;
+
+                        Text {
+                            text: @tr("System Integration");
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Palette.foreground;
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.divider;
+                    }
+
+                    // Autostart in background
+                    HorizontalLayout {
+                        spacing: 16px;
+                        alignment: stretch;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 2px;
+                            alignment: center;
+
+                            Text {
+                                text: @tr("Autostart in background");
+                                font-size: 13px;
+                                font-weight: 600;
+                                color: Palette.foreground;
+                            }
+
+                            Text {
+                                text: @tr("Start the Dynamotivation Hub silently on Windows login");
+                                font-size: 11px;
+                                color: Theme.muted-foreground;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            PlatformToggle {
+                                checked <=> root.autostart-in-background;
+                                toggled(val) => { root.autostart-toggled(val); }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.divider;
+                    }
+
+                    // Keep running in background
+                    HorizontalLayout {
+                        spacing: 16px;
+                        alignment: stretch;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 2px;
+                            alignment: center;
+
+                            Text {
+                                text: @tr("Keep running in background");
+                                font-size: 13px;
+                                font-weight: 600;
+                                color: Palette.foreground;
+                            }
+
+                            Text {
+                                text: @tr("Stay minimized in system tray when the window is closed");
+                                font-size: 11px;
+                                color: Theme.muted-foreground;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            PlatformToggle {
+                                checked <=> root.keep-running-in-background;
+                                toggled(val) => { root.background-running-toggled(val); }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.divider;
+                    }
+
+                    // Automatically check for updates
+                    HorizontalLayout {
+                        spacing: 16px;
+                        alignment: stretch;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 2px;
+                            alignment: center;
+
+                            Text {
+                                text: @tr("Automatically check for updates");
+                                font-size: 13px;
+                                font-weight: 600;
+                                color: Palette.foreground;
+                            }
+
+                            Text {
+                                text: @tr("Periodically verify whether installed packages or the Hub have newer versions");
+                                font-size: 11px;
+                                color: Theme.muted-foreground;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            PlatformToggle {
+                                checked <=> root.auto-check-updates;
+                                toggled(val) => { root.auto-updates-toggled(val); }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.divider;
+                    }
+
+                    // Show notifications
+                    HorizontalLayout {
+                        spacing: 16px;
+                        alignment: stretch;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 2px;
+                            alignment: center;
+
+                            Text {
+                                text: @tr("Show notifications");
+                                font-size: 13px;
+                                font-weight: 600;
+                                color: Palette.foreground;
+                            }
+
+                            Text {
+                                text: @tr("Display desktop notifications when package updates or downloads complete");
+                                font-size: 11px;
+                                color: Theme.muted-foreground;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            PlatformToggle {
+                                checked <=> root.show-notifications;
+                                toggled(val) => { root.notifications-toggled(val); }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // SECTION 3: Package Management & Development Tools
+            SurfaceCard {
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 14px;
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: stretch;
+
+                        Text {
+                            text: @tr("Software Registration");
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Palette.foreground;
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.divider;
+                    }
+
+                    Text {
+                        text: @tr("Register custom software packages or manually trigger a catalog sync.");
+                        font-size: 12px;
+                        color: Theme.muted-foreground;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        LineEdit {
+                            text <=> root.draft-package-name;
+                            placeholder-text: @tr("Register custom software package…");
+                            horizontal-stretch: 1;
+                            accepted => {
+                                if (root.register-package(root.draft-package-name)) {
+                                    root.draft-package-name = "";
+                                }
+                            }
+                        }
+
+                        Button {
+                            text: @tr("Register");
+                            primary: true;
+                            clicked => {
+                                if (root.register-package(root.draft-package-name)) {
+                                    root.draft-package-name = "";
+                                }
+                            }
+                        }
+
+                        Button {
+                            text: @tr("Refresh Catalog");
+                            clicked => { root.refresh-packages(); }
+                        }
+                    }
+
+                    if root.error-message != "": Text {
+                        text: root.error-message;
+                        font-size: 12px;
+                        color: Theme.critical-foreground;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // SECTION 4: About & System Info
+            SurfaceCard {
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 12px;
+
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: stretch;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 3px;
+                            alignment: center;
+
+                            Text {
+                                text: @tr("Dynamotivation Software Hub");
+                                font-size: 14px;
+                                font-weight: 700;
+                                color: Palette.foreground;
+                            }
+
+                            Text {
+                                text: @tr("Version {}", root.version);
+                                font-size: 12px;
+                                color: Theme.muted-foreground;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            Button {
+                                text: @tr("About Slint");
+                                clicked => { root.show-about(); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
