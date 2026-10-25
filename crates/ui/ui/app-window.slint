@@ -27,6 +27,7 @@ export component AppWindow inherits Window {
     in-out property <ThemePreference> theme: ThemePreference.system;
     // Resolved OS dark-mode flag so "System theme" sets an explicit scheme.
     in property <bool> system-dark: false;
+    in-out property <bool> is-maximized: false;
 
     // Currently selected package for the wide Steam-like master-detail layout.
     in-out property <PackageRow> selected-package: {
@@ -109,8 +110,10 @@ export component AppWindow inherits Window {
         width: 100%;
         height: 100%;
         background: Theme.window-background;
-        border-width: 1px;
+        border-radius: root.is-maximized ? 0px : 12px;
+        border-width: root.is-maximized ? 0px : 1px;
         border-color: Theme.window-frame-border;
+        clip: true;
 
         VerticalLayout {
             spacing: 0px;
@@ -187,15 +190,18 @@ export component AppWindow inherits Window {
                         VerticalLayout {
                             alignment: stretch;
 
-                            // Top-right Window Control Buttons
+                            // Top-right Window Control Buttons (Windows 11 Fluent style)
                             HorizontalLayout {
                                 alignment: end;
-                                spacing: 0px;
+                                spacing: 2px;
+                                padding-right: 6px;
+                                padding-top: 4px;
 
-                                // Minimize
+                                // Minimize (Windows 11 Fluent)
                                 Rectangle {
-                                    width: 44px;
-                                    height: 30px;
+                                    width: 46px;
+                                    height: 32px;
+                                    border-radius: 4px;
                                     background: min-touch.has-hover
                                         ? Theme.header-hover-background
                                         : Colors.transparent;
@@ -207,8 +213,8 @@ export component AppWindow inherits Window {
                                     }
 
                                     Image {
-                                        width: 14px;
-                                        height: 14px;
+                                        width: 10px;
+                                        height: 10px;
                                         x: (parent.width - self.width) / 2;
                                         y: (parent.height - self.height) / 2;
                                         source: @image-url("assets/window-minimize.svg");
@@ -216,37 +222,43 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
-                                // Maximize / Restore
+                                // Maximize / Restore (Windows 11 Fluent)
                                 Rectangle {
-                                    width: 44px;
-                                    height: 30px;
+                                    width: 46px;
+                                    height: 32px;
+                                    border-radius: 4px;
                                     background: max-touch.has-hover
                                         ? Theme.header-hover-background
                                         : Colors.transparent;
 
                                     max-touch := TouchArea {
                                         accessible-role: button;
-                                        accessible-label: @tr("Maximize");
+                                        accessible-label: root.is-maximized ? @tr("Restore") : @tr("Maximize");
                                         clicked => { root.toggle-maximize-window(); }
                                     }
 
                                     Image {
-                                        width: 14px;
-                                        height: 14px;
+                                        width: 10px;
+                                        height: 10px;
                                         x: (parent.width - self.width) / 2;
                                         y: (parent.height - self.height) / 2;
-                                        source: @image-url("assets/window-maximize.svg");
+                                        source: root.is-maximized
+                                            ? @image-url("assets/window-restore.svg")
+                                            : @image-url("assets/window-maximize.svg");
                                         colorize: Theme.header-foreground;
                                     }
                                 }
 
-                                // Close
+                                // Close (Windows 11 Fluent)
                                 Rectangle {
                                     width: 46px;
-                                    height: 30px;
-                                    background: close-touch.has-hover
-                                        ? Theme.window-close-hover
-                                        : Colors.transparent;
+                                    height: 32px;
+                                    border-radius: 4px;
+                                    background: close-touch.pressed
+                                        ? #b82415
+                                        : close-touch.has-hover
+                                            ? #c42b1c
+                                            : Colors.transparent;
 
                                     close-touch := TouchArea {
                                         accessible-role: button;
@@ -255,12 +267,12 @@ export component AppWindow inherits Window {
                                     }
 
                                     Image {
-                                        width: 14px;
-                                        height: 14px;
+                                        width: 10px;
+                                        height: 10px;
                                         x: (parent.width - self.width) / 2;
                                         y: (parent.height - self.height) / 2;
                                         source: @image-url("assets/window-close.svg");
-                                        colorize: Theme.header-foreground;
+                                        colorize: close-touch.has-hover ? #ffffff : Theme.header-foreground;
                                     }
                                 }
                             }
@@ -973,7 +985,7 @@ export component AppWindow inherits Window {
         }
 
         // Right-edge resize grip for frameless window
-        Rectangle {
+        if !root.is-maximized: Rectangle {
             x: parent.width - 5px;
             y: 36px;
             width: 5px;
@@ -990,7 +1002,7 @@ export component AppWindow inherits Window {
         }
 
         // Bottom-edge resize grip for frameless window
-        Rectangle {
+        if !root.is-maximized: Rectangle {
             x: 0px;
             y: parent.height - 5px;
             width: parent.width - 10px;
@@ -1007,7 +1019,7 @@ export component AppWindow inherits Window {
         }
 
         // Bottom-right corner resize grip for frameless window
-        Rectangle {
+        if !root.is-maximized: Rectangle {
             x: parent.width - 10px;
             y: parent.height - 10px;
             width: 10px;
