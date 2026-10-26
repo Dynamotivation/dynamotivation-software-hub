@@ -1,0 +1,11 @@
+name: hub_core
+description: "Platform-independent core of the Dynamotivation Software Hub: domain, application and infrastructure. No Flutter dependency."
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.7
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

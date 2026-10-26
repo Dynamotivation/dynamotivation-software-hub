@@ -1,0 +1,11 @@
+name: dynamotivation_software_hub_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.7
+
+# One frontend per OS lives in apps/; all share the packages below.
+workspace:
+  - packages/hub_core
+  - packages/hub_l10n
+  - apps/windows

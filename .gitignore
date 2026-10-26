@@ -1,1 +1,42 @@
-/dist
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec_overrides.yaml
+build/
+coverage/
+doc/api/
+*.log
+app.*.symbols
+app.*.map.json
+.widget_preview/
+migrate_working_dir/
+
+# Per-platform ephemeral output (apps/<os>/<os>/...)
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/Flutter/Flutter-Generated.xcconfig
+**/macos/Flutter/flutter_export_environment.sh
+**/macos/Flutter/ephemeral/
+
+# IDEs / OS
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local release output and scratch files
+/dist/
+err.txt
+out.txt

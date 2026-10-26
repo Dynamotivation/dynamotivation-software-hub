@@ -1,0 +1,89 @@
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:hub_core/hub_core.dart';
+import 'package:hub_l10n/hub_l10n.dart';
+
+import 'presentation/controllers/hub_controller.dart';
+import 'presentation/pages/software_hub_page.dart';
+import 'presentation/theme/dynamotivation_theme.dart';
+
+class DynamotivationApp extends StatefulWidget {
+  final HubController controller;
+  final bool initialSettingsOpen;
+
+  /// Whether to keep the Mica backdrop in sync with the theme (needs the
+  /// native window to be initialised; disabled in widget tests).
+  final bool syncMica;
+
+  const DynamotivationApp({
+    super.key,
+    required this.controller,
+    this.initialSettingsOpen = false,
+    this.syncMica = false,
+  });
+
+  @override
+  State<DynamotivationApp> createState() => _DynamotivationAppState();
+}
+
+class _DynamotivationAppState extends State<DynamotivationApp> {
+  Brightness? _micaBrightness;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_syncMica);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_syncMica);
+    super.dispose();
+  }
+
+  void _syncMica() {
+    if (!widget.syncMica) return;
+    final brightness = _resolvedBrightness();
+    if (brightness == _micaBrightness) return;
+    _micaBrightness = brightness;
+    Window.setEffect(
+      effect: WindowEffect.mica,
+      color: Colors.transparent,
+      dark: brightness == Brightness.dark,
+    );
+  }
+
+  Brightness _resolvedBrightness() {
+    switch (widget.controller.settings.themeMode) {
+      case AppThemeMode.light:
+        return Brightness.light;
+      case AppThemeMode.dark:
+        return Brightness.dark;
+      case AppThemeMode.system:
+        return WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) {
+        final isDark = _resolvedBrightness() == Brightness.dark;
+        return FluentApp(
+          onGenerateTitle: (context) => context.l10n.appTitle,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+          theme: DynamotivationTheme.lightTheme(),
+          darkTheme: DynamotivationTheme.darkTheme(),
+          debugShowCheckedModeBanner: false,
+          home: SoftwareHubPage(
+            controller: widget.controller,
+            initialSettingsOpen: widget.initialSettingsOpen,
+          ),
+        );
+      },
+    );
+  }
+}
