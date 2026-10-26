@@ -5,8 +5,7 @@ import 'package:window_manager/window_manager.dart';
 import '../l10n/l10n.dart';
 import '../theme/dynamotivation_theme.dart';
 
-/// Integrated title bar + brand header, mirroring the Rust `header` in
-/// `crates/ui/ui/app-window.slint` (82px gradient band, no OS title bar).
+/// Integrated title bar + brand header (82px gradient band, no OS title bar).
 class WindowTitleBar extends StatefulWidget {
   final bool isSettingsOpen;
   final VoidCallback onToggleSettings;
@@ -129,7 +128,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                   ),
                 ),
 
-                // Caption buttons on top, hub actions below (as in Rust).
+                // Caption buttons on top, hub actions below.
                 Padding(
                   padding: const EdgeInsets.only(right: 6, top: 4),
                   child: Column(

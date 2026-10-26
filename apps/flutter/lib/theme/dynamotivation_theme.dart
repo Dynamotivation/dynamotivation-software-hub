@@ -1,6 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-/// Colour tokens mirrored from `crates/ui/ui/theme.slint` (the `Theme` global).
+/// Dynamotivation colour tokens.
 /// Keep names and values in sync with that file so both apps look the same.
 class DynTokens {
   final bool isDark;
