@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/dynamotivation_theme.dart';
 
 /// Integrated title bar + brand header, mirroring the Rust `header` in
@@ -104,7 +105,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Dynamotivation',
+                                context.l10n.brandName,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -113,7 +114,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                                 ),
                               ),
                               Text(
-                                'Software Hub',
+                                context.l10n.productName,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -140,7 +141,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                         children: [
                           _CaptionButton(
                             icon: _captionMinimizeIcon,
-                            tooltip: 'Minimize',
+                            tooltip: context.l10n.minimize,
                             onPressed: () {
                               try {
                                 windowManager.minimize();
@@ -151,7 +152,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                             icon: _isMaximized
                                 ? _captionRestoreIcon
                                 : _captionMaximizeIcon,
-                            tooltip: _isMaximized ? 'Restore' : 'Maximize',
+                            tooltip: _isMaximized ? context.l10n.restore : context.l10n.maximize,
                             onPressed: () async {
                               try {
                                 if (_isMaximized) {
@@ -164,7 +165,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           ),
                           _CaptionButton(
                             icon: _captionCloseIcon,
-                            tooltip: 'Close',
+                            tooltip: context.l10n.close,
                             isClose: true,
                             onPressed: () {
                               try {
@@ -186,8 +187,8 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           const SizedBox(width: 6),
                           Tooltip(
                             message: widget.isSettingsOpen
-                                ? 'Back to Software'
-                                : 'Settings',
+                                ? context.l10n.backToSoftware
+                                : context.l10n.settings,
                             child: IconButton(
                               icon: Icon(
                                 widget.isSettingsOpen
@@ -261,8 +262,8 @@ class _UpdateHubPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: hubUpdateVersion != null
-          ? 'Software Hub update available ($hubUpdateVersion)'
-          : 'Hub is up to date',
+          ? context.l10n.hubUpdateAvailableTooltip(hubUpdateVersion!)
+          : context.l10n.hubUpToDate,
       child: HoverButton(
         onPressed:
             onUpdateHub ??
@@ -270,16 +271,16 @@ class _UpdateHubPill extends StatelessWidget {
               displayInfoBar(
                 context,
                 builder: (context, close) => InfoBar(
-                  title: const Text('Software Hub Update'),
+                  title: Text(context.l10n.hubUpdateTitle),
                   content: Text(
                     hubUpdateVersion != null
-                        ? 'Version $hubUpdateVersion is ready to install.'
-                        : 'You are running the latest version.',
+                        ? context.l10n.hubUpdateReady(hubUpdateVersion!)
+                        : context.l10n.hubRunningLatest,
                   ),
                   severity: InfoBarSeverity.info,
                   action: hubUpdateVersion != null
                       ? Button(
-                          child: const Text('Update now'),
+                          child: Text(context.l10n.updateNow),
                           onPressed: () {},
                         )
                       : null,
@@ -315,7 +316,7 @@ class _UpdateHubPill extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Update Hub',
+                  context.l10n.updateHub,
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,

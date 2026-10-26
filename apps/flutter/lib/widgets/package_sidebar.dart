@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../l10n/l10n.dart';
 import '../models/package_model.dart';
 import '../theme/dynamotivation_theme.dart';
 
@@ -100,7 +101,7 @@ class _PackageSidebarState extends State<PackageSidebar>
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
             child: TextBox(
               controller: _searchController,
-              placeholder: 'Search software...',
+              placeholder: context.l10n.searchSoftware,
               prefix: const Padding(
                 padding: EdgeInsets.only(left: 10, right: 6),
                 child: Icon(FluentIcons.search, size: 14),
@@ -142,7 +143,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                   child: Row(
                     children: [
                       Text(
-                        'Installed',
+                        context.l10n.installed,
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
@@ -176,7 +177,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                       ),
                       const Spacer(),
                       Tooltip(
-                        message: 'Check for updates',
+                        message: context.l10n.checkForUpdates,
                         child: IconButton(
                           icon: RotationTransition(
                             turns: _spinController,
@@ -249,7 +250,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Available',
+                            context.l10n.available,
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,

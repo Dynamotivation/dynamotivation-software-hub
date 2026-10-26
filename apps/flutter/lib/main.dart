@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'l10n/l10n.dart';
 import 'models/package_catalog.dart';
 import 'models/package_model.dart';
 import 'models/settings_model.dart';
@@ -111,7 +112,9 @@ class _DynamotivationAppState extends State<DynamotivationApp> {
     final isDark = brightness == Brightness.dark;
 
     return FluentApp(
-      title: 'Dynamotivation Software Hub',
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       theme: DynamotivationTheme.lightTheme(),
       darkTheme: DynamotivationTheme.darkTheme(),
@@ -182,9 +185,9 @@ class _SoftwareHubHomeState extends State<SoftwareHubHome> {
       });
       displayInfoBar(
         context,
-        builder: (context, close) => const InfoBar(
-          title: Text('Catalog Synchronized'),
-          content: Text('All software package listings are up to date.'),
+        builder: (context, close) => InfoBar(
+          title: Text(context.l10n.catalogSynchronized),
+          content: Text(context.l10n.catalogUpToDate),
           severity: InfoBarSeverity.success,
         ),
       );
@@ -210,8 +213,8 @@ class _SoftwareHubHomeState extends State<SoftwareHubHome> {
     displayInfoBar(
       context,
       builder: (context, close) => InfoBar(
-        title: Text('${updated.name} Updated'),
-        content: Text('Successfully updated to v${updated.latestVersion}.'),
+        title: Text(context.l10n.packageUpdatedTitle(updated.name)),
+        content: Text(context.l10n.packageUpdatedContent(updated.latestVersion)),
         severity: InfoBarSeverity.success,
       ),
     );
@@ -222,8 +225,8 @@ class _SoftwareHubHomeState extends State<SoftwareHubHome> {
     displayInfoBar(
       context,
       builder: (context, close) => InfoBar(
-        title: Text('Launching ${_selectedPackage!.name}'),
-        content: Text('Starting v${_selectedPackage!.currentVersion}...'),
+        title: Text(context.l10n.launchingTitle(_selectedPackage!.name)),
+        content: Text(context.l10n.launchingContent(_selectedPackage!.currentVersion)),
         severity: InfoBarSeverity.info,
       ),
     );
@@ -238,8 +241,8 @@ class _SoftwareHubHomeState extends State<SoftwareHubHome> {
     final newPkg = SoftwarePackage(
       id: id,
       name: name,
-      subtitle: 'Custom registered package',
-      description: 'Custom registered package from your local catalog.',
+      subtitle: context.l10n.customPackageSubtitle,
+      description: context.l10n.customPackageDescription,
       currentVersion: '1.0.0',
       latestVersion: '1.0.0',
       iconAsset: 'assets/dynamotivation-logo.svg',
@@ -248,7 +251,7 @@ class _SoftwareHubHomeState extends State<SoftwareHubHome> {
       latestRelease: ReleaseNote(
         version: '1.0.0',
         date: DateTime.now().toString().split(' ')[0],
-        highlights: const ['Initial package registration'],
+        highlights: [context.l10n.initialRegistration],
       ),
       olderReleases: const [],
       availableVersions: const ['v1.0.0 (Latest)'],
@@ -263,8 +266,8 @@ class _SoftwareHubHomeState extends State<SoftwareHubHome> {
     displayInfoBar(
       context,
       builder: (context, close) => InfoBar(
-        title: const Text('Package Registered'),
-        content: Text('"$name" has been added to your software library.'),
+        title: Text(context.l10n.packageRegistered),
+        content: Text(context.l10n.packageAddedToLibrary(name)),
         severity: InfoBarSeverity.success,
       ),
     );

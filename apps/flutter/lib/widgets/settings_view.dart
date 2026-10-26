@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../l10n/l10n.dart';
 import '../models/settings_model.dart';
 import '../theme/dynamotivation_theme.dart';
 
@@ -59,7 +60,7 @@ class _SettingsViewState extends State<SettingsView> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Settings',
+                context.l10n.settings,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -77,13 +78,13 @@ class _SettingsViewState extends State<SettingsView> {
             children: [
               // Appearance Card
               _SettingsCard(
-                title: 'Appearance',
+                title: context.l10n.appearance,
                 child: Row(
                   children: [
                     Expanded(
                       child: _ThemeOptionTile(
-                        title: 'System',
-                        subtitle: 'Matches OS mode',
+                        title: context.l10n.themeSystem,
+                        subtitle: context.l10n.themeSystemDescription,
                         isSelected:
                             widget.settings.themeMode == AppThemeMode.system,
                         onTap: () {
@@ -98,8 +99,8 @@ class _SettingsViewState extends State<SettingsView> {
                     const SizedBox(width: 14),
                     Expanded(
                       child: _ThemeOptionTile(
-                        title: 'Light',
-                        subtitle: 'Vibrant coral',
+                        title: context.l10n.themeLight,
+                        subtitle: context.l10n.themeLightDescription,
                         isSelected:
                             widget.settings.themeMode == AppThemeMode.light,
                         onTap: () {
@@ -114,8 +115,8 @@ class _SettingsViewState extends State<SettingsView> {
                     const SizedBox(width: 14),
                     Expanded(
                       child: _ThemeOptionTile(
-                        title: 'Dark',
-                        subtitle: 'Deep maroon & charcoal',
+                        title: context.l10n.themeDark,
+                        subtitle: context.l10n.themeDarkDescription,
                         isSelected:
                             widget.settings.themeMode == AppThemeMode.dark,
                         onTap: () {
@@ -135,13 +136,13 @@ class _SettingsViewState extends State<SettingsView> {
 
               // System Integration Card
               _SettingsCard(
-                title: 'System Integration',
+                title: context.l10n.systemIntegration,
                 child: Column(
                   children: [
                     _ToggleRow(
-                      title: 'Autostart in background',
+                      title: context.l10n.autostartTitle,
                       description:
-                          'Start the Software Hub silently when you log in',
+                          context.l10n.autostartDescription,
                       value: widget.settings.autostartInBackground,
                       onChanged: (val) {
                         widget.onSettingsChanged(
@@ -151,9 +152,9 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const _CardDivider(),
                     _ToggleRow(
-                      title: 'Keep running in background',
+                      title: context.l10n.keepRunningTitle,
                       description:
-                          'Stay in the system tray when the window is closed',
+                          context.l10n.keepRunningDescription,
                       value: widget.settings.keepRunningInBackground,
                       onChanged: (val) {
                         widget.onSettingsChanged(
@@ -165,8 +166,8 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const _CardDivider(),
                     _ToggleRow(
-                      title: 'Automatically check for updates',
-                      description: 'Periodically check whether installed software or the Hub has a newer version',
+                      title: context.l10n.autoCheckTitle,
+                      description: context.l10n.autoCheckDescription,
                       value: widget.settings.autoCheckUpdates,
                       onChanged: (val) {
                         widget.onSettingsChanged(
@@ -176,9 +177,9 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const _CardDivider(),
                     _ToggleRow(
-                      title: 'Show notifications',
+                      title: context.l10n.notificationsTitle,
                       description:
-                          'Notify me when updates or downloads complete',
+                          context.l10n.notificationsDescription,
                       value: widget.settings.showNotifications,
                       onChanged: (val) {
                         widget.onSettingsChanged(
@@ -194,12 +195,12 @@ class _SettingsViewState extends State<SettingsView> {
 
               // Software Registration Card
               _SettingsCard(
-                title: 'Software Registration',
+                title: context.l10n.softwareRegistration,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Register custom software packages or manually trigger a catalog sync.',
+                      context.l10n.softwareRegistrationDescription,
                       style: TextStyle(
                         fontSize: 12.5,
                         color: isDark
@@ -213,7 +214,7 @@ class _SettingsViewState extends State<SettingsView> {
                         Expanded(
                           child: TextBox(
                             controller: _packageController,
-                            placeholder: 'Software name...',
+                            placeholder: context.l10n.softwareNamePlaceholder,
                             onSubmitted: (_) => _submitRegistration(),
                             decoration: WidgetStateProperty.all(
                               BoxDecoration(
@@ -233,18 +234,18 @@ class _SettingsViewState extends State<SettingsView> {
                         const SizedBox(width: 10),
                         FilledButton(
                           onPressed: _submitRegistration,
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 3,
                             ),
-                            child: Text('Register'),
+                            child: Text(context.l10n.register),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Button(
                           onPressed: widget.onRefreshCatalog,
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 3,
@@ -254,7 +255,7 @@ class _SettingsViewState extends State<SettingsView> {
                               children: [
                                 Icon(FluentIcons.refresh, size: 12),
                                 SizedBox(width: 6),
-                                Text('Refresh catalog'),
+                                Text(context.l10n.refreshCatalog),
                               ],
                             ),
                           ),

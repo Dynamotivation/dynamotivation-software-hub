@@ -1,0 +1,10 @@
+# Crowdin sync for the Flutter app. Source strings live in app_en.arb;
+# translations are written back as app_<locale>.arb (e.g. app_de.arb).
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+base_path: apps/flutter
+preserve_hierarchy: true
+files:
+  - source: /lib/l10n/app_en.arb
+    translation: /lib/l10n/app_%two_letters_code%.arb
+    type: arb

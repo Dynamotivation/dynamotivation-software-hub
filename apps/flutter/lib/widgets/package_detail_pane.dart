@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../l10n/l10n.dart';
 import '../models/package_model.dart';
 import '../theme/dynamotivation_theme.dart';
 
@@ -41,7 +42,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
     if (widget.package == null) {
       return Center(
         child: Text(
-          'Select a software package to view details',
+          context.l10n.selectPackagePrompt,
           style: TextStyle(
             fontSize: 14,
             color: isDark
@@ -162,7 +163,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    'Update available',
+                                    context.l10n.updateAvailable,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -224,7 +225,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    'Installed',
+                                    context.l10n.installed,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -258,7 +259,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                'Available',
+                                context.l10n.available,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -307,14 +308,14 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         children: [
                           const Icon(FluentIcons.up, size: 13),
                           const SizedBox(width: 6),
-                          Text('Update to v${pkg.latestVersion}'),
+                          Text(context.l10n.updateToVersion(pkg.latestVersion)),
                         ],
                       ),
                     ),
                   ),
                   Button(
                     onPressed: widget.onLaunch,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 4,
@@ -324,7 +325,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         children: [
                           Icon(FluentIcons.play, size: 12),
                           SizedBox(width: 6),
-                          Text('Launch'),
+                          Text(context.l10n.launch),
                         ],
                       ),
                     ),
@@ -332,7 +333,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                 ] else if (pkg.isInstalled) ...[
                   FilledButton(
                     onPressed: widget.onLaunch,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 4,
@@ -342,7 +343,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         children: [
                           Icon(FluentIcons.play, size: 13),
                           SizedBox(width: 6),
-                          Text('Launch'),
+                          Text(context.l10n.launch),
                         ],
                       ),
                     ),
@@ -350,7 +351,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                 ] else if (pkg.isDownloading) ...[
                   Button(
                     onPressed: () {},
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 4,
@@ -360,7 +361,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         children: [
                           Icon(FluentIcons.cancel, size: 13),
                           SizedBox(width: 6),
-                          Text('Cancel Download'),
+                          Text(context.l10n.cancelDownload),
                         ],
                       ),
                     ),
@@ -378,7 +379,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         children: [
                           const Icon(FluentIcons.download, size: 13),
                           const SizedBox(width: 6),
-                          Text('Install v${pkg.latestVersion}'),
+                          Text(context.l10n.installVersion(pkg.latestVersion)),
                         ],
                       ),
                     ),
@@ -394,12 +395,12 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         FluentIcons.open_folder_horizontal,
                         size: 14,
                       ),
-                      text: const Text('Open install folder'),
+                      text: Text(context.l10n.openInstallFolder),
                       onPressed: () {},
                     ),
                     MenuFlyoutItem(
                       leading: const Icon(FluentIcons.verified_brand, size: 14),
-                      text: const Text('Verify files'),
+                      text: Text(context.l10n.verifyFiles),
                       onPressed: () {},
                     ),
                     const MenuFlyoutSeparator(),
@@ -409,8 +410,8 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         size: 14,
                         color: Color(0xFFC42B1C),
                       ),
-                      text: const Text(
-                        'Uninstall',
+                      text: Text(
+                        context.l10n.uninstall,
                         style: TextStyle(color: Color(0xFFC42B1C)),
                       ),
                       onPressed: () {},
@@ -435,7 +436,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
 
             // About this software
             Text(
-              'About this software',
+              context.l10n.aboutThisSoftware,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -480,7 +481,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
 
             // What's new section
             Text(
-              "What's new",
+              context.l10n.whatsNew,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -585,7 +586,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Older releases (${pkg.olderReleases.length})',
+                          context.l10n.olderReleases(pkg.olderReleases.length),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
