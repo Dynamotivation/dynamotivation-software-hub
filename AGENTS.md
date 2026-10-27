@@ -2,7 +2,7 @@
 
 Single source of truth for this repo. Keep it current; there are no README files.
 
-**Dynamotivation Software Hub** is a desktop launcher and toolbox for the software packages from the same author (Dynamotivation) installed on the user's device. It is a Flutter monorepo (Dart workspace, Flutter 3.47.x, SDK `^3.13.7`) with one frontend per OS. Frontends: `apps/windows` (Fluent UI, the shipping app) and `apps/macos` (macos_ui, a design preview that also runs on Windows; native window effects on macOS). Releases are built locally; there is no CI.
+**Dynamotivation Software Hub** is a desktop launcher and toolbox for the software packages from the same author (Dynamotivation) installed on the user's device. It is a Flutter monorepo (Dart workspace, Flutter 3.47.x, SDK `^3.13.7`) with one frontend per OS. Frontends: `apps/windows` (Fluent UI, the shipping app), `apps/macos` (macos_ui, a design preview that also runs on Windows; native window effects on macOS), and `apps/ubuntu` (Yaru design system, fusing official Ubuntu/GNOME HIG with the Dynamotivation brand identity; runs on Linux and Windows preview). Releases are built locally; there is no CI.
 
 ## Layout
 ```
@@ -12,6 +12,7 @@ packages/hub_keys    shortcut labels named after the active keyboard layout (Str
 packages/hub_scroll  eased mouse-wheel scrolling: SmoothScroll + smoothScrollPhysics
 apps/windows         Fluent UI frontend; lib/presentation/{controllers,pages,widgets,theme}
 apps/macos           macOS-style frontend; lib/presentation/{pages,widgets}
+apps/ubuntu          Ubuntu Yaru frontend; lib/presentation/{controllers,pages,widgets,theme}
 ```
 Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 
@@ -28,15 +29,30 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 
 ## Errors
 - Never swallow errors. Use cases throw typed `HubException`s; the frontend maps them to localized text in its own `lib/presentation/errors.dart` (`describeError(l10n, error)`). Each frontend has its own copy because frontends never import each other.
-- User-initiated failures are shown in the UI (InfoBar or dialog). Background probes that fail are reported via `FlutterError.reportError`, not hidden.
+- User-initiated failures are shown in the UI (InfoBar, toast, or banner). Background probes that fail are reported via `FlutterError.reportError`, not hidden.
 - Known gap: the `hubUpdateVersion: '0.2.0'` literal in `apps/windows/lib/presentation/pages/software_hub_page.dart` is hardcoded, not from a source of truth.
 
 ## UI rules
-- Shortcuts are shown only via `hub_keys` (`withShortcut`), never as hardcoded "Ctrl+X" strings. The Windows app's key bindings are in `apps/windows/lib/presentation/shortcuts.dart`.
+- Shortcuts are shown only via `hub_keys` (`withShortcut`), never as hardcoded "Ctrl+X" strings. The key bindings are defined in each app's `lib/presentation/shortcuts.dart`.
 - Text colours must keep ≥ 4.5:1 contrast (3:1 for large text and UI boundaries).
 - Custom controls must be keyboard focusable with a visible focus ring and carry `Semantics`.
-- Colours come from `DynamotivationTheme` / `DynTokens`, not literals in widgets.
+- Colours come from the platform theme / brand tokens, not arbitrary literals in widgets.
 - Every scroll view uses `SmoothScroll` with `physics: smoothScrollPhysics` and a controller it owns and disposes (see `hub_scroll`).
+- **Brand Lockup & Logo rules**:
+  - Exactly one brand lockup/logo per page, situated at the top of the navigation sidebar or title bar. Never duplicate the logo in the detail view banner or header bar.
+  - Never wrap the brand logo in artificial rounded rectangles, gray backgrounds, or borders.
+  - Brand name ("Dynamotivation") must use standard theme typography and colors matching macOS and Windows (no custom gradients, forced uppercase, or arbitrary accent colors on brand text).
+- **No Platform Tags**:
+  - Never add platform edition tags/pills (e.g., "Ubuntu", "Windows Edition", "macOS Edition") to the UI. The OS environment already establishes the platform context.
+- **No Pill / Badge Clutter**:
+  - Do not place decorative pill containers or badges behind software names, versions, or status text. Use clean typography (`Text`) for names, subtitles, and version lines (`v1.0.0 · Installed`), consistent with the Windows and macOS frontends.
+- **Sidebar List Row Stability**:
+  - Selection must never shift row content horizontally. Icons and text must remain at fixed x-coordinates whether unselected, hovered, or selected. Highlight selection using row background tint and focus borders only.
+- **Destructive Actions (Uninstall)**:
+  - Destructive actions such as Uninstall must never be exposed as primary or transparent outline buttons in the main banner.
+  - They must require two deliberate clicks: placed inside a 3-dot overflow menu (`...` / `more_horiz`), which triggers a modal confirmation dialog (`AlertDialog` / `ContentDialog` / `MacosAlertDialog`) with Cancel and Uninstall buttons.
+- **Settings View Architecture**:
+  - Settings is a global standalone full-page view, never an embedded right pane beside a selected package sidebar. When Settings is open, the package sidebar is hidden, and the header provides a back button to return to the software catalog.
 
 ## Localization (`hub_l10n`)
 - Source strings: `packages/hub_l10n/lib/l10n/app_en.arb`. Give each key an `@key` description and declare placeholders.
@@ -48,9 +64,10 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 
 ## Commands
 - `flutter pub get` at the repo root resolves the whole workspace.
-- Before finishing, `flutter analyze` and `flutter test` must pass in each of: `packages/hub_core`, `packages/hub_l10n`, `packages/hub_keys`, `packages/hub_scroll`, `apps/windows`, `apps/macos`.
+- Before finishing, `flutter analyze` and `flutter test` must pass in each of: `packages/hub_core`, `packages/hub_l10n`, `packages/hub_keys`, `packages/hub_scroll`, `apps/windows`, `apps/macos`, `apps/ubuntu`.
 - Windows app: `cd apps/windows`, then `flutter run -d windows`. Pass `-- --dark` or `-- --settings` to start in dark mode or on the Settings page (`args.contains` in `lib/main.dart`). Release build: `flutter build windows`.
 - macOS app: `cd apps/macos`, then `flutter run -d windows` for the design preview or `flutter run -d macos` for native window effects.
+- Ubuntu app: `cd apps/ubuntu`, then `flutter run -d windows` for the design preview or `flutter run -d linux` on Ubuntu. Pass `-- --dark` or `-- --settings` to start in dark mode or on the Settings view (`args.contains` in `lib/main.dart`). Release build: `flutter build windows` (preview) or `flutter build linux`.
 - `dist/` is gitignored local release output. `err.txt`, `out.txt`, `*.log`, `build/` and `.dart_tool/` are also ignored.
 
 ## Code style
@@ -62,4 +79,4 @@ A new OS frontend is a new `apps/<os>` workspace member, added to the root `pubs
 ## Open decisions (ask the owner, don't assume)
 - Licence.
 - How packages are discovered and installed. The catalog is in-memory sample data, and settings are not persisted yet.
-- Installer formats, code signing, app icons for the macOS frontend, and whether/when a Linux frontend is added.
+- Installer formats, code signing, and app icons for macOS (`.dmg`/`.pkg`) and Ubuntu (`.deb`/`snap`/`flatpak`) frontends.
