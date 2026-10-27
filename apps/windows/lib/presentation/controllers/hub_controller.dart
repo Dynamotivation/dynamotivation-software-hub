@@ -67,22 +67,20 @@ class HubController extends ChangeNotifier {
     return updated;
   }
 
-  /// Throws [HubException] on failure.
-  Future<SoftwarePackage> register({
-    required String name,
-    required String subtitle,
-    required String description,
-    required String initialHighlight,
-  }) async {
-    final created = await _useCases.registerPackage(
-      name: name,
-      subtitle: subtitle,
-      description: description,
-      initialHighlight: initialHighlight,
-    );
+  Future<SoftwarePackage> installSelected() =>
+      _runOnSelected(_useCases.installPackage);
+
+  Future<SoftwarePackage> uninstallSelected() =>
+      _runOnSelected(_useCases.uninstallPackage);
+
+  Future<SoftwarePackage> _runOnSelected(
+    Future<SoftwarePackage> Function(String id) command,
+  ) async {
+    final id = _selectedId;
+    if (id == null) throw const PackageNotFound('');
+    final result = await command(id);
     _packages = await _useCases.listPackages();
-    _selectedId = created.id;
     notifyListeners();
-    return created;
+    return result;
   }
 }

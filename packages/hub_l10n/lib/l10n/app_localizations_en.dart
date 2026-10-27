@@ -88,24 +88,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get customPackageSubtitle => 'Custom registered package';
-
-  @override
-  String get customPackageDescription =>
-      'Custom registered package from your local catalog.';
-
-  @override
-  String get initialRegistration => 'Initial package registration';
-
-  @override
-  String get packageRegistered => 'Package Registered';
-
-  @override
-  String packageAddedToLibrary(String name) {
-    return '\"$name\" has been added to your software library.';
-  }
-
-  @override
   String get selectPackagePrompt => 'Select a software package to view details';
 
   @override
@@ -212,30 +194,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'Notify me when updates or downloads complete';
 
   @override
-  String get softwareRegistration => 'Software Registration';
+  String get operationFailed => 'Something went wrong';
 
   @override
-  String get softwareRegistrationDescription =>
-      'Register custom software packages or manually trigger a catalog sync.';
+  String get menuView => 'View';
 
   @override
-  String get softwareNamePlaceholder => 'Software name...';
+  String get cancel => 'Cancel';
 
   @override
-  String get register => 'Register';
-
-  @override
-  String get refreshCatalog => 'Refresh catalog';
-
-  @override
-  String packageAlreadyRegistered(String name) {
-    return 'A package named \"$name\" is already registered.';
+  String uninstallConfirmTitle(String name) {
+    return 'Uninstall $name?';
   }
 
   @override
-  String get invalidPackageName =>
-      'Enter a software name containing letters or digits.';
+  String get uninstallConfirmBody =>
+      'It will be removed from this device. You can install it again at any time.';
 
   @override
-  String get operationFailed => 'Something went wrong';
+  String packageUninstalledTitle(String name) {
+    return '$name Uninstalled';
+  }
+
+  @override
+  String get packageUninstalledContent => 'Removed from this device.';
+
+  @override
+  String packageInstalledTitle(String name) {
+    return '$name Installed';
+  }
+
+  @override
+  String packageInstalledContent(String version) {
+    return 'Version $version is ready to launch.';
+  }
+
+  @override
+  String get moreOptions => 'More options';
 }

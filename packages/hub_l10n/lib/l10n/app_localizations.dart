@@ -230,36 +230,6 @@ abstract class AppLocalizations {
   /// **'Starting v{version}...'**
   String launchingContent(String version);
 
-  /// No description provided for @customPackageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom registered package'**
-  String get customPackageSubtitle;
-
-  /// No description provided for @customPackageDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom registered package from your local catalog.'**
-  String get customPackageDescription;
-
-  /// No description provided for @initialRegistration.
-  ///
-  /// In en, this message translates to:
-  /// **'Initial package registration'**
-  String get initialRegistration;
-
-  /// No description provided for @packageRegistered.
-  ///
-  /// In en, this message translates to:
-  /// **'Package Registered'**
-  String get packageRegistered;
-
-  /// No description provided for @packageAddedToLibrary.
-  ///
-  /// In en, this message translates to:
-  /// **'\"{name}\" has been added to your software library.'**
-  String packageAddedToLibrary(String name);
-
   /// No description provided for @selectPackagePrompt.
   ///
   /// In en, this message translates to:
@@ -452,53 +422,65 @@ abstract class AppLocalizations {
   /// **'Notify me when updates or downloads complete'**
   String get notificationsDescription;
 
-  /// No description provided for @softwareRegistration.
-  ///
-  /// In en, this message translates to:
-  /// **'Software Registration'**
-  String get softwareRegistration;
-
-  /// No description provided for @softwareRegistrationDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Register custom software packages or manually trigger a catalog sync.'**
-  String get softwareRegistrationDescription;
-
-  /// No description provided for @softwareNamePlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Software name...'**
-  String get softwareNamePlaceholder;
-
-  /// No description provided for @register.
-  ///
-  /// In en, this message translates to:
-  /// **'Register'**
-  String get register;
-
-  /// No description provided for @refreshCatalog.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh catalog'**
-  String get refreshCatalog;
-
-  /// No description provided for @packageAlreadyRegistered.
-  ///
-  /// In en, this message translates to:
-  /// **'A package named \"{name}\" is already registered.'**
-  String packageAlreadyRegistered(String name);
-
-  /// No description provided for @invalidPackageName.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a software name containing letters or digits.'**
-  String get invalidPackageName;
-
   /// No description provided for @operationFailed.
   ///
   /// In en, this message translates to:
   /// **'Something went wrong'**
   String get operationFailed;
+
+  /// Title of the View menu in the macOS menu bar
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get menuView;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @uninstallConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uninstall {name}?'**
+  String uninstallConfirmTitle(String name);
+
+  /// No description provided for @uninstallConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be removed from this device. You can install it again at any time.'**
+  String get uninstallConfirmBody;
+
+  /// No description provided for @packageUninstalledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Uninstalled'**
+  String packageUninstalledTitle(String name);
+
+  /// No description provided for @packageUninstalledContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from this device.'**
+  String get packageUninstalledContent;
+
+  /// No description provided for @packageInstalledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Installed'**
+  String packageInstalledTitle(String name);
+
+  /// No description provided for @packageInstalledContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is ready to launch.'**
+  String packageInstalledContent(String version);
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
 }
 
 class _AppLocalizationsDelegate

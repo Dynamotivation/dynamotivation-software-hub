@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
@@ -11,46 +10,32 @@ class DynamotivationApp extends StatefulWidget {
   final HubController controller;
   final bool initialSettingsOpen;
 
-  /// Whether to keep the Mica backdrop in sync with the theme (needs the
-  /// native window to be initialised; disabled in widget tests).
-  final bool syncMica;
-
   const DynamotivationApp({
     super.key,
     required this.controller,
     this.initialSettingsOpen = false,
-    this.syncMica = false,
   });
 
   @override
   State<DynamotivationApp> createState() => _DynamotivationAppState();
 }
 
-class _DynamotivationAppState extends State<DynamotivationApp> {
-  Brightness? _micaBrightness;
-
+class _DynamotivationAppState extends State<DynamotivationApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_syncMica);
+    WidgetsBinding.instance.addObserver(this);
   }
+
+  /// OS switched between light and dark while in System mode.
+  @override
+  void didChangePlatformBrightness() => setState(() {});
 
   @override
   void dispose() {
-    widget.controller.removeListener(_syncMica);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  void _syncMica() {
-    if (!widget.syncMica) return;
-    final brightness = _resolvedBrightness();
-    if (brightness == _micaBrightness) return;
-    _micaBrightness = brightness;
-    Window.setEffect(
-      effect: WindowEffect.mica,
-      color: Colors.transparent,
-      dark: brightness == Brightness.dark,
-    );
   }
 
   Brightness _resolvedBrightness() {

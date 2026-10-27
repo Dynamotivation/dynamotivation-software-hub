@@ -1,0 +1,16 @@
+name: hub_scroll
+description: "Eased mouse-wheel scrolling shared by all Software Hub frontends."
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

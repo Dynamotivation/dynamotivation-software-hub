@@ -89,24 +89,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get customPackageSubtitle => 'Benutzerdefiniert registriertes Paket';
-
-  @override
-  String get customPackageDescription =>
-      'Benutzerdefiniert registriertes Paket aus Ihrem lokalen Katalog.';
-
-  @override
-  String get initialRegistration => 'Erstregistrierung des Pakets';
-
-  @override
-  String get packageRegistered => 'Paket registriert';
-
-  @override
-  String packageAddedToLibrary(String name) {
-    return '„$name“ wurde Ihrer Softwarebibliothek hinzugefügt.';
-  }
-
-  @override
   String get selectPackagePrompt =>
       'Wählen Sie ein Softwarepaket aus, um Details anzuzeigen';
 
@@ -214,30 +196,41 @@ class AppLocalizationsDe extends AppLocalizations {
       'Benachrichtigen, wenn Updates oder Downloads abgeschlossen sind';
 
   @override
-  String get softwareRegistration => 'Software-Registrierung';
+  String get operationFailed => 'Etwas ist schiefgelaufen';
 
   @override
-  String get softwareRegistrationDescription =>
-      'Eigene Softwarepakete registrieren oder die Katalogsynchronisierung manuell auslösen.';
+  String get menuView => 'Ansicht';
 
   @override
-  String get softwareNamePlaceholder => 'Name der Software...';
+  String get cancel => 'Abbrechen';
 
   @override
-  String get register => 'Registrieren';
-
-  @override
-  String get refreshCatalog => 'Katalog aktualisieren';
-
-  @override
-  String packageAlreadyRegistered(String name) {
-    return 'Ein Paket mit dem Namen „$name“ ist bereits registriert.';
+  String uninstallConfirmTitle(String name) {
+    return '$name deinstallieren?';
   }
 
   @override
-  String get invalidPackageName =>
-      'Geben Sie einen Softwarenamen mit Buchstaben oder Ziffern ein.';
+  String get uninstallConfirmBody =>
+      'Die Software wird von diesem Gerät entfernt. Du kannst sie jederzeit erneut installieren.';
 
   @override
-  String get operationFailed => 'Etwas ist schiefgelaufen';
+  String packageUninstalledTitle(String name) {
+    return '$name deinstalliert';
+  }
+
+  @override
+  String get packageUninstalledContent => 'Von diesem Gerät entfernt.';
+
+  @override
+  String packageInstalledTitle(String name) {
+    return '$name installiert';
+  }
+
+  @override
+  String packageInstalledContent(String version) {
+    return 'Version $version kann gestartet werden.';
+  }
+
+  @override
+  String get moreOptions => 'Weitere Optionen';
 }

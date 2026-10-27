@@ -77,18 +77,6 @@
       }
     }
   },
-  "customPackageSubtitle": "Custom registered package",
-  "customPackageDescription": "Custom registered package from your local catalog.",
-  "initialRegistration": "Initial package registration",
-  "packageRegistered": "Package Registered",
-  "packageAddedToLibrary": "\"{name}\" has been added to your software library.",
-  "@packageAddedToLibrary": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "selectPackagePrompt": "Select a software package to view details",
   "updateAvailable": "Update available",
   "installed": "Installed",
@@ -142,19 +130,45 @@
   "autoCheckDescription": "Periodically check whether installed software or the Hub has a newer version",
   "notificationsTitle": "Show notifications",
   "notificationsDescription": "Notify me when updates or downloads complete",
-  "softwareRegistration": "Software Registration",
-  "softwareRegistrationDescription": "Register custom software packages or manually trigger a catalog sync.",
-  "softwareNamePlaceholder": "Software name...",
-  "register": "Register",
-  "refreshCatalog": "Refresh catalog",
-  "packageAlreadyRegistered": "A package named \"{name}\" is already registered.",
-  "@packageAlreadyRegistered": {
+  "operationFailed": "Something went wrong",
+  "menuView": "View",
+  "@menuView": {
+    "description": "Title of the View menu in the macOS menu bar"
+  },
+  "cancel": "Cancel",
+  "uninstallConfirmTitle": "Uninstall {name}?",
+  "@uninstallConfirmTitle": {
     "placeholders": {
       "name": {
         "type": "String"
       }
     }
   },
-  "invalidPackageName": "Enter a software name containing letters or digits.",
-  "operationFailed": "Something went wrong"
+  "uninstallConfirmBody": "It will be removed from this device. You can install it again at any time.",
+  "packageUninstalledTitle": "{name} Uninstalled",
+  "@packageUninstalledTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "packageUninstalledContent": "Removed from this device.",
+  "packageInstalledTitle": "{name} Installed",
+  "@packageInstalledTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "packageInstalledContent": "Version {version} is ready to launch.",
+  "@packageInstalledContent": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "moreOptions": "More options"
 }

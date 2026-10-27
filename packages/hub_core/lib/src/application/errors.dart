@@ -10,18 +10,3 @@ class PackageNotFound extends HubException {
   @override
   String toString() => 'PackageNotFound($id)';
 }
-
-class PackageAlreadyRegistered extends HubException {
-  final String id;
-  const PackageAlreadyRegistered(this.id);
-
-  @override
-  String toString() => 'PackageAlreadyRegistered($id)';
-}
-
-class InvalidPackageName extends HubException {
-  const InvalidPackageName();
-
-  @override
-  String toString() => 'InvalidPackageName()';
-}

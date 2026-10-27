@@ -25,42 +25,21 @@ class HubUseCases {
     return updated;
   }
 
-  /// Registers a locally provided package. The texts are supplied by the
-  /// frontend so that they can be localized.
-  Future<SoftwarePackage> registerPackage({
-    required String name,
-    required String subtitle,
-    required String description,
-    required String initialHighlight,
-  }) async {
-    final trimmed = name.trim();
-    final id = trimmed
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-        .replaceAll(RegExp(r'^-|-$'), '');
-    if (id.isEmpty) throw const InvalidPackageName();
-    if (await _packages.find(id) != null) throw PackageAlreadyRegistered(id);
+  Future<SoftwarePackage> installPackage(String id) =>
+      _apply(id, (p) => p.install());
 
-    final package = SoftwarePackage(
-      id: id,
-      name: trimmed,
-      subtitle: subtitle,
-      description: description,
-      currentVersion: '1.0.0',
-      latestVersion: '1.0.0',
-      iconAsset: 'assets/dynamotivation-logo.svg',
-      isSvgIcon: true,
-      status: PackageInstallationStatus.installed,
-      latestRelease: ReleaseNote(
-        version: '1.0.0',
-        date: DateTime.now().toIso8601String().split('T').first,
-        highlights: [initialHighlight],
-      ),
-      olderReleases: const [],
-      availableVersions: const ['v1.0.0 (Latest)'],
-    );
-    await _packages.save(package);
-    return package;
+  Future<SoftwarePackage> uninstallPackage(String id) =>
+      _apply(id, (p) => p.uninstall());
+
+  Future<SoftwarePackage> _apply(
+    String id,
+    SoftwarePackage Function(SoftwarePackage) command,
+  ) async {
+    final package = await _packages.find(id);
+    if (package == null) throw PackageNotFound(id);
+    final changed = command(package);
+    await _packages.save(changed);
+    return changed;
   }
 
   Future<AppSettings> loadSettings() => _settings.load();

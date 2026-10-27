@@ -8,4 +8,7 @@ environment:
 workspace:
   - packages/hub_core
   - packages/hub_l10n
+  - packages/hub_keys
+  - packages/hub_scroll
+  - apps/macos
   - apps/windows

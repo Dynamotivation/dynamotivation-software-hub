@@ -16,9 +16,9 @@ void main() {
   }
 
   void expectNoImport(String layer, Pattern forbidden) {
-    final offenders = importsOf(
-      layer,
-    ).where((e) => e.$2.contains(forbidden)).map((e) => '${e.$1}: ${e.$2}');
+    final offenders = importsOf(layer)
+        .where((e) => e.$2.contains(forbidden))
+        .map((e) => '${e.$1}: ${e.$2}');
     expect(offenders, isEmpty);
   }
 

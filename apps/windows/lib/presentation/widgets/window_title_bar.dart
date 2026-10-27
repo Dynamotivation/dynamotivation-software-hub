@@ -2,8 +2,10 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:hub_keys/hub_keys.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
+import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
 
 /// Integrated title bar + brand header (82px gradient band, no OS title bar).
@@ -73,10 +75,12 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
   @override
   Widget build(BuildContext context) {
     final tokens = DynTokens.of(context);
-    final theme = FluentTheme.of(context);
 
     return Container(
-      height: 82,
+      // Grows with the user's text size so large text is not clipped.
+      height:
+          82 +
+          (MediaQuery.textScalerOf(context).scale(20) - 20).clamp(0.0, 40.0),
       decoration: BoxDecoration(gradient: tokens.headerGradient),
       child: Column(
         children: [
@@ -131,7 +135,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
 
                 // Caption buttons on top, hub actions below.
                 Padding(
-                  padding: const EdgeInsets.only(right: 6, top: 4),
+                  padding: EdgeInsets.zero,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -177,36 +181,38 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _UpdateHubPill(
-                            tokens: tokens,
-                            hubUpdateVersion: widget.hubUpdateVersion,
-                            onUpdateHub: widget.onUpdateHub,
-                          ),
-                          const SizedBox(width: 6),
-                          Tooltip(
-                            message: widget.isSettingsOpen
-                                ? context.l10n.backToSoftware
-                                : context.l10n.settings,
-                            child: IconButton(
-                              icon: Icon(
-                                widget.isSettingsOpen
-                                    ? FluentIcons.view_dashboard
-                                    : FluentIcons.settings,
-                                size: 15,
-                                color: widget.isSettingsOpen
-                                    ? theme.accentColor.light
-                                    : tokens.headerForeground,
+                      // Plain header while in Settings: no hub actions.
+                      if (!widget.isSettingsOpen) ...[
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _UpdateHubPill(
+                                tokens: tokens,
+                                hubUpdateVersion: widget.hubUpdateVersion,
+                                onUpdateHub: widget.onUpdateHub,
                               ),
-                              onPressed: widget.onToggleSettings,
-                            ),
+                              const SizedBox(width: 6),
+                              Tooltip(
+                                message: withShortcut(
+                                  context.l10n.settings,
+                                  AppShortcuts.settings,
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    FluentIcons.settings,
+                                    size: 15,
+                                    color: tokens.headerForeground,
+                                  ),
+                                  onPressed: widget.onToggleSettings,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -378,23 +384,31 @@ class _CaptionButtonState extends State<_CaptionButton> {
 
     return Tooltip(
       message: widget.tooltip,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() {
-          _isHovered = false;
-          _isPressed = false;
-        }),
-        child: GestureDetector(
-          onTapDown: (_) => setState(() => _isPressed = true),
-          onTapUp: (_) => setState(() => _isPressed = false),
-          onTapCancel: () => setState(() => _isPressed = false),
-          onTap: widget.onPressed,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 100),
-            width: 46,
-            height: 32,
-            color: bg,
-            child: Center(child: Icon(widget.icon, size: 11, color: iconColor)),
+      child: Semantics(
+        button: true,
+        label: widget.tooltip,
+        excludeSemantics: true,
+        onTap: widget.onPressed,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() {
+            _isHovered = false;
+            _isPressed = false;
+          }),
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
+              width: 40,
+              height: 30,
+              color: bg,
+              child: Center(
+                child: Icon(widget.icon, size: 10, color: iconColor),
+              ),
+            ),
           ),
         ),
       ),

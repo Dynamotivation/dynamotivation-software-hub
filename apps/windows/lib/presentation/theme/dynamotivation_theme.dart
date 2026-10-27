@@ -88,10 +88,11 @@ class DynTokens {
     headerGradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [Color(0xFFFF4C4A), Color(0xFF893750)],
+      // 20% dark scrim over the brand gradient: white text >= 4.5:1.
+      colors: [Color(0xFFCC3C3B), Color(0xFF893750)],
     ),
     headerForeground: Color(0xFFFFFFFF),
-    headerMuted: Color(0xE6FFFFFF),
+    headerMuted: Color(0xFFFFFFFF),
     headerHover: Color(0x29FFFFFF),
     headerPill: Color(0x2EFFFFFF),
     captionCloseHover: Color(0xFFC42B1C),
@@ -115,11 +116,11 @@ class DynTokens {
     hover: Color(0x0F893750),
     selected: Color(0x17893750),
     divider: Color(0xFFEEE8EC),
-    scrollbarThumb: Color(0xFFB8ACB3),
+    scrollbarThumb: Color(0xFF8A7D84),
     progressTrack: Color(0x1F893750),
     text: Color(0xFF000000),
     textMuted: Color(0xAD000000),
-    textSubtle: Color(0x73000000),
+    textSubtle: Color(0x99000000),
   );
 
   static const dark = DynTokens._(
@@ -130,7 +131,7 @@ class DynTokens {
       colors: [Color(0xFF963744), Color(0xFF411B23)],
     ),
     headerForeground: Color(0xFFFFFFFF),
-    headerMuted: Color(0xE6FFFFFF),
+    headerMuted: Color(0xFFFFFFFF),
     headerHover: Color(0x29FFFFFF),
     headerPill: Color(0x2EFFFFFF),
     captionCloseHover: Color(0xFFC42B1C),
@@ -138,9 +139,9 @@ class DynTokens {
     brandAccent: Color(0xFF38E89F),
     brandRed: Color(0xFFFF6B6B),
     critical: Color(0xFFFF99A4),
-    primary: Color(0xFFE5484D),
-    primaryHover: Color(0xFFF05A5F),
-    primaryPressed: Color(0xFFCF3A40),
+    primary: Color(0xFFD23A40),
+    primaryHover: Color(0xFFC7343A),
+    primaryPressed: Color(0xFFB72E34),
     secondary: Color(0xFF2C2F36),
     secondaryHover: Color(0xFF363A42),
     secondaryPressed: Color(0xFF3F434C),
@@ -154,11 +155,11 @@ class DynTokens {
     hover: Color(0x0FFFFFFF),
     selected: Color(0x17FFFFFF),
     divider: Color(0xFF2E3138),
-    scrollbarThumb: Color(0xFF4E535E),
+    scrollbarThumb: Color(0xFF7A808C),
     progressTrack: Color(0x1FFFFFFF),
     text: Color(0xFFFFFFFF),
     textMuted: Color(0xADFFFFFF),
-    textSubtle: Color(0x73FFFFFF),
+    textSubtle: Color(0x99FFFFFF),
   );
 
   static DynTokens of(BuildContext context) {
@@ -213,9 +214,9 @@ class DynamotivationTheme {
     return FluentThemeData(
       brightness: Brightness.light,
       accentColor: accentColor,
-      scaffoldBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: DynTokens.light.window,
       cardColor: DynTokens.light.card,
-      micaBackgroundColor: Colors.transparent,
+      micaBackgroundColor: DynTokens.light.window,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       focusTheme: FocusThemeData(
         glowColor: coralPrimary.withValues(alpha: 0.25),
@@ -240,9 +241,9 @@ class DynamotivationTheme {
     return FluentThemeData(
       brightness: Brightness.dark,
       accentColor: accentColorDark,
-      scaffoldBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: DynTokens.dark.window,
       cardColor: DynTokens.dark.card,
-      micaBackgroundColor: Colors.transparent,
+      micaBackgroundColor: DynTokens.dark.window,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       focusTheme: FocusThemeData(
         glowColor: const Color(0xFFE5484D).withValues(alpha: 0.35),
@@ -254,9 +255,10 @@ class DynamotivationTheme {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
           ),
           backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.isPressed) return const Color(0xFFCF3A40);
-            if (states.isHovered) return const Color(0xFFF05A5F);
-            return const Color(0xFFE5484D);
+            // White label needs >= 4.5:1, so hover darkens instead of lightens.
+            if (states.isPressed) return const Color(0xFFB72E34);
+            if (states.isHovered) return const Color(0xFFC7343A);
+            return const Color(0xFFD23A40);
           }),
         ),
       ),

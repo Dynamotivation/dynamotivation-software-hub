@@ -1,9 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:hub_l10n/hub_l10n.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_keys/hub_keys.dart';
+import 'package:hub_scroll/hub_scroll.dart';
 
+import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
 
 class PackageSidebar extends StatefulWidget {
@@ -14,6 +19,7 @@ class PackageSidebar extends StatefulWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onRefresh;
   final bool isRefreshing;
+  final FocusNode? searchFocusNode;
 
   const PackageSidebar({
     super.key,
@@ -24,6 +30,7 @@ class PackageSidebar extends StatefulWidget {
     required this.onSearchChanged,
     required this.onRefresh,
     this.isRefreshing = false,
+    this.searchFocusNode,
   });
 
   @override
@@ -35,6 +42,7 @@ class _PackageSidebarState extends State<PackageSidebar>
   bool _availableExpanded = true;
   late TextEditingController _searchController;
   late AnimationController _spinController;
+  final _scroll = ScrollController();
 
   @override
   void initState() {
@@ -52,11 +60,21 @@ class _PackageSidebarState extends State<PackageSidebar>
     if (widget.searchQuery != _searchController.text) {
       _searchController.text = widget.searchQuery;
     }
-    if (widget.isRefreshing && !_spinController.isAnimating) {
+    if (widget.isRefreshing && !oldWidget.isRefreshing) {
       _spinController.repeat();
-    } else if (!widget.isRefreshing && _spinController.isAnimating) {
-      _spinController.stop();
-      _spinController.reset();
+    } else if (!widget.isRefreshing && oldWidget.isRefreshing) {
+      // Finish the turn in progress instead of snapping back, so even an
+      // instant refresh shows one smooth rotation.
+      final remaining = 1 - _spinController.value;
+      _spinController
+          .animateTo(
+            1,
+            duration: Duration(milliseconds: (900 * remaining).round()),
+            curve: Curves.easeOut,
+          )
+          .whenComplete(() {
+            if (mounted && !widget.isRefreshing) _spinController.reset();
+          });
     }
   }
 
@@ -64,6 +82,7 @@ class _PackageSidebarState extends State<PackageSidebar>
   void dispose() {
     _searchController.dispose();
     _spinController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -102,6 +121,7 @@ class _PackageSidebarState extends State<PackageSidebar>
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
             child: TextBox(
               controller: _searchController,
+              focusNode: widget.searchFocusNode,
               placeholder: context.l10n.searchSoftware,
               prefix: const Padding(
                 padding: EdgeInsets.only(left: 10, right: 6),
@@ -135,170 +155,194 @@ class _PackageSidebarState extends State<PackageSidebar>
 
           // Scrollable package lists
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              children: [
-                // Installed section header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-                  child: Row(
-                    children: [
-                      Text(
-                        context.l10n.installed,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? DynTokens.dark.textMuted
-                              : DynTokens.light.textMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0x26FFFFFF)
-                              : const Color(0x1F000000),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '${installedList.length}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? DynTokens.dark.textMuted
-                                : DynTokens.light.textMuted,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Tooltip(
-                        message: context.l10n.checkForUpdates,
-                        child: IconButton(
-                          icon: RotationTransition(
-                            turns: _spinController,
-                            child: Icon(
-                              FluentIcons.refresh,
-                              size: 13,
-                              color: isDark
-                                  ? DynTokens.dark.textMuted
-                                  : DynTokens.light.textMuted,
-                            ),
-                          ),
-                          onPressed: widget.onRefresh,
-                        ),
-                      ),
-                    ],
-                  ),
+            child: SmoothScroll(
+              controller: _scroll,
+              child: ListView(
+                controller: _scroll,
+                physics: smoothScrollPhysics,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
                 ),
-
-                // Installed list items
-                ...installedList.map(
-                  (pkg) => _PackageTile(
-                    package: pkg,
-                    isSelected: widget.selectedPackage?.id == pkg.id,
-                    onTap: () => widget.onSelectPackage(pkg),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-                Divider(
-                  style: DividerThemeData(
-                    horizontalMargin: const EdgeInsets.symmetric(horizontal: 6),
-                    thickness: 1,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0x14FFFFFF)
-                          : const Color(0x14000000),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Available section header (collapsible)
-                HoverButton(
-                  onPressed: () {
-                    setState(() {
-                      _availableExpanded = !_availableExpanded;
-                    });
-                  },
-                  builder: (context, states) {
-                    return Container(
-                      padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-                      decoration: BoxDecoration(
-                        color: states.isHovered
-                            ? (isDark
-                                  ? Colors.white.withValues(alpha: 0.04)
-                                  : Colors.black.withValues(alpha: 0.03))
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _availableExpanded
-                                ? FluentIcons.chevron_down
-                                : FluentIcons.chevron_right,
-                            size: 11,
-                            color: isDark
-                                ? DynTokens.dark.textMuted
-                                : DynTokens.light.textMuted,
+                children: [
+                  // Installed section header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  context.l10n.installed,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? DynTokens.dark.textMuted
+                                        : DynTokens.light.textMuted,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0x26FFFFFF)
+                                      : const Color(0x1F000000),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${installedList.length}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? DynTokens.dark.textMuted
+                                        : DynTokens.light.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            context.l10n.available,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? DynTokens.dark.textMuted
-                                  : DynTokens.light.textMuted,
-                            ),
+                        ),
+                        Tooltip(
+                          message: withShortcut(
+                            context.l10n.checkForUpdates,
+                            AppShortcuts.refresh,
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0x26FFFFFF)
-                                  : const Color(0x1F000000),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${availableList.length}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? DynTokens.dark.textMuted
-                                    : DynTokens.light.textMuted,
+                          child: IconButton(
+                            icon: RotationTransition(
+                              turns: _spinController,
+                              // Painted around its exact centre; a font glyph
+                              // is off-centre in its box and wobbles when spun.
+                              child: CustomPaint(
+                                size: const Size.square(14),
+                                painter: _RefreshGlyphPainter(
+                                  isDark
+                                      ? DynTokens.dark.textMuted
+                                      : DynTokens.light.textMuted,
+                                ),
                               ),
                             ),
+                            onPressed: widget.onRefresh,
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                // Available list items
-                if (_availableExpanded)
-                  ...availableList.map(
+                  // Installed list items
+                  ...installedList.map(
                     (pkg) => _PackageTile(
                       package: pkg,
                       isSelected: widget.selectedPackage?.id == pkg.id,
                       onTap: () => widget.onSelectPackage(pkg),
                     ),
                   ),
-              ],
+
+                  const SizedBox(height: 10),
+                  Divider(
+                    style: DividerThemeData(
+                      horizontalMargin: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                      ),
+                      thickness: 1,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0x14FFFFFF)
+                            : const Color(0x14000000),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Available section header (collapsible)
+                  HoverButton(
+                    onPressed: () {
+                      setState(() {
+                        _availableExpanded = !_availableExpanded;
+                      });
+                    },
+                    builder: (context, states) {
+                      return Container(
+                        padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                        decoration: BoxDecoration(
+                          color: states.isHovered
+                              ? (isDark
+                                    ? Colors.white.withValues(alpha: 0.04)
+                                    : Colors.black.withValues(alpha: 0.03))
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _availableExpanded
+                                  ? FluentIcons.chevron_down
+                                  : FluentIcons.chevron_right,
+                              size: 11,
+                              color: isDark
+                                  ? DynTokens.dark.textMuted
+                                  : DynTokens.light.textMuted,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              context.l10n.available,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? DynTokens.dark.textMuted
+                                    : DynTokens.light.textMuted,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0x26FFFFFF)
+                                    : const Color(0x1F000000),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${availableList.length}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? DynTokens.dark.textMuted
+                                      : DynTokens.light.textMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  // Available list items
+                  if (_availableExpanded)
+                    ...availableList.map(
+                      (pkg) => _PackageTile(
+                        package: pkg,
+                        isSelected: widget.selectedPackage?.id == pkg.id,
+                        onTap: () => widget.onSelectPackage(pkg),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],
@@ -409,34 +453,25 @@ class _PackageTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     if (package.hasUpdate)
-                      Row(
-                        children: [
-                          Text(
-                            'v${package.currentVersion} ',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark
-                                  ? DynTokens.dark.textMuted
-                                  : DynTokens.light.textMuted,
-                            ),
+                      Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? DynTokens.dark.textMuted
+                                : DynTokens.light.textMuted,
                           ),
-                          Text(
-                            '→ ',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: DynTokens.of(context).brandRed,
+                          children: [
+                            TextSpan(text: 'v${package.currentVersion} '),
+                            TextSpan(
+                              text: '→ v${package.latestVersion}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: DynTokens.of(context).brandRed,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'v${package.latestVersion}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: DynTokens.of(context).brandRed,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       )
                     else
                       Text(
@@ -469,4 +504,51 @@ class _PackageTile extends StatelessWidget {
       },
     );
   }
+}
+
+/// Circular refresh arrow centred exactly on its box.
+class _RefreshGlyphPainter extends CustomPainter {
+  final Color color;
+
+  const _RefreshGlyphPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2 - 1.5;
+    final stroke = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    const start = -math.pi / 2 + 0.5;
+    const sweep = math.pi * 2 - 1.3;
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      start,
+      sweep,
+      false,
+      stroke,
+    );
+    // Arrow head at the end of the arc, pointing along the direction of travel.
+    final end = start + sweep;
+    final tip = c + Offset(math.cos(end), math.sin(end)) * r;
+    final tangent = Offset(-math.sin(end), math.cos(end));
+    final normal = Offset(math.cos(end), math.sin(end));
+    final head = Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(
+        (tip - tangent * 3.2 + normal * 3).dx,
+        (tip - tangent * 3.2 + normal * 3).dy,
+      )
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(
+        (tip - tangent * 3.2 - normal * 3).dx,
+        (tip - tangent * 3.2 - normal * 3).dy,
+      );
+    canvas.drawPath(head, stroke);
+  }
+
+  @override
+  bool shouldRepaint(_RefreshGlyphPainter old) => old.color != color;
 }

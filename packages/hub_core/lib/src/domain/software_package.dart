@@ -78,6 +78,25 @@ class SoftwarePackage {
     );
   }
 
+  /// Lifecycle command: install a package that is not on the device yet.
+  SoftwarePackage install() {
+    if (status != PackageInstallationStatus.notInstalled) {
+      throw PackageStateException(id, 'Already installed or in progress.');
+    }
+    return copyWith(
+      currentVersion: latestVersion,
+      status: PackageInstallationStatus.installed,
+    );
+  }
+
+  /// Lifecycle command: remove an installed package from the device.
+  SoftwarePackage uninstall() {
+    if (!isInstalled) {
+      throw PackageStateException(id, 'Not installed.');
+    }
+    return copyWith(status: PackageInstallationStatus.notInstalled);
+  }
+
   SoftwarePackage copyWith({
     String? id,
     String? name,

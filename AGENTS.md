@@ -6,7 +6,10 @@
 ```
 packages/hub_core   pure Dart (no Flutter): domain, application, infrastructure
 packages/hub_l10n   ARB strings + generated AppLocalizations, shared by all frontends
+packages/hub_keys   shortcut labels named after the active keyboard layout (Strg/Ctrl/⌘)
+packages/hub_scroll eased mouse-wheel scrolling (SmoothScroll + smoothScrollPhysics) for every scroll view
 apps/windows        Fluent UI frontend; lib/presentation/{controllers,pages,widgets,theme}
+apps/macos          macOS-style frontend (macos_ui); also runs on Windows as a design preview
 ```
 
 ## Rules
@@ -15,11 +18,12 @@ apps/windows        Fluent UI frontend; lib/presentation/{controllers,pages,widg
 - Business rules never live in widgets or controllers. Controllers (`ChangeNotifier`) hold presentation state and call use cases.
 - Never swallow errors; show them in the UI (map `HubException` to localized text).
 - A new OS frontend is a new `apps/<os>` workspace member (add it to the root `pubspec.yaml`); platform-specific code (window chrome, tray, installers) stays in that app.
+- Show shortcuts to users only via `hub_keys` (`withShortcut`), never as hardcoded "Ctrl+X" strings. Text colours must keep >= 4.5:1 (3:1 for large text and UI boundaries); custom controls must be keyboard focusable with a visible focus ring and carry `Semantics`.
 - UI colours come from `DynamotivationTheme` / `DynTokens`. All user-facing text uses `context.l10n.<key>`: add keys to `packages/hub_l10n/lib/l10n/app_en.arb`, run `flutter gen-l10n` there, keep locales in key parity.
 
 ## Commands
 - `flutter pub get` at the repo root resolves the whole workspace.
-- Per package (`packages/hub_core`, `packages/hub_l10n`, `apps/windows`): `flutter analyze` and `flutter test` must pass before you finish.
+- Per package (`packages/hub_core`, `packages/hub_l10n`, `packages/hub_keys`, `packages/hub_scroll`, `apps/windows`, `apps/macos`): `flutter analyze` and `flutter test` must pass before you finish.
 - `flutter run -d windows` / `flutter build windows` in `apps/windows`.
 
 ## Open decisions (ask the owner, don't assume)

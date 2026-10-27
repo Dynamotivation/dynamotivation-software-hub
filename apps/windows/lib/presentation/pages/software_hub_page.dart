@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:hub_core/hub_core.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
 import '../controllers/hub_controller.dart';
+import '../shortcuts.dart';
+import '../theme/dynamotivation_theme.dart';
 import '../widgets/package_detail_pane.dart';
 import '../widgets/package_sidebar.dart';
 import '../widgets/settings_view.dart';
@@ -24,7 +27,10 @@ class SoftwareHubPage extends StatefulWidget {
 
 class _SoftwareHubPageState extends State<SoftwareHubPage> {
   String _searchQuery = '';
+  final _searchFocus = FocusNode();
   late bool _isSettingsOpen;
+  ({String title, String content, InfoBarSeverity severity})? _toast;
+  Timer? _toastTimer;
 
   HubController get _controller => widget.controller;
 
@@ -34,28 +40,43 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     _isSettingsOpen = widget.initialSettingsOpen;
   }
 
+  @override
+  void dispose() {
+    _toastTimer?.cancel();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  void _toggleSettings() => setState(() => _isSettingsOpen = !_isSettingsOpen);
+
+  /// Esc: leave settings, else clear an active search.
+  void _escape() {
+    if (_isSettingsOpen) {
+      setState(() => _isSettingsOpen = false);
+    } else if (_searchQuery.isNotEmpty) {
+      setState(() => _searchQuery = '');
+    }
+  }
+
   void _showInfo({
     required String title,
     required String content,
     InfoBarSeverity severity = InfoBarSeverity.success,
   }) {
-    displayInfoBar(
-      context,
-      builder: (context, close) => InfoBar(
-        title: Text(title),
-        content: Text(content),
-        severity: severity,
-      ),
+    // One toast slot: a new message replaces the current one in place
+    // instead of stacking, and fades/slides in and out (see build).
+    _toastTimer?.cancel();
+    setState(
+      () => _toast = (title: title, content: content, severity: severity),
     );
+    _toastTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _toast = null);
+    });
   }
 
   void _showError(Object error) {
     final l10n = context.l10n;
-    final detail = switch (error) {
-      InvalidPackageName() => l10n.invalidPackageName,
-      PackageAlreadyRegistered(:final id) => l10n.packageAlreadyRegistered(id),
-      _ => error.toString(),
-    };
+    final detail = error.toString();
     _showInfo(
       title: l10n.operationFailed,
       content: detail,
@@ -89,6 +110,54 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     }
   }
 
+  Future<void> _handleInstallPackage() async {
+    try {
+      final installed = await _controller.installSelected();
+      if (!mounted) return;
+      _showInfo(
+        title: context.l10n.packageInstalledTitle(installed.name),
+        content: context.l10n.packageInstalledContent(installed.currentVersion),
+      );
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
+  }
+
+  Future<void> _handleUninstallPackage() async {
+    final package = _controller.selected;
+    if (package == null) return;
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => ContentDialog(
+        title: Text(l10n.uninstallConfirmTitle(package.name)),
+        content: Text(l10n.uninstallConfirmBody),
+        actions: [
+          Button(
+            autofocus: true,
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.uninstall),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final removed = await _controller.uninstallSelected();
+      if (!mounted) return;
+      _showInfo(
+        title: l10n.packageUninstalledTitle(removed.name),
+        content: l10n.packageUninstalledContent,
+      );
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
+  }
+
   void _handleLaunchPackage() {
     final package = _controller.selected;
     if (package == null) return;
@@ -99,77 +168,136 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     );
   }
 
-  Future<void> _handleRegisterPackage(String name) async {
-    final l10n = context.l10n;
-    try {
-      final created = await _controller.register(
-        name: name,
-        subtitle: l10n.customPackageSubtitle,
-        description: l10n.customPackageDescription,
-        initialHighlight: l10n.initialRegistration,
-      );
-      if (!mounted) return;
-      setState(() => _isSettingsOpen = false);
-      _showInfo(
-        title: l10n.packageRegistered,
-        content: l10n.packageAddedToLibrary(created.name),
-      );
-    } catch (e) {
-      if (mounted) _showError(e);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Root stays transparent so the Mica backdrop shows between the opaque
-    // header, cards and canvas (Windows 11 convention).
-    return ListenableBuilder(
-      listenable: _controller,
-      builder: (context, _) => Column(
-        children: [
-          WindowTitleBar(
-            isSettingsOpen: _isSettingsOpen,
-            onToggleSettings: () =>
-                setState(() => _isSettingsOpen = !_isSettingsOpen),
-            hubUpdateVersion: '0.2.0',
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: _isSettingsOpen
-                  ? SettingsView(
-                      settings: _controller.settings,
-                      onSettingsChanged: _controller.updateSettings,
-                      onBack: () => setState(() => _isSettingsOpen = false),
-                      onRegisterPackage: _handleRegisterPackage,
-                      onRefreshCatalog: _handleRefresh,
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        PackageSidebar(
-                          packages: _controller.packages,
-                          selectedPackage: _controller.selected,
-                          onSelectPackage: _controller.select,
-                          searchQuery: _searchQuery,
-                          onSearchChanged: (q) =>
-                              setState(() => _searchQuery = q),
-                          onRefresh: _handleRefresh,
-                          isRefreshing: _controller.isRefreshing,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: PackageDetailPane(
-                            package: _controller.selected,
-                            onUpdate: _handleUpdatePackage,
-                            onLaunch: _handleLaunchPackage,
-                          ),
-                        ),
-                      ],
+    return CallbackShortcuts(
+      bindings: {
+        AppShortcuts.settings: _toggleSettings,
+        AppShortcuts.refresh: _handleRefresh,
+        AppShortcuts.refreshAlt: _handleRefresh,
+        AppShortcuts.search: () {
+          if (_isSettingsOpen) setState(() => _isSettingsOpen = false);
+          _searchFocus.requestFocus();
+        },
+        AppShortcuts.back: _escape,
+      },
+      child: Focus(
+        autofocus: true,
+        child: ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) => ColoredBox(
+            color: DynTokens.of(context).window,
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    WindowTitleBar(
+                      isSettingsOpen: _isSettingsOpen,
+                      onToggleSettings: () =>
+                          setState(() => _isSettingsOpen = !_isSettingsOpen),
+                      hubUpdateVersion: '0.2.0',
+                      onUpdateHub: () => _showInfo(
+                        title: context.l10n.hubUpdateTitle,
+                        content: context.l10n.hubUpdateReady('0.2.0'),
+                        severity: InfoBarSeverity.info,
+                      ),
                     ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: _isSettingsOpen
+                            ? SettingsView(
+                                settings: _controller.settings,
+                                onSettingsChanged: _controller.updateSettings,
+                                onBack: () =>
+                                    setState(() => _isSettingsOpen = false),
+                              )
+                            : Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  PackageSidebar(
+                                    packages: _controller.packages,
+                                    selectedPackage: _controller.selected,
+                                    onSelectPackage: _controller.select,
+                                    searchQuery: _searchQuery,
+                                    onSearchChanged: (q) =>
+                                        setState(() => _searchQuery = q),
+                                    onRefresh: _handleRefresh,
+                                    isRefreshing: _controller.isRefreshing,
+                                    searchFocusNode: _searchFocus,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: PackageDetailPane(
+                                      package: _controller.selected,
+                                      onUpdate: _handleUpdatePackage,
+                                      onLaunch: _handleLaunchPackage,
+                                      onInstall: _handleInstallPackage,
+                                      onUninstall: _handleUninstallPackage,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 24,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: AnimatedSwitcher(
+                      duration: FluentTheme.of(context).mediumAnimationDuration,
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.4),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      ),
+                      child: _toast == null
+                          ? const SizedBox.shrink(key: ValueKey('none'))
+                          : Semantics(
+                              liveRegion: true,
+                              key: ValueKey(_toast),
+                              child: PhysicalModel(
+                                color: Colors.transparent,
+                                elevation: 8,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 520,
+                                  ),
+                                  // InfoBar is translucent; give it an
+                                  // opaque base so nothing shows through.
+                                  child: ColoredBox(
+                                    color:
+                                        FluentTheme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? DynTokens.dark.card
+                                        : DynTokens.light.card,
+                                    child: InfoBar(
+                                      title: Text(_toast!.title),
+                                      content: Text(_toast!.content),
+                                      severity: _toast!.severity,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
