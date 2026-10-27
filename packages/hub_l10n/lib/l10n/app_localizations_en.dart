@@ -264,8 +264,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String settingsVersionLine(String version) {
-    return 'Version $version · Ubuntu Yaru Edition';
+    return 'Version $version';
   }
+
+  @override
+  String get packageDetails => 'Package Details';
+
+  @override
+  String versionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get packageId => 'Package ID';
+
+  @override
+  String get installedVersion => 'Installed Version';
+
+  @override
+  String get availableVersion => 'Available Version';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get none => 'None';
 
   @override
   String errorPackageNotFound(String id) {

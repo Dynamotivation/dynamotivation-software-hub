@@ -59,11 +59,14 @@ abstract final class DynUbuntuTheme {
   ///
   /// Fuses on top of the runtime-resolved Yaru theme (which already follows
   /// the user's GTK theme name, GNOME color-scheme and geometry preferences
-  /// live), so only the brand identity colors are overridden.
+  /// live). `primary` is intentionally not overridden: it stays on the
+  /// Yaru variant resolved at runtime, so the user's control-center accent
+  /// color (Ubuntu 24.10+) and the per-distro accents Yaru picks for other
+  /// desktop environments (Kubuntu blue, Cinnamon brown, Xubuntu blue, ...)
+  /// keep flowing through. Only the brand accent (`secondary`) is overridden.
   static ThemeData light(ThemeData yaruBase) {
     return yaruBase.copyWith(
       colorScheme: yaruBase.colorScheme.copyWith(
-        primary: ubuntuOrange,
         secondary: coralAccent,
         surface: contentLight,
       ),
@@ -78,10 +81,12 @@ abstract final class DynUbuntuTheme {
   }
 
   /// Builds the dark Ubuntu theme fused with Dynamotivation accents.
+  ///
+  /// Like [light]: `primary` stays on the runtime-resolved Yaru variant;
+  /// only the brand accent (`secondary`) and surfaces are overridden.
   static ThemeData dark(ThemeData yaruBase) {
     return yaruBase.copyWith(
       colorScheme: yaruBase.colorScheme.copyWith(
-        primary: ubuntuOrange,
         secondary: coralAccent,
         surface: contentDark,
       ),

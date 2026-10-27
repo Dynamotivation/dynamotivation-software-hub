@@ -255,7 +255,7 @@ class _UbuntuPackageTileState extends State<_UbuntuPackageTile> {
 
     Color bg;
     if (selected) {
-      bg = DynUbuntuTheme.ubuntuOrange.withValues(
+      bg = theme.colorScheme.primary.withValues(
         alpha: isDark ? 0.20 : 0.13,
       );
     } else if (_hovered) {

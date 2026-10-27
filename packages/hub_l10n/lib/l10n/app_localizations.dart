@@ -536,11 +536,53 @@ abstract class AppLocalizations {
   /// **'Publisher'**
   String get publisher;
 
-  /// Subtitle of the package row in the Settings about section
+  /// App version subtitle in the Settings about section
   ///
   /// In en, this message translates to:
-  /// **'Version {version} · Ubuntu Yaru Edition'**
+  /// **'Version {version}'**
   String settingsVersionLine(String version);
+
+  /// Title of the metadata card in the package detail view
+  ///
+  /// In en, this message translates to:
+  /// **'Package Details'**
+  String get packageDetails;
+
+  /// Heading of a release entry in the What's new and Older releases cards
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String versionLabel(String version);
+
+  /// Label of the identifier row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Package ID'**
+  String get packageId;
+
+  /// Label of the installed version row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Installed Version'**
+  String get installedVersion;
+
+  /// Label of the available version row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Available Version'**
+  String get availableVersion;
+
+  /// Label of the status row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// Value of the installed version row when the package is not installed
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
 
   /// No description provided for @errorPackageNotFound.
   ///

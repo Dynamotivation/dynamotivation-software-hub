@@ -94,7 +94,7 @@ class PackageDetailView extends StatelessWidget {
                   ],
                   const SizedBox(height: 16),
                   _UbuntuCard(
-                    title: 'Package Details',
+                    title: l10n.packageDetails,
                     icon: Icons.tune,
                     child: _PackageMetadataTable(package: pkg),
                   ),
@@ -156,6 +156,7 @@ class _UbuntuBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
     final status = package.isInstalled ? l10n.installed : l10n.available;
 
     return Container(
@@ -214,8 +215,8 @@ class _UbuntuBanner extends StatelessWidget {
                           if (!package.isInstalled)
                             FilledButton.icon(
                               style: FilledButton.styleFrom(
-                                backgroundColor: DynUbuntuTheme.ubuntuOrange,
-                                foregroundColor: Colors.white,
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 18,
                                   vertical: 10,
@@ -236,8 +237,10 @@ class _UbuntuBanner extends StatelessWidget {
                               style: FilledButton.styleFrom(
                                 backgroundColor: package.hasUpdate
                                     ? Colors.white24
-                                    : DynUbuntuTheme.ubuntuOrange,
-                                foregroundColor: Colors.white,
+                                    : theme.colorScheme.primary,
+                                foregroundColor: package.hasUpdate
+                                    ? Colors.white
+                                    : theme.colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 10,
@@ -256,8 +259,8 @@ class _UbuntuBanner extends StatelessWidget {
                           if (package.hasUpdate)
                             FilledButton.icon(
                               style: FilledButton.styleFrom(
-                                backgroundColor: DynUbuntuTheme.ubuntuOrange,
-                                foregroundColor: Colors.white,
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 10,
@@ -349,7 +352,7 @@ class _UbuntuCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: DynUbuntuTheme.ubuntuOrange),
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -386,6 +389,7 @@ class _ReleaseNotesView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +397,7 @@ class _ReleaseNotesView extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Version ${note.version}',
+              l10n.versionLabel(note.version),
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -440,30 +444,31 @@ class _PackageMetadataTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final secondary = isDark ? Colors.white60 : Colors.black54;
+    final l10n = context.l10n;
 
     return Column(
       children: [
         _MetadataRow(
-          label: 'Package ID',
+          label: l10n.packageId,
           value: package.id,
           secondaryColor: secondary,
         ),
         const Divider(height: 16),
         _MetadataRow(
-          label: 'Installed Version',
-          value: package.isInstalled ? 'v${package.currentVersion}' : 'None',
+          label: l10n.installedVersion,
+          value: package.isInstalled ? 'v${package.currentVersion}' : l10n.none,
           secondaryColor: secondary,
         ),
         const Divider(height: 16),
         _MetadataRow(
-          label: 'Available Version',
+          label: l10n.availableVersion,
           value: 'v${package.latestVersion}',
           secondaryColor: secondary,
         ),
         const Divider(height: 16),
         _MetadataRow(
-          label: 'Status',
-          value: package.isInstalled ? 'Installed' : 'Available',
+          label: l10n.status,
+          value: package.isInstalled ? l10n.installed : l10n.available,
           secondaryColor: secondary,
         ),
       ],

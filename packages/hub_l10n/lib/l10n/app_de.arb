@@ -83,14 +83,47 @@
   "@publisher": {
     "description": "Row title of the publisher entry in the Settings view"
   },
-  "settingsVersionLine": "Version {version} · Ubuntu-Yaru-Ausgabe",
+  "settingsVersionLine": "Version {version}",
   "@settingsVersionLine": {
-    "description": "Subtitle of the package row in the Settings about section",
+    "description": "App version subtitle in the Settings about section",
     "placeholders": {
       "version": {
         "type": "String"
       }
     }
+  },
+  "packageDetails": "Paketdetails",
+  "@packageDetails": {
+    "description": "Title of the metadata card in the package detail view"
+  },
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "description": "Heading of a release entry in the What's new and Older releases cards",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "packageId": "Paket-ID",
+  "@packageId": {
+    "description": "Label of the identifier row in the package metadata card"
+  },
+  "installedVersion": "Installierte Version",
+  "@installedVersion": {
+    "description": "Label of the installed version row in the package metadata card"
+  },
+  "availableVersion": "Verfügbare Version",
+  "@availableVersion": {
+    "description": "Label of the available version row in the package metadata card"
+  },
+  "status": "Status",
+  "@status": {
+    "description": "Label of the status row in the package metadata card"
+  },
+  "none": "Keine",
+  "@none": {
+    "description": "Value of the installed version row when the package is not installed"
   },
   "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
   "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar."

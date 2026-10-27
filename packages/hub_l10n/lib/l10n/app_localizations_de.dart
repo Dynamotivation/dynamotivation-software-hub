@@ -266,8 +266,31 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String settingsVersionLine(String version) {
-    return 'Version $version · Ubuntu-Yaru-Ausgabe';
+    return 'Version $version';
   }
+
+  @override
+  String get packageDetails => 'Paketdetails';
+
+  @override
+  String versionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get packageId => 'Paket-ID';
+
+  @override
+  String get installedVersion => 'Installierte Version';
+
+  @override
+  String get availableVersion => 'Verfügbare Version';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get none => 'Keine';
 
   @override
   String errorPackageNotFound(String id) {
