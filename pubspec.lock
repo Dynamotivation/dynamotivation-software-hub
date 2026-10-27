@@ -29,10 +29,10 @@ packages:
     dependency: transitive
     description:
       name: animated_vector_annotations
-      sha256: "07c1ea603a2096f7eb6f1c2b8f16c3c330c680843ea78b7782a3217c3c53f979"
+      sha256: c1bf348882940b64d7b86b8fc09572310a5dc28091cdde8436156844ca15a30d
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.2"
+    version: "0.3.0"
   appkit_ui_element_colors:
     dependency: transitive
     description:
@@ -149,10 +149,10 @@ packages:
     dependency: transitive
     description:
       name: cupertino_icons
-      sha256: "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
+      sha256: b7cc2390aac296c083bea762859413eb1cf5b630c70e0c7e4d831018f762a8b2
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.9"
+    version: "2.0.0"
   cupertino_ui:
     dependency: transitive
     description:
@@ -165,10 +165,10 @@ packages:
     dependency: transitive
     description:
       name: dbus
-      sha256: a48d5da28e89bd02196e80d81ed8d7954923d00a0f4a68cc20b575038f023383
+      sha256: f7db8504e715b835f5ebe5fe74604ccd961d504c73389a5d8e81bafc2e2f3612
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.15"
+    version: "0.8.0"
   equatable:
     dependency: transitive
     description:
@@ -273,10 +273,10 @@ packages:
     dependency: transitive
     description:
       name: gsettings
-      sha256: "1b0ce661f5436d2db1e51f3c4295a49849f03d304003a7ba177d01e3a858249c"
+      sha256: "5e3e299b871a16d142691aa91595a4d73bab7a7fa65d53db0bf2c576959aaefc"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.8"
+    version: "0.2.9"
   gtk:
     dependency: transitive
     description:
@@ -742,18 +742,18 @@ packages:
     dependency: transitive
     description:
       name: vector_graphics_compiler
-      sha256: a8e2c19796144da2f81bcc96dad1bb19c4677b561c452081b97ee737b9faed65
+      sha256: "40c92d6de05024a337a6f25feff931e1480c76cb0bb35fc37553c48951526b2f"
       url: "https://pub.dev"
     source: hosted
-    version: "1.3.2"
+    version: "1.3.3"
   vector_math:
     dependency: transitive
     description:
       name: vector_math
-      sha256: "92b9910f66ed1057fd4da7b040ae7c74cafacf885bdc81be496928d5049b032d"
+      sha256: fa49e1674cb84acb900141714e6c6e1f9ae099827c24d141430ff6819db4e1bc
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.3"
+    version: "2.4.4"
   vm_service:
     dependency: transitive
     description:
@@ -838,10 +838,10 @@ packages:
     dependency: transitive
     description:
       name: yaru
-      sha256: "95e801c52dfda458bcb772baee6b2575c711fd951616a24910d6d30e70f5fb0d"
+      sha256: b4f3167b9f138ffd20998bfa36d003dcf5e7979cf2652e4a01835dec66361e33
       url: "https://pub.dev"
     source: hosted
-    version: "10.2.0"
+    version: "11.0.0"
   yaru_window:
     dependency: transitive
     description:

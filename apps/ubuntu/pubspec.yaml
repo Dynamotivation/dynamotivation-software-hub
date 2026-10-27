@@ -17,7 +17,7 @@ dependencies:
   hub_keys: any
   hub_scroll: any
 
-  yaru: ^10.0.0
+  yaru: ^11.0.0
   yaru_window_manager: ^0.1.0
   window_manager: ^0.5.2
   flutter_svg: ^2.3.0
