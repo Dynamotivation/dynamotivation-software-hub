@@ -7,6 +7,7 @@ import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
 import 'package_image.dart';
+import 'version_label.dart';
 
 class PackageDetailPane extends StatefulWidget {
   final SoftwarePackage? package;
@@ -142,7 +143,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                               children: [
                                 if (pkg.hasUpdate) ...[
                                   Text(
-                                    'v${pkg.currentVersion}',
+                                    versionLabel(pkg.currentVersion),
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: tokens.textMuted,
@@ -164,7 +165,11 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                       color: tokens.success,
                                     ),
                                   Text(
-                                    'v${pkg.isInstalled ? pkg.currentVersion : pkg.latestVersion}',
+                                    versionLabel(
+                                      pkg.isInstalled
+                                          ? pkg.currentVersion
+                                          : pkg.latestVersion,
+                                    ),
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: tokens.textMuted,
@@ -404,48 +409,51 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
-                    Divider(
-                      style: DividerThemeData(
-                        thickness: 1,
-                        decoration: BoxDecoration(color: tokens.cardBorder),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // What's new section
-                    Text(
-                      context.l10n.whatsNew,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: tokens.text,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Latest release notes
-                    Row(
-                      children: [
-                        Text(
-                          'v${pkg.latestRelease.version}',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: tokens.text,
-                          ),
+                    // What's new is hidden until the catalog publishes a release.
+                    if (pkg.latestRelease.version.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Divider(
+                        style: DividerThemeData(
+                          thickness: 1,
+                          decoration: BoxDecoration(color: tokens.cardBorder),
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          pkg.latestRelease.date,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: tokens.textSubtle,
-                          ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      // What's new section
+                      Text(
+                        context.l10n.whatsNew,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: tokens.text,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Latest release notes
+                      Row(
+                        children: [
+                          Text(
+                            versionLabel(pkg.latestRelease.version),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: tokens.text,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            pkg.latestRelease.date,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: tokens.textSubtle,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
 
                     // Highlights
                     ...pkg.latestRelease.highlights.map(
@@ -541,7 +549,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                     Row(
                                       children: [
                                         Text(
-                                          'v${rel.version}',
+                                          versionLabel(rel.version),
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,

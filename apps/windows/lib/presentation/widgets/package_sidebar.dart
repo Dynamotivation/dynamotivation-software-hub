@@ -10,6 +10,7 @@ import 'package:hub_scroll/hub_scroll.dart';
 
 import '../shortcuts.dart';
 import 'package_image.dart';
+import 'version_label.dart';
 import '../theme/dynamotivation_theme.dart';
 
 class PackageSidebar extends StatefulWidget {
@@ -413,7 +414,7 @@ class _PackageTile extends StatelessWidget {
                       )
                     else
                       Text(
-                        'v${package.currentVersion}',
+                        versionLabel(package.currentVersion),
                         style: TextStyle(fontSize: 11, color: tokens.textMuted),
                       ),
                   ],
