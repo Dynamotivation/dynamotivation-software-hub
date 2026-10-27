@@ -29,8 +29,11 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 
 ## Catalog source
 - The software catalog is published by the website (`dynamotivation.github.io`, template `templates/catalog/catalog.json`). The format version is in the URL path, not the document: `/v1/catalog.json/`. Local preview: `http://127.0.0.1:1111/v1/catalog.json/`. The Windows app reads it through `WebsitePackageRepository`, overridable with `--catalog-url=`.
-- The document is `{ "software": [ { name, description, url, icon: {url,width,height}, screenshots, platforms: {windows, macos, linux} } ] }`. Only software whose page sets `[extra.hub] exposed = true` is listed. The package id is the last segment of `url` (the page slug).
-- Each software page's front matter has `[extra.hub]`: `exposed` (bool) and `targets` (`windows` x86/x64/arm64, `macos` x64/arm64, `linux` x86/x64/arm64). Targets outside that matrix are dropped by the template.
+- The document is `{ "software": [ { name, description, url, icon: {url,width,height}, screenshots, platforms: {windows, macos, linux}, releases: [{version, date, highlights}] } ] }`. Only software whose page sets `[extra.hub] exposed = true` is listed. The package id is the last segment of `url` (the page slug). Icon URLs are absolute.
+- Each software page's front matter has `[extra.hub]`: `exposed` (bool) and `targets`, written as a table: `targets = { windows = ["x64"], macos = [], linux = [] }`. Allowed values are `windows` x86/x64/arm64, `macos` x64/arm64, `linux` x86/x64/arm64. Targets outside that matrix are dropped by the template. `platforms` in the catalog is built from `targets`.
+- Releases live in the website repo at `data/releases.json`, keyed by page slug: `{ "<slug>": { "releases": [ { "version": "1.2.0", "date": "2026-10-01", "highlights": ["..."] } ] } }`. Entries are newest first. Versions are `1.2` or `1.2.3` (optional `-pre`/`+build` suffix), dates are `YYYY-MM-DD`, and versions must be unique. The slug must match a file in `content/portfolio/software/`. Run `python scripts/validate_releases.py` in the website repo before building; CI should run it too.
+- The software page shows the newest release with its highlights, and older releases under "Past versions". The newest version is also written to the page's JSON-LD `softwareVersion`. A page without releases shows no release section.
+- The hub app parses `releases` (`WebsitePackageRepository`). It does not yet read `platforms`.
 
 ## Errors
 - Never swallow errors. Use cases throw typed `HubException`s; the frontend maps them to localized text in its own `lib/presentation/errors.dart` (`describeError(l10n, error)`). Each frontend has its own copy because frontends never import each other.
