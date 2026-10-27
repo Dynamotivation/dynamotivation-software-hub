@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:hub_l10n/hub_l10n.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
 
@@ -60,8 +61,7 @@ class SettingsView extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+          child: _SmoothSettingsList(
             children: [
               _Card(
                 children: [
@@ -147,6 +147,40 @@ class SettingsView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Scrollable column of settings cards with the eased mouse-wheel scrolling
+/// every scroll view in the app uses.
+class _SmoothSettingsList extends StatefulWidget {
+  final List<Widget> children;
+
+  const _SmoothSettingsList({required this.children});
+
+  @override
+  State<_SmoothSettingsList> createState() => _SmoothSettingsListState();
+}
+
+class _SmoothSettingsListState extends State<_SmoothSettingsList> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SmoothScroll(
+      controller: _scroll,
+      child: ListView(
+        controller: _scroll,
+        physics: smoothScrollPhysics,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+        children: widget.children,
+      ),
     );
   }
 }

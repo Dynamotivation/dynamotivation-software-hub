@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
 import '../controllers/hub_controller.dart';
+import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
 import '../widgets/package_detail_pane.dart';
@@ -76,10 +77,9 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
 
   void _showError(Object error) {
     final l10n = context.l10n;
-    final detail = error.toString();
     _showInfo(
       title: l10n.operationFailed,
-      content: detail,
+      content: describeError(l10n, error),
       severity: InfoBarSeverity.error,
     );
   }

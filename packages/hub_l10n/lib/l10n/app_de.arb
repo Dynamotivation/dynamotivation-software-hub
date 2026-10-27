@@ -63,5 +63,7 @@
   "packageUninstalledContent": "Von diesem Gerät entfernt.",
   "packageInstalledTitle": "{name} installiert",
   "packageInstalledContent": "Version {version} kann gestartet werden.",
-  "moreOptions": "Weitere Optionen"
+  "moreOptions": "Weitere Optionen",
+  "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
+  "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar."
 }

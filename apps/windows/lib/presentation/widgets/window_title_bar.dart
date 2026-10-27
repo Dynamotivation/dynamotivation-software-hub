@@ -5,6 +5,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:hub_keys/hub_keys.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
+import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
 
@@ -34,23 +35,21 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
   void initState() {
     super.initState();
     if (!WidgetsBinding.instance.runtimeType.toString().contains("Test")) {
-      try {
-        windowManager.addListener(this);
-        _checkMaximized();
-      } catch (_) {}
+      windowManager.addListener(this);
+      _checkMaximized();
     }
   }
 
   @override
   void dispose() {
     if (!WidgetsBinding.instance.runtimeType.toString().contains("Test")) {
-      try {
-        windowManager.removeListener(this);
-      } catch (_) {}
+      windowManager.removeListener(this);
     }
     super.dispose();
   }
 
+  /// Background probe, not user-initiated: a failure is reported to Flutter's
+  /// error handler rather than shown, and the button keeps its last state.
   Future<void> _checkMaximized() async {
     try {
       final maximized = await windowManager.isMaximized();
@@ -59,7 +58,30 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
           _isMaximized = maximized;
         });
       }
-    } catch (_) {}
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stack),
+      );
+    }
+  }
+
+  /// Runs a caption or header action the user asked for. A failure is shown
+  /// in an InfoBar.
+  Future<void> _runWindowAction(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      if (!mounted) return;
+      final l10n = context.l10n;
+      displayInfoBar(
+        context,
+        builder: (context, close) => InfoBar(
+          title: Text(l10n.operationFailed),
+          content: Text(describeError(l10n, error)),
+          severity: InfoBarSeverity.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -146,11 +168,8 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           _CaptionButton(
                             icon: _captionMinimizeIcon,
                             tooltip: context.l10n.minimize,
-                            onPressed: () {
-                              try {
-                                windowManager.minimize();
-                              } catch (_) {}
-                            },
+                            onPressed: () =>
+                                _runWindowAction(windowManager.minimize),
                           ),
                           _CaptionButton(
                             icon: _isMaximized
@@ -159,25 +178,18 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                             tooltip: _isMaximized
                                 ? context.l10n.restore
                                 : context.l10n.maximize,
-                            onPressed: () async {
-                              try {
-                                if (_isMaximized) {
-                                  await windowManager.unmaximize();
-                                } else {
-                                  await windowManager.maximize();
-                                }
-                              } catch (_) {}
-                            },
+                            onPressed: () => _runWindowAction(
+                              _isMaximized
+                                  ? windowManager.unmaximize
+                                  : windowManager.maximize,
+                            ),
                           ),
                           _CaptionButton(
                             icon: _captionCloseIcon,
                             tooltip: context.l10n.close,
                             isClose: true,
-                            onPressed: () {
-                              try {
-                                windowManager.close();
-                              } catch (_) {}
-                            },
+                            onPressed: () =>
+                                _runWindowAction(windowManager.close),
                           ),
                         ],
                       ),

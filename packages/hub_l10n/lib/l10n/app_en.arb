@@ -170,5 +170,14 @@
       }
     }
   },
-  "moreOptions": "More options"
+  "moreOptions": "More options",
+  "errorPackageNotFound": "The package \"{id}\" could not be found.",
+  "@errorPackageNotFound": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "errorActionRejected": "This action is not available for the package right now."
 }

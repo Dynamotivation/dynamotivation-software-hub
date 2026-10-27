@@ -231,4 +231,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreOptions => 'More options';
+
+  @override
+  String errorPackageNotFound(String id) {
+    return 'The package \"$id\" could not be found.';
+  }
+
+  @override
+  String get errorActionRejected =>
+      'This action is not available for the package right now.';
 }

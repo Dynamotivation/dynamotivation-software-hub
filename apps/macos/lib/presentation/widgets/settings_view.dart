@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:hub_scroll/hub_scroll.dart';
 import 'package:macos_ui/macos_ui.dart';
 
 /// Preferences, shown in the content area. (macOS convention is a separate
@@ -25,7 +26,15 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
+  final _scroll = ScrollController();
+
   AppSettings get _s => widget.settings;
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   /// A System Settings style row: title and optional subtitle on the left,
   /// control on the right.
@@ -139,77 +148,82 @@ class _SettingsViewState extends State<SettingsView> {
     final l10n = context.l10n;
     final typography = MacosTheme.of(context).typography;
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(32, widget.topInset, 32, 40),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 14, bottom: 18),
-                child: Text(l10n.settings, style: typography.largeTitle),
-              ),
-              _group(context, l10n.appearance, [
-                _row(
-                  context,
-                  l10n.appearance,
-                  MacosPopupButton<AppThemeMode>(
-                    value: _s.themeMode,
-                    onChanged: (m) {
-                      if (m != null) {
-                        widget.onSettingsChanged(_s.copyWith(themeMode: m));
-                      }
-                    },
-                    items: [
-                      MacosPopupMenuItem(
-                        value: AppThemeMode.system,
-                        child: Text(l10n.themeSystem),
-                      ),
-                      MacosPopupMenuItem(
-                        value: AppThemeMode.light,
-                        child: Text(l10n.themeLight),
-                      ),
-                      MacosPopupMenuItem(
-                        value: AppThemeMode.dark,
-                        child: Text(l10n.themeDark),
-                      ),
-                    ],
+    return SmoothScroll(
+      controller: _scroll,
+      child: SingleChildScrollView(
+        controller: _scroll,
+        physics: smoothScrollPhysics,
+        padding: EdgeInsets.fromLTRB(32, widget.topInset, 32, 40),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 14, bottom: 18),
+                  child: Text(l10n.settings, style: typography.largeTitle),
+                ),
+                _group(context, l10n.appearance, [
+                  _row(
+                    context,
+                    l10n.appearance,
+                    MacosPopupButton<AppThemeMode>(
+                      value: _s.themeMode,
+                      onChanged: (m) {
+                        if (m != null) {
+                          widget.onSettingsChanged(_s.copyWith(themeMode: m));
+                        }
+                      },
+                      items: [
+                        MacosPopupMenuItem(
+                          value: AppThemeMode.system,
+                          child: Text(l10n.themeSystem),
+                        ),
+                        MacosPopupMenuItem(
+                          value: AppThemeMode.light,
+                          child: Text(l10n.themeLight),
+                        ),
+                        MacosPopupMenuItem(
+                          value: AppThemeMode.dark,
+                          child: Text(l10n.themeDark),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ]),
-              _group(context, l10n.systemIntegration, [
-                _toggle(
-                  context,
-                  l10n.autostartTitle,
-                  l10n.autostartDescription,
-                  _s.autostartInBackground,
-                  (v) => _s.copyWith(autostartInBackground: v),
-                ),
-                _toggle(
-                  context,
-                  l10n.keepRunningTitle,
-                  l10n.keepRunningDescription,
-                  _s.keepRunningInBackground,
-                  (v) => _s.copyWith(keepRunningInBackground: v),
-                ),
-                _toggle(
-                  context,
-                  l10n.autoCheckTitle,
-                  l10n.autoCheckDescription,
-                  _s.autoCheckUpdates,
-                  (v) => _s.copyWith(autoCheckUpdates: v),
-                ),
-                _toggle(
-                  context,
-                  l10n.notificationsTitle,
-                  l10n.notificationsDescription,
-                  _s.showNotifications,
-                  (v) => _s.copyWith(showNotifications: v),
-                ),
-              ]),
-            ],
+                ]),
+                _group(context, l10n.systemIntegration, [
+                  _toggle(
+                    context,
+                    l10n.autostartTitle,
+                    l10n.autostartDescription,
+                    _s.autostartInBackground,
+                    (v) => _s.copyWith(autostartInBackground: v),
+                  ),
+                  _toggle(
+                    context,
+                    l10n.keepRunningTitle,
+                    l10n.keepRunningDescription,
+                    _s.keepRunningInBackground,
+                    (v) => _s.copyWith(keepRunningInBackground: v),
+                  ),
+                  _toggle(
+                    context,
+                    l10n.autoCheckTitle,
+                    l10n.autoCheckDescription,
+                    _s.autoCheckUpdates,
+                    (v) => _s.copyWith(autoCheckUpdates: v),
+                  ),
+                  _toggle(
+                    context,
+                    l10n.notificationsTitle,
+                    l10n.notificationsDescription,
+                    _s.showNotifications,
+                    (v) => _s.copyWith(showNotifications: v),
+                  ),
+                ]),
+              ],
+            ),
           ),
         ),
       ),

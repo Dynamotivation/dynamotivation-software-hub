@@ -10,6 +10,7 @@ import 'package:macos_ui/macos_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../controllers/hub_controller.dart';
+import '../errors.dart';
 import '../theme/dynamotivation_macos_theme.dart';
 import '../widgets/brand_lockup.dart';
 import '../widgets/glass_controls.dart';
@@ -72,13 +73,12 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
 
   void _showError(Object error) {
     final l10n = context.l10n;
-    final detail = error.toString();
     showMacosAlertDialog<void>(
       context: context,
       builder: (context) => MacosAlertDialog(
         appIcon: const MacosIcon(CupertinoIcons.exclamationmark_triangle),
         title: Text(l10n.operationFailed),
-        message: Text(detail),
+        message: Text(describeError(l10n, error)),
         primaryButton: PushButton(
           controlSize: ControlSize.large,
           onPressed: () => Navigator.of(context).pop(),

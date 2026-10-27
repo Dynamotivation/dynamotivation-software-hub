@@ -481,6 +481,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More options'**
   String get moreOptions;
+
+  /// No description provided for @errorPackageNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The package \"{id}\" could not be found.'**
+  String errorPackageNotFound(String id);
+
+  /// No description provided for @errorActionRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is not available for the package right now.'**
+  String get errorActionRejected;
 }
 
 class _AppLocalizationsDelegate
