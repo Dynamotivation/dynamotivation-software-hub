@@ -51,6 +51,9 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 - **Destructive Actions (Uninstall)**:
   - Destructive actions such as Uninstall must never be exposed as primary or transparent outline buttons in the main banner.
   - They must require two deliberate clicks: placed inside a 3-dot overflow menu (`...` / `more_horiz`), which triggers a modal confirmation dialog (`AlertDialog` / `ContentDialog` / `MacosAlertDialog`) with Cancel and Uninstall buttons.
+- **Launch / Update Button Order**:
+  - Launch is always the leftmost action button; Update sits to its right, in every frontend. Launch gets the muscle-memory spot, so an accidental double-click can never trigger an update.
+  - Keep the existing emphasis hierarchy: Update stays the filled/prominent control (or the Launch button de-emphasized via a secondary style) — position changes, emphasis does not.
 - **Settings View Architecture**:
   - Settings is a global standalone full-page view, never an embedded right pane beside a selected package sidebar. When Settings is open, the package sidebar is hidden, and the header provides a back button to return to the software catalog.
 

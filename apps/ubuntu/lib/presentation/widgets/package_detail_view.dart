@@ -231,26 +231,6 @@ class _UbuntuBanner extends StatelessWidget {
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
-                          if (package.hasUpdate)
-                            FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: DynUbuntuTheme.ubuntuOrange,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              onPressed: onUpdate,
-                              icon: const Icon(Icons.arrow_circle_up, size: 18),
-                              label: Text(
-                                l10n.updateToVersion(package.latestVersion),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
                           if (package.isInstalled)
                             FilledButton.icon(
                               style: FilledButton.styleFrom(
@@ -270,6 +250,26 @@ class _UbuntuBanner extends StatelessWidget {
                               icon: const Icon(Icons.play_arrow, size: 18),
                               label: Text(
                                 l10n.launch,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          if (package.hasUpdate)
+                            FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: DynUbuntuTheme.ubuntuOrange,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: onUpdate,
+                              icon: const Icon(Icons.arrow_circle_up, size: 18),
+                              label: Text(
+                                l10n.updateToVersion(package.latestVersion),
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),

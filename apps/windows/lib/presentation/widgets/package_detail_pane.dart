@@ -200,6 +200,23 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (pkg.hasUpdate) ...[
+                              Button(
+                                onPressed: widget.onLaunch,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(FluentIcons.play, size: 12),
+                                      SizedBox(width: 6),
+                                      Text(context.l10n.launch),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               FilledButton(
                                 onPressed: widget.onUpdate,
                                 child: Padding(
@@ -217,23 +234,6 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                           pkg.latestVersion,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Button(
-                                onPressed: widget.onLaunch,
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(FluentIcons.play, size: 12),
-                                      SizedBox(width: 6),
-                                      Text(context.l10n.launch),
                                     ],
                                   ),
                                 ),
