@@ -57,6 +57,9 @@ class _DynamotivationAppState extends State<DynamotivationApp>
         final isDark = _resolvedBrightness() == Brightness.dark;
         return FluentApp(
           onGenerateTitle: (context) => context.l10n.appTitle,
+          // Window chrome accent/frame color: the brand color, following the
+          // FluentApp.color pattern from the fluent_ui gallery.
+          color: DynamotivationTheme.coralPrimary,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           themeMode: isDark ? ThemeMode.dark : ThemeMode.light,

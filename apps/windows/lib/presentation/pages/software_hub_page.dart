@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../controllers/hub_controller.dart';
 import '../errors.dart';
@@ -30,6 +31,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
   String _searchQuery = '';
   final _searchFocus = FocusNode();
   late bool _isSettingsOpen;
+  String? _lastWindowTitle;
   ({String title, String content, InfoBarSeverity severity})? _toast;
   Timer? _toastTimer;
 
@@ -168,8 +170,25 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     );
   }
 
+  /// Keeps the native window title (taskbar, alt-tab) on the localized
+  /// product name. WinUI apps keep a constant window title while the
+  /// in-app heading changes per view, so it only updates when needed.
+  void _syncWindowTitle(String title) {
+    if (_lastWindowTitle == title) return;
+    _lastWindowTitle = title;
+    windowManager.setTitle(title).catchError((error, stack) {
+      // Window state sync, not user initiated: failures go to Flutter's
+      // error handler, never to the UI.
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stack),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _syncWindowTitle(context.l10n.productName);
+
     return CallbackShortcuts(
       bindings: {
         AppShortcuts.settings: _toggleSettings,

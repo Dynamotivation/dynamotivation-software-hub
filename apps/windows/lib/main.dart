@@ -10,6 +10,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final startDark = args.contains('--dark');
+  final startLight = args.contains('--light');
   final openSettings = args.contains('--settings');
 
   await windowManager.ensureInitialized();
@@ -28,6 +29,10 @@ void main(List<String> args) async {
   if (startDark) {
     await controller.updateSettings(
       controller.settings.copyWith(themeMode: AppThemeMode.dark),
+    );
+  } else if (startLight) {
+    await controller.updateSettings(
+      controller.settings.copyWith(themeMode: AppThemeMode.light),
     );
   }
 

@@ -11,13 +11,12 @@ class DynTokens {
   final Color headerMuted;
   final Color headerHover;
   final Color headerPill;
-  final Color captionCloseHover;
-  final Color captionClosePressed;
 
   // Brand
   final Color brandAccent;
   final Color brandRed;
   final Color critical;
+  final Color success;
 
   // Primary / secondary buttons
   final Color primary;
@@ -55,11 +54,10 @@ class DynTokens {
     required this.headerMuted,
     required this.headerHover,
     required this.headerPill,
-    required this.captionCloseHover,
-    required this.captionClosePressed,
     required this.brandAccent,
     required this.brandRed,
     required this.critical,
+    required this.success,
     required this.primary,
     required this.primaryHover,
     required this.primaryPressed,
@@ -95,11 +93,10 @@ class DynTokens {
     headerMuted: Color(0xFFFFFFFF),
     headerHover: Color(0x29FFFFFF),
     headerPill: Color(0x2EFFFFFF),
-    captionCloseHover: Color(0xFFC42B1C),
-    captionClosePressed: Color(0xFFB82415),
     brandAccent: Color(0xFFE22050),
     brandRed: Color(0xFFD61F45),
     critical: Color(0xFFC42B1C),
+    success: Color(0xFF0F7A48),
     primary: Color(0xFFE22050),
     primaryHover: Color(0xFFC91A45),
     primaryPressed: Color(0xFFB0163C),
@@ -134,11 +131,10 @@ class DynTokens {
     headerMuted: Color(0xFFFFFFFF),
     headerHover: Color(0x29FFFFFF),
     headerPill: Color(0x2EFFFFFF),
-    captionCloseHover: Color(0xFFC42B1C),
-    captionClosePressed: Color(0xFFB82415),
     brandAccent: Color(0xFF38E89F),
     brandRed: Color(0xFFFF6B6B),
     critical: Color(0xFFFF99A4),
+    success: Color(0xFF67FFAE),
     primary: Color(0xFFD23A40),
     primaryHover: Color(0xFFC7343A),
     primaryPressed: Color(0xFFB72E34),
@@ -162,8 +158,57 @@ class DynTokens {
     textSubtle: Color(0x99FFFFFF),
   );
 
+  /// Tokens for users with high contrast enabled: translucent text and
+  /// hairlines become fully opaque, overlays and borders grow stronger.
+  /// Contrast requirements trump both brand and Fluent-light styling.
+  static DynTokens highContrast(DynTokens base) {
+    final isDark = base.isDark;
+    return DynTokens._(
+      isDark: base.isDark,
+      headerGradient: base.headerGradient,
+      headerForeground: base.headerForeground,
+      headerMuted: base.headerMuted,
+      headerHover: isDark ? const Color(0x33FFFFFF) : const Color(0x33000000),
+      headerPill: isDark ? const Color(0x40FFFFFF) : const Color(0x40000000),
+      brandAccent: base.brandAccent,
+      brandRed: base.brandRed,
+      critical: base.critical,
+      success: isDark ? const Color(0xFF8DFFC4) : const Color(0xFF006734),
+      primary: base.primary,
+      primaryHover: base.primaryHover,
+      primaryPressed: base.primaryPressed,
+      secondary: base.secondary,
+      secondaryHover: base.secondaryHover,
+      secondaryPressed: base.secondaryPressed,
+      secondaryBorder: isDark
+          ? const Color(0xFF6A6F7B)
+          : const Color(0xFF8A7D84),
+      updateBadge: base.updateBadge,
+      neutralBadge: base.neutralBadge,
+      window: base.window,
+      card: base.card,
+      cardBorder: isDark ? const Color(0xFF4A4E58) : const Color(0xFF8A7D84),
+      popup: base.popup,
+      hover: isDark ? const Color(0x1FFFFFFF) : const Color(0x1F000000),
+      selected: isDark ? const Color(0x33FFFFFF) : const Color(0x33000000),
+      divider: isDark ? const Color(0xFF4A4E58) : const Color(0xFF8A7D84),
+      scrollbarThumb: isDark
+          ? const Color(0xFFB8BEC8)
+          : const Color(0xFF5A5560),
+      progressTrack: isDark ? const Color(0x33FFFFFF) : const Color(0x33000000),
+      text: base.text,
+      textMuted: base.text,
+      textSubtle: base.text,
+    );
+  }
+
+  /// The tokens for the current brightness, with strengthened contrast when
+  /// the user has high contrast enabled.
   static DynTokens of(BuildContext context) {
-    return FluentTheme.of(context).brightness == Brightness.dark ? dark : light;
+    final tokens = FluentTheme.of(context).brightness == Brightness.dark
+        ? dark
+        : light;
+    return MediaQuery.highContrastOf(context) ? highContrast(tokens) : tokens;
   }
 }
 

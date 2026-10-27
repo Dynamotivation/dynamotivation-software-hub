@@ -143,6 +143,38 @@ class SettingsView extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 8),
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.settingsAboutHeading,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text,
+                    ),
+                  ),
+                ),
+              ),
+              _Card(
+                children: [
+                  _SettingRow(
+                    title: l10n.productName,
+                    description: l10n.brandName,
+                    control: const SizedBox.shrink(),
+                  ),
+                  _SettingRow(
+                    title: l10n.publisher,
+                    control: Icon(
+                      FluentIcons.verified_brand,
+                      size: 18,
+                      color: DynamotivationTheme.coralPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

@@ -34,17 +34,13 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
   @override
   void initState() {
     super.initState();
-    if (!WidgetsBinding.instance.runtimeType.toString().contains("Test")) {
-      windowManager.addListener(this);
-      _checkMaximized();
-    }
+    windowManager.addListener(this);
+    _checkMaximized();
   }
 
   @override
   void dispose() {
-    if (!WidgetsBinding.instance.runtimeType.toString().contains("Test")) {
-      windowManager.removeListener(this);
-    }
+    windowManager.removeListener(this);
     super.dispose();
   }
 
@@ -155,7 +151,10 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                   ),
                 ),
 
-                // Caption buttons on top, hub actions below.
+                // Caption buttons on top, hub actions below. These are the
+                // real Windows 11 caption buttons from window_manager
+                // (46x32, system hover/press fills, red close), matching the
+                // WindowButtons pattern used by the fluent_ui gallery.
                 Padding(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -165,31 +164,41 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _CaptionButton(
-                            icon: _captionMinimizeIcon,
-                            tooltip: context.l10n.minimize,
-                            onPressed: () =>
-                                _runWindowAction(windowManager.minimize),
-                          ),
-                          _CaptionButton(
-                            icon: _isMaximized
-                                ? _captionRestoreIcon
-                                : _captionMaximizeIcon,
-                            tooltip: _isMaximized
-                                ? context.l10n.restore
-                                : context.l10n.maximize,
-                            onPressed: () => _runWindowAction(
-                              _isMaximized
-                                  ? windowManager.unmaximize
-                                  : windowManager.maximize,
+                          Tooltip(
+                            message: context.l10n.minimize,
+                            child: WindowCaptionButton.minimize(
+                              // The band is a dark brand gradient in both
+                              // modes, so the dark scheme's white glyphs fit.
+                              brightness: Brightness.dark,
+                              onPressed: () =>
+                                  _runWindowAction(windowManager.minimize),
                             ),
                           ),
-                          _CaptionButton(
-                            icon: _captionCloseIcon,
-                            tooltip: context.l10n.close,
-                            isClose: true,
-                            onPressed: () =>
-                                _runWindowAction(windowManager.close),
+                          Tooltip(
+                            message: _isMaximized
+                                ? context.l10n.restore
+                                : context.l10n.maximize,
+                            child: _isMaximized
+                                ? WindowCaptionButton.unmaximize(
+                                    brightness: Brightness.dark,
+                                    onPressed: () => _runWindowAction(
+                                      windowManager.unmaximize,
+                                    ),
+                                  )
+                                : WindowCaptionButton.maximize(
+                                    brightness: Brightness.dark,
+                                    onPressed: () => _runWindowAction(
+                                      windowManager.maximize,
+                                    ),
+                                  ),
+                          ),
+                          Tooltip(
+                            message: context.l10n.close,
+                            child: WindowCaptionButton.close(
+                              brightness: Brightness.dark,
+                              onPressed: () =>
+                                  _runWindowAction(windowManager.close),
+                            ),
                           ),
                         ],
                       ),
@@ -244,28 +253,6 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
     );
   }
 }
-
-// Windows 11 caption glyphs from Segoe Fluent Icons (the native title bar set).
-const _captionMinimizeIcon = IconData(
-  0xE921,
-  fontFamily: 'Segoe Fluent Icons',
-  fontFamilyFallback: ['Segoe MDL2 Assets'],
-);
-const _captionMaximizeIcon = IconData(
-  0xE922,
-  fontFamily: 'Segoe Fluent Icons',
-  fontFamilyFallback: ['Segoe MDL2 Assets'],
-);
-const _captionRestoreIcon = IconData(
-  0xE923,
-  fontFamily: 'Segoe Fluent Icons',
-  fontFamilyFallback: ['Segoe MDL2 Assets'],
-);
-const _captionCloseIcon = IconData(
-  0xE8BB,
-  fontFamily: 'Segoe Fluent Icons',
-  fontFamilyFallback: ['Segoe MDL2 Assets'],
-);
 
 class _UpdateHubPill extends StatelessWidget {
   final DynTokens tokens;
@@ -347,82 +334,6 @@ class _UpdateHubPill extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _CaptionButton extends StatefulWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final bool isClose;
-
-  const _CaptionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.isClose = false,
-  });
-
-  @override
-  State<_CaptionButton> createState() => _CaptionButtonState();
-}
-
-class _CaptionButtonState extends State<_CaptionButton> {
-  bool _isHovered = false;
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = DynTokens.of(context);
-
-    Color bg = Colors.transparent;
-    Color iconColor = tokens.headerForeground;
-
-    if (widget.isClose) {
-      if (_isPressed) {
-        bg = tokens.captionClosePressed;
-        iconColor = Colors.white;
-      } else if (_isHovered) {
-        bg = tokens.captionCloseHover;
-        iconColor = Colors.white;
-      }
-    } else if (_isPressed) {
-      bg = tokens.headerHover.withValues(alpha: 0.35);
-    } else if (_isHovered) {
-      bg = tokens.headerHover;
-    }
-
-    return Tooltip(
-      message: widget.tooltip,
-      child: Semantics(
-        button: true,
-        label: widget.tooltip,
-        excludeSemantics: true,
-        onTap: widget.onPressed,
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() {
-            _isHovered = false;
-            _isPressed = false;
-          }),
-          child: GestureDetector(
-            onTapDown: (_) => setState(() => _isPressed = true),
-            onTapUp: (_) => setState(() => _isPressed = false),
-            onTapCancel: () => setState(() => _isPressed = false),
-            onTap: widget.onPressed,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 100),
-              width: 40,
-              height: 30,
-              color: bg,
-              child: Center(
-                child: Icon(widget.icon, size: 10, color: iconColor),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
