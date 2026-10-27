@@ -202,6 +202,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuView => 'Ansicht';
 
   @override
+  String get menuSoftware => 'Software';
+
+  @override
+  String get menuWindow => 'Fenster';
+
+  @override
+  String aboutMenuItem(String productName) {
+    return 'Über $productName';
+  }
+
+  @override
+  String get zoom => 'Zoom';
+
+  @override
+  String get enterFullScreen => 'Vollbild aktivieren';
+
+  @override
+  String get exitFullScreen => 'Vollbild beenden';
+
+  @override
   String get cancel => 'Abbrechen';
 
   @override

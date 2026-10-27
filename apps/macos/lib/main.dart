@@ -17,16 +17,19 @@ Future<void> main(List<String> args) async {
   final preview = !args.contains('--no-mac-chrome') && !Platform.isMacOS;
 
   if (Platform.isMacOS || preview) {
-    // Full-size content under a transparent title bar; the system keeps
-    // drawing the traffic lights, the toolbar row is the drag area.
+    // Full-size content under a transparent title bar. Off macOS the
+    // (painted) traffic lights come from MacWindowControlsPreview; on macOS
+    // the system draws the real ones — but window_manager only keeps them
+    // visible when windowButtonVisibility is true, so it must match the
+    // platform.
     await windowManager.ensureInitialized();
     await windowManager.waitUntilReadyToShow(
-      const WindowOptions(
+      WindowOptions(
         size: Size(1100, 780),
         minimumSize: Size(720, 520),
         center: true,
         titleBarStyle: TitleBarStyle.hidden,
-        windowButtonVisibility: false,
+        windowButtonVisibility: !Platform.isMacOS,
       ),
       () async {
         await windowManager.show();

@@ -1,8 +1,11 @@
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/widgets.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 import 'package:macos_ui/macos_ui.dart';
+
+import '../theme/dynamotivation_macos_theme.dart';
 
 /// Preferences, shown in the content area. (macOS convention is a separate
 /// Settings window opened with Cmd+,; a second Flutter window needs a
@@ -129,7 +132,12 @@ class _SettingsViewState extends State<SettingsView> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0x0FFFFFFF) : const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.dividerColor),
+              // High contrast: a hard edge instead of the faint hairline.
+              border: Border.all(
+                color: MediaQuery.highContrastOf(context)
+                    ? DynBrand.hardContrast(isDark)
+                    : theme.dividerColor,
+              ),
             ),
             child: Column(children: children),
           ),
@@ -220,6 +228,25 @@ class _SettingsViewState extends State<SettingsView> {
                     l10n.notificationsDescription,
                     _s.showNotifications,
                     (v) => _s.copyWith(showNotifications: v),
+                  ),
+                ]),
+                // About, mirroring the Windows and Ubuntu frontends: product
+                // name over the verified publisher row.
+                _group(context, l10n.settingsAboutHeading, [
+                  _row(
+                    context,
+                    l10n.productName,
+                    const SizedBox.shrink(),
+                    subtitle: l10n.brandName,
+                  ),
+                  _row(
+                    context,
+                    l10n.publisher,
+                    MacosIcon(
+                      CupertinoIcons.checkmark_seal_fill,
+                      size: 16,
+                      color: DynBrand.accent,
+                    ),
                   ),
                 ]),
               ],

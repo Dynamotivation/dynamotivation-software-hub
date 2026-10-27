@@ -135,6 +135,39 @@
   "@menuView": {
     "description": "Title of the View menu in the macOS menu bar"
   },
+  "menuSoftware": "Software",
+  "@menuSoftware": {
+    "description": "Title of the app-specific software menu in the macOS menu bar"
+  },
+  "menuWindow": "Window",
+  "@menuWindow": {
+    "description": "Title of the standard Window menu in the macOS menu bar"
+  },
+  "aboutMenuItem": "About {productName}",
+  "@aboutMenuItem": {
+    "description": "App menu item that opens the About dialog",
+    "placeholders": {
+      "productName": {
+        "type": "String"
+      }
+    }
+  },
+  "minimize": "Minimize",
+  "@minimize": {
+    "description": "Window menu item: minimize the window to the Dock"
+  },
+  "zoom": "Zoom",
+  "@zoom": {
+    "description": "Window menu item: toggle between the window's saved size and a content-fitting size"
+  },
+  "enterFullScreen": "Enter Full Screen",
+  "@enterFullScreen": {
+    "description": "View menu item while the window is not full screen"
+  },
+  "exitFullScreen": "Exit Full Screen",
+  "@exitFullScreen": {
+    "description": "View menu item while the window is full screen"
+  },
   "cancel": "Cancel",
   "uninstallConfirmTitle": "Uninstall {name}?",
   "@uninstallConfirmTitle": {

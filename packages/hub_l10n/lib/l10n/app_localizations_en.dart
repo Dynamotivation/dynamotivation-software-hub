@@ -200,6 +200,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuView => 'View';
 
   @override
+  String get menuSoftware => 'Software';
+
+  @override
+  String get menuWindow => 'Window';
+
+  @override
+  String aboutMenuItem(String productName) {
+    return 'About $productName';
+  }
+
+  @override
+  String get zoom => 'Zoom';
+
+  @override
+  String get enterFullScreen => 'Enter Full Screen';
+
+  @override
+  String get exitFullScreen => 'Exit Full Screen';
+
+  @override
   String get cancel => 'Cancel';
 
   @override

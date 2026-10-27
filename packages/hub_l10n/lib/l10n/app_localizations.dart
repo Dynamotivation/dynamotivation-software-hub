@@ -116,7 +116,7 @@ abstract class AppLocalizations {
   /// **'Software Hub'**
   String get productName;
 
-  /// No description provided for @minimize.
+  /// Window menu item: minimize the window to the Dock
   ///
   /// In en, this message translates to:
   /// **'Minimize'**
@@ -433,6 +433,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View'**
   String get menuView;
+
+  /// Title of the app-specific software menu in the macOS menu bar
+  ///
+  /// In en, this message translates to:
+  /// **'Software'**
+  String get menuSoftware;
+
+  /// Title of the standard Window menu in the macOS menu bar
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get menuWindow;
+
+  /// App menu item that opens the About dialog
+  ///
+  /// In en, this message translates to:
+  /// **'About {productName}'**
+  String aboutMenuItem(String productName);
+
+  /// Window menu item: toggle between the window's saved size and a content-fitting size
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get zoom;
+
+  /// View menu item while the window is not full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Full Screen'**
+  String get enterFullScreen;
+
+  /// View menu item while the window is full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Full Screen'**
+  String get exitFullScreen;
 
   /// No description provided for @cancel.
   ///

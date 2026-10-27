@@ -30,15 +30,26 @@ abstract final class DynBrand {
     colors: [Color(0xFFCC3C3B), Color(0xFF893750)],
   );
 
-  static MacosThemeData light() => MacosThemeData(
+  static MacosThemeData light({bool isMainWindow = true}) => MacosThemeData(
     brightness: Brightness.light,
     primaryColor: accent,
-    accentColor: AccentColor.pink,
+    // Crimson, the closest system palette family to the brand coral/crimson;
+    // it is only used for small control accents (focus/selection tints),
+    // never for brand fills, which stay token-driven.
+    accentColor: AccentColor.red,
+    isMainWindow: isMainWindow,
   );
 
-  static MacosThemeData dark() => MacosThemeData(
+  static MacosThemeData dark({bool isMainWindow = true}) => MacosThemeData(
     brightness: Brightness.dark,
     primaryColor: accent,
-    accentColor: AccentColor.pink,
+    accentColor: AccentColor.red,
+    isMainWindow: isMainWindow,
   );
+
+  /// Maximum-contrast hairline colour for high-contrast mode (HIG: the
+  /// interface keeps working when Reduce Transparency/Increase Contrast is on
+  /// and materials and translucency disappear).
+  static Color hardContrast(bool isDark) =>
+      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
 }
