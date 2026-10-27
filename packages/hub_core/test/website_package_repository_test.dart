@@ -91,6 +91,61 @@ void main() {
       );
     });
 
+    test('maps releases newest first onto the package', () {
+      final packages = WebsitePackageRepository.parseCatalog(
+        _source,
+        '''
+        {"software": [{
+          "name": "A",
+          "url": "https://x.test/portfolio/software/a/",
+          "releases": [
+            {"version": "1.1.0", "date": "2026-10-01", "highlights": ["New"]},
+            {"version": "1.0.0", "date": "2026-09-01", "highlights": []}
+          ]
+        }]}
+        ''',
+      );
+      final p = packages.single;
+      expect(p.latestVersion, '1.1.0');
+      expect(p.currentVersion, '');
+      expect(p.latestRelease.date, '2026-10-01');
+      expect(p.latestRelease.highlights, ['New']);
+      expect(p.olderReleases.map((r) => r.version), ['1.0.0']);
+      expect(p.availableVersions, ['1.1.0', '1.0.0']);
+    });
+
+    test('leaves versions empty when the page has no releases', () {
+      final p = WebsitePackageRepository.parseCatalog(
+        _source,
+        '{"software": [{"name": "A", "url": "https://x.test/a/", "releases": []}]}',
+      ).single;
+      expect(p.latestVersion, '');
+      expect(p.olderReleases, isEmpty);
+      expect(p.availableVersions, isEmpty);
+    });
+
+    test('rejects a release without a version', () {
+      expect(
+        () => WebsitePackageRepository.parseCatalog(
+          _source,
+          '{"software": [{"name": "A", "url": "https://x.test/a/", '
+          '"releases": [{"date": "2026-10-01"}]}]}',
+        ),
+        throwsA(isA<CatalogUnavailable>()),
+      );
+    });
+
+    test('rejects non-string highlights instead of dropping them', () {
+      expect(
+        () => WebsitePackageRepository.parseCatalog(
+          _source,
+          '{"software": [{"name": "A", "url": "https://x.test/a/", '
+          '"releases": [{"version": "1.0.0", "highlights": [3]}]}]}',
+        ),
+        throwsA(isA<CatalogUnavailable>()),
+      );
+    });
+
     test('propagates fetch failures unchanged', () {
       final repo = WebsitePackageRepository(
         _source,
