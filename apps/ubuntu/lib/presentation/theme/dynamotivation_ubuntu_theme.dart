@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
 
 /// Dynamotivation tokens fused with Ubuntu Yaru styling.
 ///
@@ -57,9 +56,13 @@ abstract final class DynUbuntuTheme {
   static const cardBorderLight = Color(0xFFE0DAE0);
 
   /// Builds the light Ubuntu theme fused with Dynamotivation accents.
-  static ThemeData light() {
-    return yaruLight.copyWith(
-      colorScheme: yaruLight.colorScheme.copyWith(
+  ///
+  /// Fuses on top of the runtime-resolved Yaru theme (which already follows
+  /// the user's GTK theme name, GNOME color-scheme and geometry preferences
+  /// live), so only the brand identity colors are overridden.
+  static ThemeData light(ThemeData yaruBase) {
+    return yaruBase.copyWith(
+      colorScheme: yaruBase.colorScheme.copyWith(
         primary: ubuntuOrange,
         secondary: coralAccent,
         surface: contentLight,
@@ -75,9 +78,9 @@ abstract final class DynUbuntuTheme {
   }
 
   /// Builds the dark Ubuntu theme fused with Dynamotivation accents.
-  static ThemeData dark() {
-    return yaruDark.copyWith(
-      colorScheme: yaruDark.colorScheme.copyWith(
+  static ThemeData dark(ThemeData yaruBase) {
+    return yaruBase.copyWith(
+      colorScheme: yaruBase.colorScheme.copyWith(
         primary: ubuntuOrange,
         secondary: coralAccent,
         surface: contentDark,
@@ -91,4 +94,24 @@ abstract final class DynUbuntuTheme {
       ),
     );
   }
+
+  /// High-contrast themes follow the accessibility requirement, not brand:
+  /// contrast rules trump corporate identity colors, matching the Ubuntu
+  /// App Center, which hands the stock `yaru` high-contrast themes to
+  /// `MaterialApp.highContrastTheme`.
+  static ThemeData highContrastLight(ThemeData yaruBase) => yaruBase.copyWith(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF111111),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      );
+
+  static ThemeData highContrastDark(ThemeData yaruBase) => yaruBase.copyWith(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF111111),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      );
 }

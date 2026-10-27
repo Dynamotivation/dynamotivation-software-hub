@@ -233,6 +233,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreOptions => 'More options';
 
   @override
+  String get appearanceSubtitle =>
+      'Choose between system, light or dark Yaru appearance';
+
+  @override
+  String get settingsAboutHeading => 'About';
+
+  @override
+  String get publisher => 'Publisher';
+
+  @override
+  String settingsVersionLine(String version) {
+    return 'Version $version · Ubuntu Yaru Edition';
+  }
+
+  @override
   String errorPackageNotFound(String id) {
     return 'The package \"$id\" could not be found.';
   }

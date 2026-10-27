@@ -482,6 +482,30 @@ abstract class AppLocalizations {
   /// **'More options'**
   String get moreOptions;
 
+  /// Subtitle of the appearance preference in the Settings view
+  ///
+  /// In en, this message translates to:
+  /// **'Choose between system, light or dark Yaru appearance'**
+  String get appearanceSubtitle;
+
+  /// Heading of the about section in the Settings view
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAboutHeading;
+
+  /// Row title of the publisher entry in the Settings view
+  ///
+  /// In en, this message translates to:
+  /// **'Publisher'**
+  String get publisher;
+
+  /// Subtitle of the package row in the Settings about section
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} · Ubuntu Yaru Edition'**
+  String settingsVersionLine(String version);
+
   /// No description provided for @errorPackageNotFound.
   ///
   /// In en, this message translates to:

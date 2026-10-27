@@ -5,6 +5,8 @@ import 'package:dynamotivation_software_hub_ubuntu/presentation/controllers/hub_
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
 
+import 'yaru_window_mock.dart';
+
 void main() {
   testWidgets('Ubuntu frontend smoke test: shows the selected package', (
     tester,
@@ -20,10 +22,10 @@ void main() {
       ),
     );
     await controller.load();
+    mockYaruWindowChannel();
 
     await tester.pumpWidget(DynamotivationUbuntuApp(controller: controller));
     await tester.pumpAndSettle();
 
-    expect(find.text(controller.selected!.name), findsWidgets);
-  });
+    expect(find.text(controller.selected!.name), findsWidgets);  });
 }

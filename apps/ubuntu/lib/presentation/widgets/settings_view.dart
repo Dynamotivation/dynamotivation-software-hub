@@ -53,7 +53,7 @@ class _SettingsViewState extends State<SettingsView> {
               title,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: DynUbuntuTheme.ubuntuOrange,
+                color: theme.colorScheme.primary,
               ),
             ),
           ),
@@ -99,6 +99,8 @@ class _SettingsViewState extends State<SettingsView> {
     String? subtitle,
     required Widget trailing,
   }) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -109,8 +111,7 @@ class _SettingsViewState extends State<SettingsView> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -118,9 +119,8 @@ class _SettingsViewState extends State<SettingsView> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -137,6 +137,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
 
     return Center(
       child: ConstrainedBox(
@@ -157,7 +158,7 @@ class _SettingsViewState extends State<SettingsView> {
                   children: [
                     _preferenceRow(
                       title: l10n.appearance,
-                      subtitle: 'Choose between system, light or dark Yaru appearance',
+                      subtitle: l10n.appearanceSubtitle,
                       trailing: SegmentedButton<AppThemeMode>(
                         segments: [
                           ButtonSegment(
@@ -187,7 +188,7 @@ class _SettingsViewState extends State<SettingsView> {
                 // Behavior / System Integration
                 _preferenceGroup(
                   context,
-                  title: 'Behavior',
+                  title: l10n.systemIntegration,
                   children: [
                     _preferenceRow(
                       title: l10n.autoCheckTitle,
@@ -231,23 +232,27 @@ class _SettingsViewState extends State<SettingsView> {
                 // About
                 _preferenceGroup(
                   context,
-                  title: 'About',
+                  title: l10n.settingsAboutHeading,
                   children: [
                     _preferenceRow(
                       title: l10n.productName,
-                      subtitle: 'Version 0.2.0 · Ubuntu Yaru Edition',
-                      trailing: const Text(
+                      subtitle: l10n.settingsVersionLine('0.2.0'),
+                      trailing: Text(
                         '0.2.0',
-                        style: TextStyle(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: DynUbuntuTheme.ubuntuOrange,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ),
                     _preferenceRow(
-                      title: 'Publisher',
+                      title: l10n.publisher,
                       subtitle: l10n.brandName,
-                      trailing: const Icon(Icons.verified, size: 18, color: Colors.green),
+                      trailing: Icon(
+                        Icons.verified,
+                        size: 18,
+                        color: theme.colorScheme.tertiary,
+                      ),
                     ),
                   ],
                 ),

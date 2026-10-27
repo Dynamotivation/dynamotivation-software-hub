@@ -1,6 +1,11 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:yaru/yaru.dart';
+import 'package:yaru_window_manager/yaru_window_manager.dart';
 
 import 'app.dart';
 import 'presentation/controllers/hub_controller.dart';
@@ -10,11 +15,19 @@ import 'presentation/controllers/hub_controller.dart';
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Route `YaruWindow` (used by YaruWindowTitleBar, drag & window controls)
+  // through window_manager on platforms without a native yaru_window plugin.
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS)) {
+    YaruWindowManager.registerWith();
+  }
+
   final startDark = args.contains('--dark');
   final startLight = args.contains('--light');
   final openSettings = args.contains('--settings');
 
   await windowManager.ensureInitialized();
+  // Hides the native title bar and prepares the in-scene Yaru window title bar.
+  await YaruWindowTitleBar.ensureInitialized();
   const windowOptions = WindowOptions(
     size: Size(1060, 780),
     minimumSize: Size(640, 560),

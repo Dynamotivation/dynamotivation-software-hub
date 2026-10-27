@@ -65,9 +65,9 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 ## Commands
 - `flutter pub get` at the repo root resolves the whole workspace.
 - Before finishing, `flutter analyze` and `flutter test` must pass in each of: `packages/hub_core`, `packages/hub_l10n`, `packages/hub_keys`, `packages/hub_scroll`, `apps/windows`, `apps/macos`, `apps/ubuntu`.
-- Windows app: `cd apps/windows`, then `flutter run -d windows`. Pass `-- --dark` or `-- --settings` to start in dark mode or on the Settings page (`args.contains` in `lib/main.dart`). Release build: `flutter build windows`.
+- Windows app: `cd apps/windows`, then `flutter run -d windows`. Pass `-a --dark` or `-a --settings` to start in dark mode or on the Settings page (`args.contains` in `lib/main.dart`). Release build: `flutter build windows`.
 - macOS app: `cd apps/macos`, then `flutter run -d windows` for the design preview or `flutter run -d macos` for native window effects.
-- Ubuntu app: `cd apps/ubuntu`, then `flutter run -d windows` for the design preview or `flutter run -d linux` on Ubuntu. Pass `-- --dark` or `-- --settings` to start in dark mode or on the Settings view (`args.contains` in `lib/main.dart`). Release build: `flutter build windows` (preview) or `flutter build linux`.
+- Ubuntu app: `cd apps/ubuntu`, then `flutter run -d windows` for the design preview or `flutter run -d linux` on Ubuntu. Pass `-a --dark` or `-a --settings` to start in dark mode or on the Settings view (`args.contains` in `lib/main.dart`). Release build: `flutter build windows` (preview) or `flutter build linux`.
 - `dist/` is gitignored local release output. `err.txt`, `out.txt`, `*.log`, `build/` and `.dart_tool/` are also ignored.
 
 ## Code style

@@ -64,6 +64,27 @@
   "packageInstalledTitle": "{name} installiert",
   "packageInstalledContent": "Version {version} kann gestartet werden.",
   "moreOptions": "Weitere Optionen",
+  "appearanceSubtitle": "Zwischen dem System-, hellen und dunklen Yaru-Erscheinungsbild wählen",
+  "@appearanceSubtitle": {
+    "description": "Subtitle of the appearance preference in the Settings view"
+  },
+  "settingsAboutHeading": "Über",
+  "@settingsAboutHeading": {
+    "description": "Heading of the about section in the Settings view"
+  },
+  "publisher": "Herausgeber",
+  "@publisher": {
+    "description": "Row title of the publisher entry in the Settings view"
+  },
+  "settingsVersionLine": "Version {version} · Ubuntu-Yaru-Ausgabe",
+  "@settingsVersionLine": {
+    "description": "Subtitle of the package row in the Settings about section",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
   "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar."
 }

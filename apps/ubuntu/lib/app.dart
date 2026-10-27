@@ -33,8 +33,18 @@ class DynamotivationUbuntuApp extends StatelessWidget {
             onGenerateTitle: (context) => context.l10n.appTitle,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            theme: DynUbuntuTheme.light(),
-            darkTheme: DynUbuntuTheme.dark(),
+            // Brand tokens are fused on top of the runtime-resolved Yaru
+            // themes (same pattern as the Ubuntu App Center). The base themes
+            // follow the user's GTK theme name, GNOME color scheme and
+            // accent on non-brand surfaces, and carry the system font.
+            theme: DynUbuntuTheme.light(yaru.theme),
+            darkTheme: DynUbuntuTheme.dark(yaru.darkTheme),
+            highContrastTheme: DynUbuntuTheme.highContrastLight(
+              yaruHighContrastLight,
+            ),
+            highContrastDarkTheme: DynUbuntuTheme.highContrastDark(
+              yaruHighContrastDark,
+            ),
             themeMode: mode,
             debugShowCheckedModeBanner: false,
             home: SoftwareHubPage(

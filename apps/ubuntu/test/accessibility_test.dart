@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
 
+import 'yaru_window_mock.dart';
+
 Future<HubController> _pump(
   WidgetTester tester, {
   double textScale = 1,
@@ -26,6 +28,7 @@ Future<HubController> _pump(
     ),
   );
   await controller.load();
+  mockYaruWindowChannel();
   await tester.pumpWidget(DynamotivationUbuntuApp(controller: controller));
   await tester.pump(const Duration(seconds: 1));
   return controller;

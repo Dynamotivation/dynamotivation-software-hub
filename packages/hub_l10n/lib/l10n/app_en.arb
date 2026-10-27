@@ -171,6 +171,27 @@
     }
   },
   "moreOptions": "More options",
+  "appearanceSubtitle": "Choose between system, light or dark Yaru appearance",
+  "@appearanceSubtitle": {
+    "description": "Subtitle of the appearance preference in the Settings view"
+  },
+  "settingsAboutHeading": "About",
+  "@settingsAboutHeading": {
+    "description": "Heading of the about section in the Settings view"
+  },
+  "publisher": "Publisher",
+  "@publisher": {
+    "description": "Row title of the publisher entry in the Settings view"
+  },
+  "settingsVersionLine": "Version {version} · Ubuntu Yaru Edition",
+  "@settingsVersionLine": {
+    "description": "Subtitle of the package row in the Settings about section",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "errorPackageNotFound": "The package \"{id}\" could not be found.",
   "@errorPackageNotFound": {
     "placeholders": {

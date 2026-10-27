@@ -101,10 +101,7 @@ class _PackageSidebarState extends State<PackageSidebar> {
               onChanged: widget.onSearchChanged,
               decoration: InputDecoration(
                 hintText: l10n.searchSoftware,
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.white54 : Colors.black45,
-                  fontSize: 13,
-                ),
+                hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 prefixIcon: const Icon(Icons.search, size: 18),
                 suffixIcon: widget.searchQuery.isNotEmpty
                     ? IconButton(
@@ -121,7 +118,9 @@ class _PackageSidebarState extends State<PackageSidebar> {
                   vertical: 8,
                 ),
                 filled: true,
-                fillColor: isDark ? const Color(0x1FFFFFFF) : const Color(0x0A000000),
+                fillColor: theme.colorScheme.onSurface.withValues(
+                  alpha: isDark ? 0.12 : 0.04,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                   borderSide: BorderSide(color: borderColor),
@@ -132,8 +131,8 @@ class _PackageSidebarState extends State<PackageSidebar> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(
-                    color: DynUbuntuTheme.ubuntuOrange,
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
                     width: 1.5,
                   ),
                 ),
@@ -183,9 +182,8 @@ class _PackageSidebarState extends State<PackageSidebar> {
                         child: Center(
                           child: Text(
                             l10n.selectPackagePrompt,
-                            style: TextStyle(
-                              color: isDark ? Colors.white54 : Colors.black45,
-                              fontSize: 13,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -212,7 +210,7 @@ class _CategoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
 
     return Semantics(
       header: true,
@@ -220,10 +218,9 @@ class _CategoryHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
         child: Text(
           '$title  $count',
-          style: TextStyle(
-            fontSize: 11,
+          style: theme.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white60 : Colors.black54,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -258,9 +255,11 @@ class _UbuntuPackageTileState extends State<_UbuntuPackageTile> {
 
     Color bg;
     if (selected) {
-      bg = isDark ? const Color(0x33E95420) : const Color(0x22E95420);
+      bg = DynUbuntuTheme.ubuntuOrange.withValues(
+        alpha: isDark ? 0.20 : 0.13,
+      );
     } else if (_hovered) {
-      bg = isDark ? const Color(0x14FFFFFF) : const Color(0x0C000000);
+      bg = theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05);
     } else {
       bg = Colors.transparent;
     }
@@ -280,7 +279,7 @@ class _UbuntuPackageTileState extends State<_UbuntuPackageTile> {
               borderRadius: BorderRadius.circular(8),
               border: selected
                   ? Border.all(
-                      color: DynUbuntuTheme.ubuntuOrange,
+                      color: theme.colorScheme.primary,
                       width: 1.5,
                     )
                   : null,
@@ -309,10 +308,9 @@ class _UbuntuPackageTileState extends State<_UbuntuPackageTile> {
                           if (pkg.hasUpdate)
                             Text(
                               'v${pkg.latestVersion}',
-                              style: const TextStyle(
-                                fontSize: 11,
+                              style: theme.textTheme.labelSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: DynUbuntuTheme.ubuntuOrange,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                         ],
@@ -321,9 +319,8 @@ class _UbuntuPackageTileState extends State<_UbuntuPackageTile> {
                       Text(
                         pkg.subtitle,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.white60 : Colors.black54,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],

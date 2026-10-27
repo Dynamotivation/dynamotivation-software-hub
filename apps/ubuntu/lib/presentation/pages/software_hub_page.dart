@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:yaru/yaru.dart';
 
 import '../controllers/hub_controller.dart';
 import '../errors.dart';
@@ -142,6 +143,14 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    // Keep the native window title (taskbar, alt-tab) in sync with the view.
+    YaruWindow.setTitle(
+      context,
+      _isSettingsOpen ? l10n.settings : l10n.productName,
+    );
+
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) => CallbackShortcuts(

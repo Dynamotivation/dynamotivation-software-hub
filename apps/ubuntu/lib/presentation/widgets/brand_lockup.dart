@@ -31,7 +31,7 @@ class BrandLockup extends StatelessWidget {
                   l10n.brandName,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark ? Colors.white70 : Colors.black54,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
