@@ -218,6 +218,13 @@ class _Header extends StatelessWidget {
                                   l10n.installVersion(package.latestVersion),
                                 ),
                               ),
+                            if (package.isInstalled)
+                              PushButton(
+                                controlSize: ControlSize.large,
+                                secondary: package.hasUpdate,
+                                onPressed: onLaunch,
+                                child: Text(l10n.launch),
+                              ),
                             if (package.hasUpdate)
                               PushButton(
                                 controlSize: ControlSize.large,
@@ -225,13 +232,6 @@ class _Header extends StatelessWidget {
                                 child: Text(
                                   l10n.updateToVersion(package.latestVersion),
                                 ),
-                              ),
-                            if (package.isInstalled)
-                              PushButton(
-                                controlSize: ControlSize.large,
-                                secondary: package.hasUpdate,
-                                onPressed: onLaunch,
-                                child: Text(l10n.launch),
                               ),
                           ],
                         ),

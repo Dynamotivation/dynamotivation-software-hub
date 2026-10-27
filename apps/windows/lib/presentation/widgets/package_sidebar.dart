@@ -9,6 +9,8 @@ import 'package:hub_keys/hub_keys.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../shortcuts.dart';
+import 'package_image.dart';
+import 'version_label.dart';
 import '../theme/dynamotivation_theme.dart';
 
 class PackageSidebar extends StatefulWidget {
@@ -88,8 +90,7 @@ class _PackageSidebarState extends State<PackageSidebar>
 
   @override
   Widget build(BuildContext context) {
-    final theme = FluentTheme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final tokens = DynTokens.of(context);
 
     final query = widget.searchQuery.trim().toLowerCase();
     final filtered = widget.packages.where((pkg) {
@@ -105,14 +106,9 @@ class _PackageSidebarState extends State<PackageSidebar>
     return Container(
       width: 320,
       decoration: BoxDecoration(
-        color: isDark ? DynTokens.dark.card : DynTokens.light.card,
+        color: tokens.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? DynTokens.dark.cardBorder
-              : DynTokens.light.cardBorder,
-          width: 1,
-        ),
+        border: Border.all(color: tokens.cardBorder, width: 1),
       ),
       child: Column(
         children: [
@@ -137,19 +133,6 @@ class _PackageSidebarState extends State<PackageSidebar>
                     )
                   : null,
               onChanged: widget.onSearchChanged,
-              decoration: WidgetStateProperty.all(
-                BoxDecoration(
-                  color: isDark
-                      ? const Color(0x28FFFFFF)
-                      : const Color(0xF2FFFFFF),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0x2EFFFFFF)
-                        : const Color(0x2A000000),
-                  ),
-                ),
-              ),
             ),
           ),
 
@@ -180,9 +163,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                                   style: TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? DynTokens.dark.textMuted
-                                        : DynTokens.light.textMuted,
+                                    color: tokens.textMuted,
                                   ),
                                 ),
                               ),
@@ -193,9 +174,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0x26FFFFFF)
-                                      : const Color(0x1F000000),
+                                  color: tokens.hover,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -203,9 +182,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? DynTokens.dark.textMuted
-                                        : DynTokens.light.textMuted,
+                                    color: tokens.textMuted,
                                   ),
                                 ),
                               ),
@@ -224,11 +201,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                               // is off-centre in its box and wobbles when spun.
                               child: CustomPaint(
                                 size: const Size.square(14),
-                                painter: _RefreshGlyphPainter(
-                                  isDark
-                                      ? DynTokens.dark.textMuted
-                                      : DynTokens.light.textMuted,
-                                ),
+                                painter: _RefreshGlyphPainter(tokens.textMuted),
                               ),
                             ),
                             onPressed: widget.onRefresh,
@@ -254,11 +227,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                         horizontal: 6,
                       ),
                       thickness: 1,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0x14FFFFFF)
-                            : const Color(0x14000000),
-                      ),
+                      decoration: BoxDecoration(color: tokens.divider),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -275,9 +244,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                         padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
                         decoration: BoxDecoration(
                           color: states.isHovered
-                              ? (isDark
-                                    ? Colors.white.withValues(alpha: 0.04)
-                                    : Colors.black.withValues(alpha: 0.03))
+                              ? (tokens.hover)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -288,9 +255,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                                   ? FluentIcons.chevron_down
                                   : FluentIcons.chevron_right,
                               size: 11,
-                              color: isDark
-                                  ? DynTokens.dark.textMuted
-                                  : DynTokens.light.textMuted,
+                              color: tokens.textMuted,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -298,9 +263,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? DynTokens.dark.textMuted
-                                    : DynTokens.light.textMuted,
+                                color: tokens.textMuted,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -310,9 +273,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0x26FFFFFF)
-                                    : const Color(0x1F000000),
+                                color: tokens.hover,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
@@ -320,9 +281,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? DynTokens.dark.textMuted
-                                      : DynTokens.light.textMuted,
+                                  color: tokens.textMuted,
                                 ),
                               ),
                             ),
@@ -364,15 +323,12 @@ class _PackageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = FluentTheme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final tokens = DynTokens.of(context);
 
-    final tileBg = isSelected
-        ? (isDark ? const Color(0x28FFFFFF) : DynTokens.light.selected)
-        : Colors.transparent;
+    final tileBg = isSelected ? (tokens.selected) : Colors.transparent;
 
     final tileBorder = isSelected
-        ? (isDark ? const Color(0x40FFFFFF) : const Color(0x3B893750))
+        ? (tokens.primary.withValues(alpha: 0.4))
         : Colors.transparent;
 
     return HoverButton(
@@ -385,20 +341,12 @@ class _PackageTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? tileBg
-                : (isHover
-                      ? (isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : const Color(0x14893750))
-                      : Colors.transparent),
+                : (isHover ? (tokens.hover) : Colors.transparent),
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
               color: isSelected
                   ? tileBorder
-                  : (isHover
-                        ? (isDark
-                              ? DynTokens.dark.cardBorder
-                              : const Color(0x18000000))
-                        : Colors.transparent),
+                  : (isHover ? (tokens.cardBorder) : Colors.transparent),
               width: 1,
             ),
           ),
@@ -410,12 +358,7 @@ class _PackageTile extends StatelessWidget {
                 height: 38,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0x28FFFFFF)
-                        : DynTokens.light.cardBorder,
-                    width: 1,
-                  ),
+                  border: Border.all(color: tokens.cardBorder, width: 1),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: package.isSvgIcon
@@ -426,7 +369,7 @@ class _PackageTile extends StatelessWidget {
                           fit: BoxFit.contain,
                         ),
                       )
-                    : Image.asset(package.iconAsset, fit: BoxFit.cover),
+                    : packageImage(package, BoxFit.cover),
               ),
 
               const SizedBox(width: 10),
@@ -444,9 +387,7 @@ class _PackageTile extends StatelessWidget {
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w600,
-                        color: isDark
-                            ? DynTokens.dark.text
-                            : DynTokens.light.text,
+                        color: tokens.text,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -457,9 +398,7 @@ class _PackageTile extends StatelessWidget {
                         TextSpan(
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark
-                                ? DynTokens.dark.textMuted
-                                : DynTokens.light.textMuted,
+                            color: tokens.textMuted,
                           ),
                           children: [
                             TextSpan(text: 'v${package.currentVersion} '),
@@ -475,13 +414,8 @@ class _PackageTile extends StatelessWidget {
                       )
                     else
                       Text(
-                        'v${package.currentVersion}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? DynTokens.dark.textMuted
-                              : DynTokens.light.textMuted,
-                        ),
+                        versionLabel(package.currentVersion),
+                        style: TextStyle(fontSize: 11, color: tokens.textMuted),
                       ),
                   ],
                 ),

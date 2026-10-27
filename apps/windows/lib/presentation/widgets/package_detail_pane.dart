@@ -6,6 +6,8 @@ import 'package:hub_core/hub_core.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'package_image.dart';
+import 'version_label.dart';
 
 class PackageDetailPane extends StatefulWidget {
   final SoftwarePackage? package;
@@ -51,17 +53,13 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
   Widget build(BuildContext context) {
     final theme = FluentTheme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final tokens = DynTokens.of(context);
 
     if (widget.package == null) {
       return Center(
         child: Text(
           context.l10n.selectPackagePrompt,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark
-                ? DynTokens.dark.textMuted
-                : DynTokens.light.textMuted,
-          ),
+          style: TextStyle(fontSize: 14, color: tokens.textMuted),
         ),
       );
     }
@@ -71,14 +69,9 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? DynTokens.dark.card : DynTokens.light.card,
+        color: tokens.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? DynTokens.dark.cardBorder
-              : DynTokens.light.cardBorder,
-          width: 1,
-        ),
+        border: Border.all(color: tokens.cardBorder, width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -99,9 +92,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark
-                                ? const Color(0x28FFFFFF)
-                                : const Color(0x22000000),
+                            color: tokens.cardBorder,
                             width: 1.5,
                           ),
                           boxShadow: [
@@ -123,7 +114,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   fit: BoxFit.contain,
                                 ),
                               )
-                            : Image.asset(pkg.iconAsset, fit: BoxFit.cover),
+                            : packageImage(pkg, BoxFit.cover),
                       ),
 
                       const SizedBox(width: 18),
@@ -138,9 +129,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? DynTokens.dark.text
-                                    : DynTokens.light.text,
+                                color: tokens.text,
                                 letterSpacing: -0.2,
                               ),
                             ),
@@ -154,12 +143,10 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                               children: [
                                 if (pkg.hasUpdate) ...[
                                   Text(
-                                    'v${pkg.currentVersion}',
+                                    versionLabel(pkg.currentVersion),
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: isDark
-                                          ? DynTokens.dark.textMuted
-                                          : DynTokens.light.textMuted,
+                                      color: tokens.textMuted,
                                     ),
                                   ),
                                   Text(
@@ -175,17 +162,17 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                     Icon(
                                       FluentIcons.check_mark,
                                       size: 12,
-                                      color: isDark
-                                          ? const Color(0xFF67FFAE)
-                                          : const Color(0xFF0F7A48),
+                                      color: tokens.success,
                                     ),
                                   Text(
-                                    'v${pkg.isInstalled ? pkg.currentVersion : pkg.latestVersion}',
+                                    versionLabel(
+                                      pkg.isInstalled
+                                          ? pkg.currentVersion
+                                          : pkg.latestVersion,
+                                    ),
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: isDark
-                                          ? DynTokens.dark.textMuted
-                                          : DynTokens.light.textMuted,
+                                      color: tokens.textMuted,
                                     ),
                                   ),
                                   Text(
@@ -194,9 +181,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                         : context.l10n.available,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: isDark
-                                          ? DynTokens.dark.textMuted
-                                          : DynTokens.light.textMuted,
+                                      color: tokens.textMuted,
                                     ),
                                   ),
                                 ],
@@ -221,6 +206,23 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (pkg.hasUpdate) ...[
+                              Button(
+                                onPressed: widget.onLaunch,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(FluentIcons.play, size: 12),
+                                      SizedBox(width: 6),
+                                      Text(context.l10n.launch),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               FilledButton(
                                 onPressed: widget.onUpdate,
                                 child: Padding(
@@ -238,23 +240,6 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                           pkg.latestVersion,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Button(
-                                onPressed: widget.onLaunch,
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(FluentIcons.play, size: 12),
-                                      SizedBox(width: 6),
-                                      Text(context.l10n.launch),
                                     ],
                                   ),
                                 ),
@@ -361,16 +346,14 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                             ),
                             const MenuFlyoutSeparator(),
                             MenuFlyoutItem(
-                              leading: const Icon(
+                              leading: Icon(
                                 FluentIcons.delete,
                                 size: 14,
-                                color: Color(0xFFC42B1C),
+                                color: tokens.critical,
                               ),
                               text: Text(
                                 context.l10n.uninstall,
-                                style: const TextStyle(
-                                  color: Color(0xFFC42B1C),
-                                ),
+                                style: TextStyle(color: tokens.critical),
                               ),
                               onPressed: widget.onUninstall,
                             ),
@@ -383,11 +366,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                   Divider(
                     style: DividerThemeData(
                       thickness: 1,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? DynTokens.dark.cardBorder
-                            : const Color(0x18000000),
-                      ),
+                      decoration: BoxDecoration(color: tokens.cardBorder),
                     ),
                   ),
                 ],
@@ -408,9 +387,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? DynTokens.dark.text
-                            : DynTokens.light.text,
+                        color: tokens.text,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -419,9 +396,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? const Color(0xFFE2E4EB)
-                            : const Color(0xFF282B33),
+                        color: tokens.text,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -430,64 +405,55 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.5,
-                        color: isDark
-                            ? DynTokens.dark.textMuted
-                            : const Color(0xFF5A5D6B),
+                        color: tokens.textMuted,
                       ),
                     ),
 
-                    const SizedBox(height: 24),
-                    Divider(
-                      style: DividerThemeData(
-                        thickness: 1,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? DynTokens.dark.cardBorder
-                              : const Color(0x18000000),
+                    // What's new is hidden until the catalog publishes a release.
+                    if (pkg.latestRelease.version.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Divider(
+                        style: DividerThemeData(
+                          thickness: 1,
+                          decoration: BoxDecoration(color: tokens.cardBorder),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 18),
+                      const SizedBox(height: 18),
 
-                    // What's new section
-                    Text(
-                      context.l10n.whatsNew,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? DynTokens.dark.text
-                            : DynTokens.light.text,
+                      // What's new section
+                      Text(
+                        context.l10n.whatsNew,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: tokens.text,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    // Latest release notes
-                    Row(
-                      children: [
-                        Text(
-                          'v${pkg.latestRelease.version}',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? DynTokens.dark.text
-                                : DynTokens.light.text,
+                      // Latest release notes
+                      Row(
+                        children: [
+                          Text(
+                            versionLabel(pkg.latestRelease.version),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: tokens.text,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          pkg.latestRelease.date,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? const Color(0xFF8A8D99)
-                                : const Color(0xFF828594),
+                          const SizedBox(width: 10),
+                          Text(
+                            pkg.latestRelease.date,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: tokens.textSubtle,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
 
                     // Highlights
                     ...pkg.latestRelease.highlights.map(
@@ -511,9 +477,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                 style: TextStyle(
                                   fontSize: 13,
                                   height: 1.45,
-                                  color: isDark
-                                      ? DynTokens.dark.textMuted
-                                      : DynTokens.light.textMuted,
+                                  color: tokens.textMuted,
                                 ),
                               ),
                             ),
@@ -540,9 +504,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                             ),
                             decoration: BoxDecoration(
                               color: states.isHovered
-                                  ? (isDark
-                                        ? Colors.white.withValues(alpha: 0.05)
-                                        : Colors.black.withValues(alpha: 0.04))
+                                  ? (tokens.hover)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -554,9 +516,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                       ? FluentIcons.chevron_down
                                       : FluentIcons.chevron_right,
                                   size: 11,
-                                  color: isDark
-                                      ? DynTokens.dark.textMuted
-                                      : DynTokens.light.textMuted,
+                                  color: tokens.textMuted,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -566,9 +526,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? DynTokens.dark.textMuted
-                                        : DynTokens.light.textMuted,
+                                    color: tokens.textMuted,
                                   ),
                                 ),
                               ],
@@ -591,13 +549,11 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                     Row(
                                       children: [
                                         Text(
-                                          'v${rel.version}',
+                                          versionLabel(rel.version),
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
-                                            color: isDark
-                                                ? DynTokens.dark.textMuted
-                                                : DynTokens.light.textMuted,
+                                            color: tokens.textMuted,
                                           ),
                                         ),
                                         const SizedBox(width: 8),
@@ -605,9 +561,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                           rel.date,
                                           style: TextStyle(
                                             fontSize: 11.5,
-                                            color: isDark
-                                                ? const Color(0xFF8A8D99)
-                                                : const Color(0xFF828594),
+                                            color: tokens.textSubtle,
                                           ),
                                         ),
                                       ],
@@ -631,9 +585,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                               height: 4,
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                color: isDark
-                                                    ? const Color(0xFF8A8D99)
-                                                    : const Color(0xFF828594),
+                                                color: tokens.textSubtle,
                                               ),
                                             ),
                                             Expanded(
@@ -642,11 +594,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                                 style: TextStyle(
                                                   fontSize: 12.5,
                                                   height: 1.4,
-                                                  color: isDark
-                                                      ? DynTokens.dark.textMuted
-                                                      : DynTokens
-                                                            .light
-                                                            .textMuted,
+                                                  color: tokens.textMuted,
                                                 ),
                                               ),
                                             ),

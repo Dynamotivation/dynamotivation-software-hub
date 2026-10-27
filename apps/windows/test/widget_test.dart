@@ -4,6 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
 
+import 'window_manager_mock.dart';
+
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1024, 768);
@@ -17,6 +19,7 @@ void main() {
       ),
     );
     await controller.load();
+    mockWindowManagerChannel();
 
     await tester.pumpWidget(DynamotivationApp(controller: controller));
     await tester.pump();

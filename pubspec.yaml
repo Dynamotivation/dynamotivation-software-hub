@@ -12,3 +12,4 @@ workspace:
   - packages/hub_scroll
   - apps/macos
   - apps/windows
+  - apps/ubuntu

@@ -135,6 +135,39 @@
   "@menuView": {
     "description": "Title of the View menu in the macOS menu bar"
   },
+  "menuSoftware": "Software",
+  "@menuSoftware": {
+    "description": "Title of the app-specific software menu in the macOS menu bar"
+  },
+  "menuWindow": "Window",
+  "@menuWindow": {
+    "description": "Title of the standard Window menu in the macOS menu bar"
+  },
+  "aboutMenuItem": "About {productName}",
+  "@aboutMenuItem": {
+    "description": "App menu item that opens the About dialog",
+    "placeholders": {
+      "productName": {
+        "type": "String"
+      }
+    }
+  },
+  "minimize": "Minimize",
+  "@minimize": {
+    "description": "Window menu item: minimize the window to the Dock"
+  },
+  "zoom": "Zoom",
+  "@zoom": {
+    "description": "Window menu item: toggle between the window's saved size and a content-fitting size"
+  },
+  "enterFullScreen": "Enter Full Screen",
+  "@enterFullScreen": {
+    "description": "View menu item while the window is not full screen"
+  },
+  "exitFullScreen": "Exit Full Screen",
+  "@exitFullScreen": {
+    "description": "View menu item while the window is full screen"
+  },
   "cancel": "Cancel",
   "uninstallConfirmTitle": "Uninstall {name}?",
   "@uninstallConfirmTitle": {
@@ -170,5 +203,70 @@
       }
     }
   },
-  "moreOptions": "More options"
+  "moreOptions": "More options",
+  "appearanceSubtitle": "Choose between system, light or dark Yaru appearance",
+  "@appearanceSubtitle": {
+    "description": "Subtitle of the appearance preference in the Settings view"
+  },
+  "settingsAboutHeading": "About",
+  "@settingsAboutHeading": {
+    "description": "Heading of the about section in the Settings view"
+  },
+  "publisher": "Publisher",
+  "@publisher": {
+    "description": "Row title of the publisher entry in the Settings view"
+  },
+  "settingsVersionLine": "Version {version}",
+  "@settingsVersionLine": {
+    "description": "App version subtitle in the Settings about section",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "packageDetails": "Package Details",
+  "@packageDetails": {
+    "description": "Title of the metadata card in the package detail view"
+  },
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "description": "Heading of a release entry in the What's new and Older releases cards",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "packageId": "Package ID",
+  "@packageId": {
+    "description": "Label of the identifier row in the package metadata card"
+  },
+  "installedVersion": "Installed Version",
+  "@installedVersion": {
+    "description": "Label of the installed version row in the package metadata card"
+  },
+  "availableVersion": "Available Version",
+  "@availableVersion": {
+    "description": "Label of the available version row in the package metadata card"
+  },
+  "status": "Status",
+  "@status": {
+    "description": "Label of the status row in the package metadata card"
+  },
+  "none": "None",
+  "@none": {
+    "description": "Value of the installed version row when the package is not installed"
+  },
+  "errorPackageNotFound": "The package \"{id}\" could not be found.",
+  "@errorPackageNotFound": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCatalogUnavailable": "The software catalog could not be loaded. Check your connection and try again.",
+  "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
+  "errorActionRejected": "This action is not available for the package right now."
 }

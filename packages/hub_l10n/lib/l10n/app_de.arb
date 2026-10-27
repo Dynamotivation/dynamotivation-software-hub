@@ -56,6 +56,13 @@
   "notificationsDescription": "Benachrichtigen, wenn Updates oder Downloads abgeschlossen sind",
   "operationFailed": "Etwas ist schiefgelaufen",
   "menuView": "Ansicht",
+  "menuSoftware": "Software",
+  "menuWindow": "Fenster",
+  "aboutMenuItem": "Über {productName}",
+  "minimize": "Minimieren",
+  "zoom": "Zoom",
+  "enterFullScreen": "Vollbild aktivieren",
+  "exitFullScreen": "Vollbild beenden",
   "cancel": "Abbrechen",
   "uninstallConfirmTitle": "{name} deinstallieren?",
   "uninstallConfirmBody": "Die Software wird von diesem Gerät entfernt. Du kannst sie jederzeit erneut installieren.",
@@ -63,5 +70,63 @@
   "packageUninstalledContent": "Von diesem Gerät entfernt.",
   "packageInstalledTitle": "{name} installiert",
   "packageInstalledContent": "Version {version} kann gestartet werden.",
-  "moreOptions": "Weitere Optionen"
+  "moreOptions": "Weitere Optionen",
+  "appearanceSubtitle": "Zwischen dem System-, hellen und dunklen Yaru-Erscheinungsbild wählen",
+  "@appearanceSubtitle": {
+    "description": "Subtitle of the appearance preference in the Settings view"
+  },
+  "settingsAboutHeading": "Über",
+  "@settingsAboutHeading": {
+    "description": "Heading of the about section in the Settings view"
+  },
+  "publisher": "Herausgeber",
+  "@publisher": {
+    "description": "Row title of the publisher entry in the Settings view"
+  },
+  "settingsVersionLine": "Version {version}",
+  "@settingsVersionLine": {
+    "description": "App version subtitle in the Settings about section",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "packageDetails": "Paketdetails",
+  "@packageDetails": {
+    "description": "Title of the metadata card in the package detail view"
+  },
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "description": "Heading of a release entry in the What's new and Older releases cards",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "packageId": "Paket-ID",
+  "@packageId": {
+    "description": "Label of the identifier row in the package metadata card"
+  },
+  "installedVersion": "Installierte Version",
+  "@installedVersion": {
+    "description": "Label of the installed version row in the package metadata card"
+  },
+  "availableVersion": "Verfügbare Version",
+  "@availableVersion": {
+    "description": "Label of the available version row in the package metadata card"
+  },
+  "status": "Status",
+  "@status": {
+    "description": "Label of the status row in the package metadata card"
+  },
+  "none": "Keine",
+  "@none": {
+    "description": "Value of the installed version row when the package is not installed"
+  },
+  "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
+  "errorCatalogUnavailable": "Der Software-Katalog konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+  "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
+  "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar."
 }

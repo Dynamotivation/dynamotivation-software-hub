@@ -33,7 +33,7 @@ void main() {
     );
     expect(
       () => hub.updatePackage(current.id),
-      throwsA(isA<PackageStateException>()),
+      throwsA(isA<PackageActionRejected>()),
     );
   });
 
@@ -73,11 +73,11 @@ void main() {
 
     expect(
       () => hub.uninstallPackage(notInstalled.id),
-      throwsA(isA<PackageStateException>()),
+      throwsA(isA<PackageActionRejected>()),
     );
     expect(
       () => hub.installPackage(installed.id),
-      throwsA(isA<PackageStateException>()),
+      throwsA(isA<PackageActionRejected>()),
     );
     expect(() => hub.installPackage('nope'), throwsA(isA<PackageNotFound>()));
   });

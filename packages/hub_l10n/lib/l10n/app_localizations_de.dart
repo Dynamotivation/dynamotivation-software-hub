@@ -202,6 +202,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuView => 'Ansicht';
 
   @override
+  String get menuSoftware => 'Software';
+
+  @override
+  String get menuWindow => 'Fenster';
+
+  @override
+  String aboutMenuItem(String productName) {
+    return 'Über $productName';
+  }
+
+  @override
+  String get zoom => 'Zoom';
+
+  @override
+  String get enterFullScreen => 'Vollbild aktivieren';
+
+  @override
+  String get exitFullScreen => 'Vollbild beenden';
+
+  @override
   String get cancel => 'Abbrechen';
 
   @override
@@ -233,4 +253,55 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get moreOptions => 'Weitere Optionen';
+
+  @override
+  String get appearanceSubtitle =>
+      'Zwischen dem System-, hellen und dunklen Yaru-Erscheinungsbild wählen';
+
+  @override
+  String get settingsAboutHeading => 'Über';
+
+  @override
+  String get publisher => 'Herausgeber';
+
+  @override
+  String settingsVersionLine(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get packageDetails => 'Paketdetails';
+
+  @override
+  String versionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get packageId => 'Paket-ID';
+
+  @override
+  String get installedVersion => 'Installierte Version';
+
+  @override
+  String get availableVersion => 'Verfügbare Version';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get none => 'Keine';
+
+  @override
+  String errorPackageNotFound(String id) {
+    return 'Das Paket \"$id\" wurde nicht gefunden.';
+  }
+
+  @override
+  String get errorCatalogUnavailable =>
+      'Der Software-Katalog konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.';
+
+  @override
+  String get errorActionRejected =>
+      'Diese Aktion ist für das Paket derzeit nicht verfügbar.';
 }

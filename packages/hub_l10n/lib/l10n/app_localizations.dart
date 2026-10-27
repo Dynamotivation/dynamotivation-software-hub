@@ -116,7 +116,7 @@ abstract class AppLocalizations {
   /// **'Software Hub'**
   String get productName;
 
-  /// No description provided for @minimize.
+  /// Window menu item: minimize the window to the Dock
   ///
   /// In en, this message translates to:
   /// **'Minimize'**
@@ -434,6 +434,42 @@ abstract class AppLocalizations {
   /// **'View'**
   String get menuView;
 
+  /// Title of the app-specific software menu in the macOS menu bar
+  ///
+  /// In en, this message translates to:
+  /// **'Software'**
+  String get menuSoftware;
+
+  /// Title of the standard Window menu in the macOS menu bar
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get menuWindow;
+
+  /// App menu item that opens the About dialog
+  ///
+  /// In en, this message translates to:
+  /// **'About {productName}'**
+  String aboutMenuItem(String productName);
+
+  /// Window menu item: toggle between the window's saved size and a content-fitting size
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get zoom;
+
+  /// View menu item while the window is not full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Full Screen'**
+  String get enterFullScreen;
+
+  /// View menu item while the window is full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Full Screen'**
+  String get exitFullScreen;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
@@ -481,6 +517,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More options'**
   String get moreOptions;
+
+  /// Subtitle of the appearance preference in the Settings view
+  ///
+  /// In en, this message translates to:
+  /// **'Choose between system, light or dark Yaru appearance'**
+  String get appearanceSubtitle;
+
+  /// Heading of the about section in the Settings view
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAboutHeading;
+
+  /// Row title of the publisher entry in the Settings view
+  ///
+  /// In en, this message translates to:
+  /// **'Publisher'**
+  String get publisher;
+
+  /// App version subtitle in the Settings about section
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String settingsVersionLine(String version);
+
+  /// Title of the metadata card in the package detail view
+  ///
+  /// In en, this message translates to:
+  /// **'Package Details'**
+  String get packageDetails;
+
+  /// Heading of a release entry in the What's new and Older releases cards
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String versionLabel(String version);
+
+  /// Label of the identifier row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Package ID'**
+  String get packageId;
+
+  /// Label of the installed version row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Installed Version'**
+  String get installedVersion;
+
+  /// Label of the available version row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Available Version'**
+  String get availableVersion;
+
+  /// Label of the status row in the package metadata card
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// Value of the installed version row when the package is not installed
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @errorPackageNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The package \"{id}\" could not be found.'**
+  String errorPackageNotFound(String id);
+
+  /// Shown when the online software catalog cannot be fetched or parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'The software catalog could not be loaded. Check your connection and try again.'**
+  String get errorCatalogUnavailable;
+
+  /// No description provided for @errorActionRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is not available for the package right now.'**
+  String get errorActionRejected;
 }
 
 class _AppLocalizationsDelegate

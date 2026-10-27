@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
 
+import 'window_manager_mock.dart';
+
 Future<void> _pump(
   WidgetTester tester, {
   double textScale = 1,
@@ -27,6 +29,7 @@ Future<void> _pump(
     ),
   );
   await controller.load();
+  mockWindowManagerChannel();
   await tester.pumpWidget(DynamotivationApp(controller: controller));
   await tester.pump(const Duration(seconds: 1));
 }

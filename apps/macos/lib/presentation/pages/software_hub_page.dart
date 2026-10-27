@@ -2,14 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform;
+    show FlutterError, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../controllers/hub_controller.dart';
+import '../errors.dart';
 import '../theme/dynamotivation_macos_theme.dart';
 import '../widgets/brand_lockup.dart';
 import '../widgets/glass_controls.dart';
@@ -38,7 +40,8 @@ class SoftwareHubPage extends StatefulWidget {
   State<SoftwareHubPage> createState() => _SoftwareHubPageState();
 }
 
-class _SoftwareHubPageState extends State<SoftwareHubPage> {
+class _SoftwareHubPageState extends State<SoftwareHubPage>
+    with WindowListener {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
   final _sidebarScroll = ScrollController();
@@ -46,19 +49,82 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
   String? _status;
   Timer? _statusTimer;
   bool _showSettings = false;
+  bool _isFullScreen = false;
+  String? _lastWindowTitle;
 
   HubController get _controller => widget.controller;
 
   bool get _isMac => defaultTargetPlatform == TargetPlatform.macOS;
 
   @override
+  void initState() {
+    super.initState();
+    // Tracks window focus/full screen for the HIG inactive-window styling
+    // (handled by macos_ui) and the View menu's Enter/Exit Full Screen title.
+    windowManager.addListener(this);
+  }
+
+  @override
   void dispose() {
+    windowManager.removeListener(this);
     _statusTimer?.cancel();
     _search.dispose();
     _searchFocus.dispose();
     _sidebarScroll.dispose();
     _contentScroll.dispose();
     super.dispose();
+  }
+
+  @override
+  void onWindowEnterFullScreen() {
+    if (mounted) setState(() => _isFullScreen = true);
+  }
+
+  @override
+  void onWindowLeaveFullScreen() {
+    if (mounted) setState(() => _isFullScreen = false);
+  }
+
+  /// Keeps the native window title (Window menu, cmd-tab) on the localized
+  /// product name. The hidden title bar never displays it, but macOS surface
+  /// window titles elsewhere.
+  void _syncWindowTitle(String title) {
+    if (_lastWindowTitle == title) return;
+    _lastWindowTitle = title;
+    windowManager.setTitle(title).catchError((error, stack) {
+      // Window state sync, not user initiated: failures go to Flutter's
+      // error handler, never to the UI.
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stack),
+      );
+    });
+  }
+
+  Future<void> _minimizeWindow() => _windowCommand(windowManager.minimize);
+
+  /// Zoom toggles between the saved window size and "fit more content",
+  /// like the standard macOS green-dot double-click.
+  Future<void> _zoomWindow() async {
+    final maximized = await windowManager.isMaximized();
+    await _windowCommand(
+      maximized ? windowManager.unmaximize : windowManager.maximize,
+    );
+  }
+
+  Future<void> _toggleFullScreen() async {
+    final full = await windowManager.isFullScreen();
+    await _windowCommand(() => windowManager.setFullScreen(!full));
+  }
+
+  Future<void> _windowCommand(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error, stack) {
+      // Window state sync, not user initiated: handled in the background.
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stack),
+      );
+    }
   }
 
   /// Transient confirmation shown at the bottom of the content area.
@@ -72,13 +138,39 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
 
   void _showError(Object error) {
     final l10n = context.l10n;
-    final detail = error.toString();
     showMacosAlertDialog<void>(
       context: context,
       builder: (context) => MacosAlertDialog(
         appIcon: const MacosIcon(CupertinoIcons.exclamationmark_triangle),
         title: Text(l10n.operationFailed),
-        message: Text(detail),
+        message: Text(describeError(l10n, error)),
+        primaryButton: PushButton(
+          controlSize: ControlSize.large,
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('OK'),
+        ),
+      ),
+    );
+  }
+
+  /// About window contents: name, brand, publisher. macOS apps expose this
+  /// from the App menu's first item (HIG: `About <AppName>`), not from the
+  /// window itself.
+  void _showAbout() {
+    final l10n = context.l10n;
+    final isDark = MacosTheme.of(context).brightness.isDark;
+    showMacosAlertDialog<void>(
+      context: context,
+      builder: (context) => MacosAlertDialog(
+        appIcon: SvgPicture.asset(
+          isDark
+              ? 'assets/dynamotivation-logo-dark.svg'
+              : 'assets/dynamotivation-logo.svg',
+          width: 64,
+          height: 64,
+        ),
+        title: Text(l10n.productName),
+        message: Text('${l10n.brandName} · ${l10n.publisher}'),
         primaryButton: PushButton(
           controlSize: ControlSize.large,
           onPressed: () => Navigator.of(context).pop(),
@@ -234,6 +326,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final chrome = _isMac || widget.macChromePreview;
+    if (chrome) _syncWindowTitle(l10n.productName);
 
     return ListenableBuilder(
       listenable: Listenable.merge([_controller, _search]),
@@ -250,6 +343,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
             ? DynBrand.sidebarDark
             : DynBrand.sidebarLight;
         final onGradient = !_showSettings && selected != null;
+        final highContrast = MediaQuery.highContrastOf(context);
 
         // Floating sidebar panel (navigation layer).
         final sidebar = Padding(
@@ -258,7 +352,12 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
             decoration: BoxDecoration(
               color: sidebarColor,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: theme.dividerColor),
+              // High contrast: a hard edge instead of the faint hairline.
+              border: Border.all(
+                color: highContrast
+                    ? DynBrand.hardContrast(isDark)
+                    : theme.dividerColor,
+              ),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x14000000),
@@ -478,9 +577,19 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
 
         return PlatformMenuBar(
           menus: [
+            // HIG app menu: About first (own group = separator), then
+            // Settings…, then the system-provided Quit.
             PlatformMenu(
               label: l10n.appTitle,
               menus: [
+                PlatformMenuItemGroup(
+                  members: [
+                    PlatformMenuItem(
+                      label: l10n.aboutMenuItem(l10n.productName),
+                      onSelected: _showAbout,
+                    ),
+                  ],
+                ),
                 PlatformMenuItemGroup(
                   members: [
                     PlatformMenuItem(
@@ -501,24 +610,70 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                   ),
               ],
             ),
+            // HIG View menu: window appearance commands. Even a View menu
+            // with only the full-screen toggle is expected on macOS.
             PlatformMenu(
               label: l10n.menuView,
               menus: [
-                PlatformMenuItem(
-                  label: l10n.checkForUpdates,
-                  shortcut: const SingleActivator(
-                    LogicalKeyboardKey.keyR,
-                    meta: true,
-                  ),
-                  onSelected: _refresh,
+                PlatformMenuItemGroup(
+                  members: [
+                    PlatformMenuItem(
+                      label: _isFullScreen
+                          ? l10n.exitFullScreen
+                          : l10n.enterFullScreen,
+                      onSelected: _toggleFullScreen,
+                    ),
+                  ],
                 ),
-                PlatformMenuItem(
-                  label: l10n.searchSoftware.replaceAll('...', ''),
-                  shortcut: const SingleActivator(
-                    LogicalKeyboardKey.keyF,
-                    meta: true,
-                  ),
-                  onSelected: _focusSearch,
+              ],
+            ),
+            // App-specific commands live in their own menu between View and
+            // Window (HIG: the menu bar is where Mac users look for commands).
+            PlatformMenu(
+              label: l10n.menuSoftware,
+              menus: [
+                PlatformMenuItemGroup(
+                  members: [
+                    PlatformMenuItem(
+                      label: l10n.checkForUpdates,
+                      shortcut: const SingleActivator(
+                        LogicalKeyboardKey.keyR,
+                        meta: true,
+                      ),
+                      onSelected: _refresh,
+                    ),
+                    PlatformMenuItem(
+                      label: l10n.searchSoftware.replaceAll('...', ''),
+                      shortcut: const SingleActivator(
+                        LogicalKeyboardKey.keyF,
+                        meta: true,
+                      ),
+                      onSelected: _focusSearch,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // HIG: provide a Window menu even with a single window, so
+            // Full Keyboard Access users can reach Minimize and Zoom.
+            PlatformMenu(
+              label: l10n.menuWindow,
+              menus: [
+                PlatformMenuItemGroup(
+                  members: [
+                    PlatformMenuItem(
+                      label: l10n.minimize,
+                      shortcut: const SingleActivator(
+                        LogicalKeyboardKey.keyM,
+                        meta: true,
+                      ),
+                      onSelected: _minimizeWindow,
+                    ),
+                    PlatformMenuItem(
+                      label: l10n.zoom,
+                      onSelected: _zoomWindow,
+                    ),
+                  ],
                 ),
               ],
             ),

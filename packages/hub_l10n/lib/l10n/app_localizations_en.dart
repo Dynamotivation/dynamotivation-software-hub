@@ -200,6 +200,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuView => 'View';
 
   @override
+  String get menuSoftware => 'Software';
+
+  @override
+  String get menuWindow => 'Window';
+
+  @override
+  String aboutMenuItem(String productName) {
+    return 'About $productName';
+  }
+
+  @override
+  String get zoom => 'Zoom';
+
+  @override
+  String get enterFullScreen => 'Enter Full Screen';
+
+  @override
+  String get exitFullScreen => 'Exit Full Screen';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
@@ -231,4 +251,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreOptions => 'More options';
+
+  @override
+  String get appearanceSubtitle =>
+      'Choose between system, light or dark Yaru appearance';
+
+  @override
+  String get settingsAboutHeading => 'About';
+
+  @override
+  String get publisher => 'Publisher';
+
+  @override
+  String settingsVersionLine(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get packageDetails => 'Package Details';
+
+  @override
+  String versionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get packageId => 'Package ID';
+
+  @override
+  String get installedVersion => 'Installed Version';
+
+  @override
+  String get availableVersion => 'Available Version';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String errorPackageNotFound(String id) {
+    return 'The package \"$id\" could not be found.';
+  }
+
+  @override
+  String get errorCatalogUnavailable =>
+      'The software catalog could not be loaded. Check your connection and try again.';
+
+  @override
+  String get errorActionRejected =>
+      'This action is not available for the package right now.';
 }
