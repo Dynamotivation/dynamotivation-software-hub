@@ -298,6 +298,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get errorCatalogUnavailable =>
+      'Der Software-Katalog konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.';
+
+  @override
   String get errorActionRejected =>
       'Diese Aktion ist für das Paket derzeit nicht verfügbar.';
 }

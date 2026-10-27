@@ -5,6 +5,20 @@ import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'presentation/controllers/hub_controller.dart';
 
+/// Catalog published by the website. Override with `--catalog-url=<uri>`.
+final _defaultCatalogUri = Uri.parse(
+  'http://127.0.0.1:1111/v1/catalog.json/',
+);
+
+Uri catalogUri(List<String> args) {
+  for (final arg in args) {
+    if (arg.startsWith('--catalog-url=')) {
+      return Uri.parse(arg.substring('--catalog-url='.length));
+    }
+  }
+  return _defaultCatalogUri;
+}
+
 /// Composition root of the Windows frontend.
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +37,10 @@ void main(List<String> args) async {
   );
 
   final controller = HubController(
-    HubUseCases(InMemoryPackageRepository(), InMemorySettingsRepository()),
+    HubUseCases(
+      WebsitePackageRepository(catalogUri(args)),
+      InMemorySettingsRepository(),
+    ),
   );
   await controller.load(preferredId: 'geo-background-generator');
   if (startDark) {

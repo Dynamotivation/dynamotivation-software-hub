@@ -12,8 +12,12 @@ class HubController extends ChangeNotifier {
   String? _selectedId;
   AppSettings _settings = const AppSettings();
   bool _isRefreshing = false;
+  Object? _loadError;
 
   List<SoftwarePackage> get packages => _packages;
+
+  /// Set when the catalog could not be loaded at startup. The page shows it once.
+  Object? get loadError => _loadError;
   AppSettings get settings => _settings;
   bool get isRefreshing => _isRefreshing;
 
@@ -26,7 +30,12 @@ class HubController extends ChangeNotifier {
 
   Future<void> load({String? preferredId}) async {
     _settings = await _useCases.loadSettings();
-    _packages = await _useCases.listPackages();
+    try {
+      _packages = await _useCases.listPackages();
+    } on CatalogUnavailable catch (e) {
+      _loadError = e;
+      _packages = const [];
+    }
     _selectedId = _packages.any((p) => p.id == preferredId)
         ? preferredId
         : _packages.firstOrNull?.id;

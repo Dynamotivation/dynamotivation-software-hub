@@ -22,3 +22,14 @@ class PackageActionRejected extends HubException {
   @override
   String toString() => 'PackageActionRejected($id): $reason';
 }
+
+/// The package catalog could not be fetched or understood. [reason] is for
+/// developers; show a localized message instead.
+class CatalogUnavailable extends HubException {
+  final Uri source;
+  final String reason;
+  const CatalogUnavailable(this.source, this.reason);
+
+  @override
+  String toString() => 'CatalogUnavailable($source): $reason';
+}

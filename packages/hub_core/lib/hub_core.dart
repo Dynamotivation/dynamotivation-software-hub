@@ -10,3 +10,4 @@ export 'src/domain/app_settings.dart';
 export 'src/domain/software_package.dart';
 export 'src/infrastructure/in_memory_package_repository.dart';
 export 'src/infrastructure/in_memory_settings_repository.dart';
+export 'src/infrastructure/website_package_repository.dart';

@@ -9,6 +9,7 @@ import 'package:hub_keys/hub_keys.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../shortcuts.dart';
+import 'package_image.dart';
 import '../theme/dynamotivation_theme.dart';
 
 class PackageSidebar extends StatefulWidget {
@@ -367,7 +368,7 @@ class _PackageTile extends StatelessWidget {
                           fit: BoxFit.contain,
                         ),
                       )
-                    : Image.asset(package.iconAsset, fit: BoxFit.cover),
+                    : packageImage(package, BoxFit.cover),
               ),
 
               const SizedBox(width: 10),

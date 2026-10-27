@@ -126,5 +126,7 @@
     "description": "Value of the installed version row when the package is not installed"
   },
   "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
+  "errorCatalogUnavailable": "Der Software-Katalog konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+  "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
   "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar."
 }

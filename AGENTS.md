@@ -27,6 +27,11 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 - Composition root: each app's `lib/main.dart` constructs the adapters and `HubUseCases`. That is the only place wiring happens.
 - Business rules never live in widgets or controllers. Controllers (`ChangeNotifier`) hold presentation state and call use cases.
 
+## Catalog source
+- The software catalog is published by the website (`dynamotivation.github.io`, template `templates/catalog/catalog.json`). The format version is in the URL path, not the document: `/v1/catalog.json/`. Local preview: `http://127.0.0.1:1111/v1/catalog.json/`. The Windows app reads it through `WebsitePackageRepository`, overridable with `--catalog-url=`.
+- The document is `{ "software": [ { name, description, url, icon: {url,width,height}, screenshots, platforms: {windows, macos, linux} } ] }`. Only software whose page sets `[extra.hub] exposed = true` is listed. The package id is the last segment of `url` (the page slug).
+- Each software page's front matter has `[extra.hub]`: `exposed` (bool) and `targets` (`windows` x86/x64/arm64, `macos` x64/arm64, `linux` x86/x64/arm64). Targets outside that matrix are dropped by the template.
+
 ## Errors
 - Never swallow errors. Use cases throw typed `HubException`s; the frontend maps them to localized text in its own `lib/presentation/errors.dart` (`describeError(l10n, error)`). Each frontend has its own copy because frontends never import each other.
 - User-initiated failures are shown in the UI (InfoBar, toast, or banner). Background probes that fail are reported via `FlutterError.reportError`, not hidden.

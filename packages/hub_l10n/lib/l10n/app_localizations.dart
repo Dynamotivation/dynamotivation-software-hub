@@ -590,6 +590,12 @@ abstract class AppLocalizations {
   /// **'The package \"{id}\" could not be found.'**
   String errorPackageNotFound(String id);
 
+  /// Shown when the online software catalog cannot be fetched or parsed.
+  ///
+  /// In en, this message translates to:
+  /// **'The software catalog could not be loaded. Check your connection and try again.'**
+  String get errorCatalogUnavailable;
+
   /// No description provided for @errorActionRejected.
   ///
   /// In en, this message translates to:

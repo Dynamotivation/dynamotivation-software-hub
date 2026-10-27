@@ -6,6 +6,7 @@ import 'package:hub_core/hub_core.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'package_image.dart';
 
 class PackageDetailPane extends StatefulWidget {
   final SoftwarePackage? package;
@@ -112,7 +113,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   fit: BoxFit.contain,
                                 ),
                               )
-                            : Image.asset(pkg.iconAsset, fit: BoxFit.cover),
+                            : packageImage(pkg, BoxFit.cover),
                       ),
 
                       const SizedBox(width: 18),

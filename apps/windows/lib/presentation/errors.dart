@@ -6,5 +6,6 @@ import 'package:hub_l10n/hub_l10n.dart';
 String describeError(AppLocalizations l10n, Object error) => switch (error) {
   PackageNotFound(:final id) => l10n.errorPackageNotFound(id),
   PackageActionRejected() => l10n.errorActionRejected,
+  CatalogUnavailable() => l10n.errorCatalogUnavailable,
   _ => error.toString(),
 };

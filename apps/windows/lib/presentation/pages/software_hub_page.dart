@@ -41,6 +41,12 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
   void initState() {
     super.initState();
     _isSettingsOpen = widget.initialSettingsOpen;
+    final loadError = _controller.loadError;
+    if (loadError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showError(loadError);
+      });
+    }
   }
 
   @override
