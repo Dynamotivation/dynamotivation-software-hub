@@ -373,6 +373,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  local_notifier:
+    dependency: transitive
+    description:
+      name: local_notifier
+      sha256: f6cfc933c6fbc961f4e52b5c880f68e41b2d3cd29aad557cc654fd211093a025
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.6"
   logging:
     dependency: transitive
     description:
@@ -682,6 +690,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  system_tray:
+    dependency: transitive
+    description:
+      name: system_tray
+      sha256: "40444e5de8ed907822a98694fd031b8accc3cb3c0baa547634ce76189cf3d9cf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.3"
   term_glyph:
     dependency: transitive
     description:
@@ -722,6 +738,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  uuid:
+    dependency: transitive
+    description:
+      name: uuid
+      sha256: "648e103079f7c64a36dc7d39369cabb358d377078a051d6ae2ad3aa539519313"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.7"
   vector_graphics:
     dependency: transitive
     description:

@@ -35,6 +35,13 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 - The software page shows the newest release with its highlights, and older releases under "Past versions". The newest version is also written to the page's JSON-LD `softwareVersion`. A page without releases shows no release section.
 - The hub app parses `releases` (`WebsitePackageRepository`). It does not yet read `platforms`.
 
+## Background surface (Windows)
+- The background implementation lives in `apps/windows/lib/background`: `TraySurface` (system tray icon, `system_tray`), `HubNotifications` (Windows toasts, `local_notifier`), `UpdateWatchService` (the hourly catalog fetch) and `BackgroundService` (close-to-tray behavior, wiring). `main.dart` is the only wiring point; the pure diff detection is `CatalogUpdateWatcher` in `hub_core`.
+- When *Keep running in background* is on, closing the window hides it to the tray (the paused engine stops rendering; only the hourly watch keeps ticking) and the tray icon appears; its right-click menu has *Open Software Hub* and *End* (removes the icon and quits the process). Left-clicking the icon, or clicking a toast, opens the window. With the setting off, nothing changes the default exit behavior.
+- The update watch runs about once an hour while the app process runs — window open or tray-only treat it the same. It respects *Automatically check for updates* (fetch + announce) and *Show notifications* (display). New catalog entries and newer release versions are announced; catalog removals are not. Its baseline follows every catalog load the window completed (`HubController.onCatalogSynced`), so something the user already saw on screen is never announced again.
+- A failed fetch never blocks or stops the schedule: background failures are reported through `FlutterError.reportError`, not shown as in-app errors.
+- The tray icons are the website's branded favicons, copied from `dynamotivation.github.io/public/favicon/favicon.ico` (light) and `favicon-dark.ico` (dark). Known gap: the light/dark variant is picked at app start; switching live when the OS theme changes is not implemented.
+
 ## Errors
 - Never swallow errors. Use cases throw typed `HubException`s; the frontend maps them to localized text in its own `lib/presentation/errors.dart` (`describeError(l10n, error)`). Each frontend has its own copy because frontends never import each other.
 - User-initiated failures are shown in the UI (InfoBar, toast, or banner). Background probes that fail are reported via `FlutterError.reportError`, not hidden.
