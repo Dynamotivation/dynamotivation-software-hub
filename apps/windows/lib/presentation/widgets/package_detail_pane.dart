@@ -6,6 +6,7 @@ import 'package:hub_core/hub_core.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'lcd_text.dart';
 import 'package_image.dart';
 import 'version_label.dart';
 
@@ -124,12 +125,13 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            LcdText(
                               pkg.name,
-                              style: TextStyle(
+                              color: tokens.text,
+                              background: tokens.card,
+                              style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
-                                color: tokens.text,
                                 letterSpacing: -0.2,
                               ),
                             ),
@@ -400,13 +402,11 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    LcdText(
                       pkg.description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.5,
-                        color: tokens.textMuted,
-                      ),
+                      color: tokens.textMuted,
+                      background: tokens.card,
+                      style: const TextStyle(fontSize: 13, height: 1.5),
                     ),
 
                     // What's new is hidden until the catalog publishes a release.
