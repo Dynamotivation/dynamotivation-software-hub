@@ -197,12 +197,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                           child: IconButton(
                             icon: RotationTransition(
                               turns: _spinController,
-                              // Painted around its exact centre; a font glyph
-                              // is off-centre in its box and wobbles when spun.
-                              child: CustomPaint(
-                                size: const Size.square(14),
-                                painter: _RefreshGlyphPainter(tokens.textMuted),
-                              ),
+                              child: const SpinnableRefreshIcon(size: 14),
                             ),
                             onPressed: widget.onRefresh,
                           ),
@@ -440,23 +435,55 @@ class _PackageTile extends StatelessWidget {
   }
 }
 
-/// Circular refresh arrow centred exactly on its box.
-class _RefreshGlyphPainter extends CustomPainter {
+/// Refresh arrow built to be spun: a ring centred exactly on the pivot with a
+/// small filled arrowhead, all inside a circle that fits the paint area, so no
+/// angle crops it or shifts its centre. Font and SVG glyphs put a detached
+/// arrowhead in a corner, which swings outside the ring while turning.
+///
+/// Lays out as [size] square but paints on a larger canvas so the arrowhead is
+/// never clipped.
+class SpinnableRefreshIcon extends StatelessWidget {
+  final double size;
+
+  const SpinnableRefreshIcon({super.key, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = DynTokens.of(context).textMuted;
+    final canvas = size * 1.4;
+    return SizedBox.square(
+      dimension: size,
+      child: OverflowBox(
+        maxWidth: canvas,
+        maxHeight: canvas,
+        child: ExcludeSemantics(
+          child: CustomPaint(
+            size: Size.square(canvas),
+            painter: _RefreshRingPainter(color),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RefreshRingPainter extends CustomPainter {
   final Color color;
 
-  const _RefreshGlyphPainter(this.color);
+  const _RefreshRingPainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final unit = size.width / 20; // designed on a 20 x 20 grid
     final c = size.center(Offset.zero);
-    final r = size.width / 2 - 1.5;
+    final r = 6.5 * unit;
     final stroke = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 1.5 * unit
       ..strokeCap = StrokeCap.round;
-    const start = -math.pi / 2 + 0.5;
-    const sweep = math.pi * 2 - 1.3;
+    const start = -28 * math.pi / 180;
+    const sweep = 290 * math.pi / 180;
     canvas.drawArc(
       Rect.fromCircle(center: c, radius: r),
       start,
@@ -464,25 +491,28 @@ class _RefreshGlyphPainter extends CustomPainter {
       false,
       stroke,
     );
-    // Arrow head at the end of the arc, pointing along the direction of travel.
-    final end = start + sweep;
-    final tip = c + Offset(math.cos(end), math.sin(end)) * r;
+
+    // Filled arrowhead on the arc's end, pointing along the clockwise travel.
+    const end = start + sweep;
+    final radial = Offset(math.cos(end), math.sin(end));
     final tangent = Offset(-math.sin(end), math.cos(end));
-    final normal = Offset(math.cos(end), math.sin(end));
+    final base = c + radial * r;
     final head = Path()
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(
-        (tip - tangent * 3.2 + normal * 3).dx,
-        (tip - tangent * 3.2 + normal * 3).dy,
+      ..moveTo(
+        (base + tangent * 3.4 * unit).dx,
+        (base + tangent * 3.4 * unit).dy,
       )
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(
-        (tip - tangent * 3.2 - normal * 3).dx,
-        (tip - tangent * 3.2 - normal * 3).dy,
-      );
-    canvas.drawPath(head, stroke);
+      ..lineTo((base + radial * 2.6 * unit).dx, (base + radial * 2.6 * unit).dy)
+      ..lineTo((base - radial * 2.6 * unit).dx, (base - radial * 2.6 * unit).dy)
+      ..close();
+    canvas.drawPath(
+      head,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.fill,
+    );
   }
 
   @override
-  bool shouldRepaint(_RefreshGlyphPainter old) => old.color != color;
+  bool shouldRepaint(_RefreshRingPainter old) => old.color != color;
 }
