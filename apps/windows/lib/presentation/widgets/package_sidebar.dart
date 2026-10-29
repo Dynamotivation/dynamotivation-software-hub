@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -197,11 +196,10 @@ class _PackageSidebarState extends State<PackageSidebar>
                           child: IconButton(
                             icon: RotationTransition(
                               turns: _spinController,
-                              // Painted around its exact centre; a font glyph
-                              // is off-centre in its box and wobbles when spun.
-                              child: CustomPaint(
-                                size: const Size.square(14),
-                                painter: _RefreshGlyphPainter(tokens.textMuted),
+                              child: Icon(
+                                FluentIcons.refresh,
+                                size: 14,
+                                color: tokens.textMuted,
                               ),
                             ),
                             onPressed: widget.onRefresh,
@@ -438,51 +436,4 @@ class _PackageTile extends StatelessWidget {
       },
     );
   }
-}
-
-/// Circular refresh arrow centred exactly on its box.
-class _RefreshGlyphPainter extends CustomPainter {
-  final Color color;
-
-  const _RefreshGlyphPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-    final r = size.width / 2 - 1.5;
-    final stroke = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-    const start = -math.pi / 2 + 0.5;
-    const sweep = math.pi * 2 - 1.3;
-    canvas.drawArc(
-      Rect.fromCircle(center: c, radius: r),
-      start,
-      sweep,
-      false,
-      stroke,
-    );
-    // Arrow head at the end of the arc, pointing along the direction of travel.
-    final end = start + sweep;
-    final tip = c + Offset(math.cos(end), math.sin(end)) * r;
-    final tangent = Offset(-math.sin(end), math.cos(end));
-    final normal = Offset(math.cos(end), math.sin(end));
-    final head = Path()
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(
-        (tip - tangent * 3.2 + normal * 3).dx,
-        (tip - tangent * 3.2 + normal * 3).dy,
-      )
-      ..moveTo(tip.dx, tip.dy)
-      ..lineTo(
-        (tip - tangent * 3.2 - normal * 3).dx,
-        (tip - tangent * 3.2 - normal * 3).dy,
-      );
-    canvas.drawPath(head, stroke);
-  }
-
-  @override
-  bool shouldRepaint(_RefreshGlyphPainter old) => old.color != color;
 }

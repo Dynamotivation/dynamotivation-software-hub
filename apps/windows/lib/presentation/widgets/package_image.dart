@@ -4,6 +4,9 @@ import 'package:hub_core/hub_core.dart';
 
 /// Icon of [package]: the bundled asset when it has one, otherwise the icon
 /// the catalog publishes. Falls back to a neutral glyph if the download fails.
+///
+/// Bitmaps are drawn with [FilterQuality.high] (mipmapped, bicubic); the
+/// default low quality aliases visibly when a large icon is shrunk.
 Widget packageImage(SoftwarePackage package, BoxFit fit) {
   final url = package.iconUrl;
   if (package.iconAsset.isEmpty && url != null) {
@@ -18,8 +21,13 @@ Widget packageImage(SoftwarePackage package, BoxFit fit) {
     return Image.network(
       url,
       fit: fit,
+      filterQuality: FilterQuality.high,
       errorBuilder: (context, error, stackTrace) => fallback,
     );
   }
-  return Image.asset(package.iconAsset, fit: fit);
+  return Image.asset(
+    package.iconAsset,
+    fit: fit,
+    filterQuality: FilterQuality.high,
+  );
 }

@@ -74,6 +74,16 @@ void main() {
       expect((await repo.find('germemz'))!.isInstalled, isTrue);
     });
 
+    test('refresh keeps lifecycle state of known packages', () async {
+      final repo = WebsitePackageRepository(
+        _source,
+        fetch: (_) async => _catalog,
+      );
+      await repo.save((await repo.find('germemz'))!.install());
+      await repo.refresh();
+      expect((await repo.find('germemz'))!.isInstalled, isTrue);
+    });
+
     test('reports a non-JSON body as CatalogUnavailable', () {
       expect(
         () => WebsitePackageRepository.parseCatalog(_source, '<html>'),

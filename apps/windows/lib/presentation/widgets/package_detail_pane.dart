@@ -87,10 +87,10 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                     children: [
                       // Large package icon
                       Container(
-                        width: 72,
-                        height: 72,
+                        width: 104,
+                        height: 104,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: tokens.cardBorder,
                             width: 1.5,
@@ -108,7 +108,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                         clipBehavior: Clip.antiAlias,
                         child: pkg.isSvgIcon
                             ? Padding(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(12),
                                 child: SvgPicture.asset(
                                   pkg.iconAsset,
                                   fit: BoxFit.contain,

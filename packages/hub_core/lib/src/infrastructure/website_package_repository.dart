@@ -48,8 +48,27 @@ class WebsitePackageRepository implements PackageRepository {
 
   @override
   Future<void> refresh() async {
+    final previous = _byId;
     _byId = null;
-    await _loaded();
+    try {
+      await _loaded();
+    } catch (_) {
+      _byId = previous;
+      rethrow;
+    }
+    if (previous == null) return;
+    // The website knows nothing about local installs: keep each surviving
+    // package's lifecycle state and versions, take only the published content.
+    final fresh = _byId!;
+    for (final old in previous.values) {
+      final incoming = fresh[old.id];
+      if (incoming == null) continue;
+      fresh[old.id] = old.copyWith(
+        name: incoming.name,
+        description: incoming.description,
+        iconUrl: incoming.iconUrl,
+      );
+    }
   }
 
   /// Parses a catalog document. Throws [CatalogUnavailable] if the document is

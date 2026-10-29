@@ -22,6 +22,11 @@ class DynamotivationApp extends StatefulWidget {
 
 class _DynamotivationAppState extends State<DynamotivationApp>
     with WidgetsBindingObserver {
+  // Built once. A fresh FluentThemeData per rebuild makes FluentApp animate
+  // between two equal themes, and the half-lerped button shapes flash square.
+  final _lightTheme = DynamotivationTheme.lightTheme();
+  final _darkTheme = DynamotivationTheme.darkTheme();
+
   @override
   void initState() {
     super.initState();
@@ -63,8 +68,8 @@ class _DynamotivationAppState extends State<DynamotivationApp>
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-          theme: DynamotivationTheme.lightTheme(),
-          darkTheme: DynamotivationTheme.darkTheme(),
+          theme: _lightTheme,
+          darkTheme: _darkTheme,
           debugShowCheckedModeBanner: false,
           home: SoftwareHubPage(
             controller: widget.controller,
