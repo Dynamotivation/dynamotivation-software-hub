@@ -196,11 +196,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                           child: IconButton(
                             icon: RotationTransition(
                               turns: _spinController,
-                              child: Icon(
-                                FluentIcons.refresh,
-                                size: 14,
-                                color: tokens.textMuted,
-                              ),
+                              child: const _CentredRefreshIcon(size: 14),
                             ),
                             onPressed: widget.onRefresh,
                           ),
@@ -434,6 +430,29 @@ class _PackageTile extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The Fluent refresh glyph with its ring centred on the box, so a
+/// [RotationTransition] turns it about the ring's own centre. The glyph's ring
+/// sits 12.5% of the icon size above the middle of its box (measured by
+/// fitting a circle to the rendered ink); left alone it orbits instead of
+/// spinning.
+class _CentredRefreshIcon extends StatelessWidget {
+  final double size;
+
+  const _CentredRefreshIcon({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = DynTokens.of(context);
+    return SizedBox.square(
+      dimension: size,
+      child: Transform.translate(
+        offset: Offset(0, size * 0.125),
+        child: Icon(FluentIcons.refresh, size: size, color: tokens.textMuted),
+      ),
     );
   }
 }
