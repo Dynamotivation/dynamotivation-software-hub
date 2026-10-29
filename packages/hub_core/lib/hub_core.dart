@@ -2,6 +2,7 @@
 /// macOS, Linux, ...) depends on this library and on nothing below `src/`.
 library;
 
+export 'src/application/catalog_update_watcher.dart';
 export 'src/application/errors.dart';
 export 'src/application/hub_use_cases.dart';
 export 'src/application/package_repository.dart';
