@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -196,7 +197,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                           child: IconButton(
                             icon: RotationTransition(
                               turns: _spinController,
-                              child: const _CentredRefreshIcon(size: 14),
+                              child: const SpinnableRefreshIcon(size: 14),
                             ),
                             onPressed: widget.onRefresh,
                           ),
@@ -434,25 +435,84 @@ class _PackageTile extends StatelessWidget {
   }
 }
 
-/// The Fluent refresh glyph with its ring centred on the box, so a
-/// [RotationTransition] turns it about the ring's own centre. The glyph's ring
-/// sits 12.5% of the icon size above the middle of its box (measured by
-/// fitting a circle to the rendered ink); left alone it orbits instead of
-/// spinning.
-class _CentredRefreshIcon extends StatelessWidget {
+/// Refresh arrow built to be spun: a ring centred exactly on the pivot with a
+/// small filled arrowhead, all inside a circle that fits the paint area, so no
+/// angle crops it or shifts its centre. Font and SVG glyphs put a detached
+/// arrowhead in a corner, which swings outside the ring while turning.
+///
+/// Lays out as [size] square but paints on a larger canvas so the arrowhead is
+/// never clipped.
+class SpinnableRefreshIcon extends StatelessWidget {
   final double size;
 
-  const _CentredRefreshIcon({required this.size});
+  const SpinnableRefreshIcon({super.key, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    final tokens = DynTokens.of(context);
+    final color = DynTokens.of(context).textMuted;
+    final canvas = size * 1.4;
     return SizedBox.square(
       dimension: size,
-      child: Transform.translate(
-        offset: Offset(0, size * 0.125),
-        child: Icon(FluentIcons.refresh, size: size, color: tokens.textMuted),
+      child: OverflowBox(
+        maxWidth: canvas,
+        maxHeight: canvas,
+        child: ExcludeSemantics(
+          child: CustomPaint(
+            size: Size.square(canvas),
+            painter: _RefreshRingPainter(color),
+          ),
+        ),
       ),
     );
   }
+}
+
+class _RefreshRingPainter extends CustomPainter {
+  final Color color;
+
+  const _RefreshRingPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final unit = size.width / 20; // designed on a 20 x 20 grid
+    final c = size.center(Offset.zero);
+    final r = 6.5 * unit;
+    final stroke = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5 * unit
+      ..strokeCap = StrokeCap.round;
+    const start = -28 * math.pi / 180;
+    const sweep = 290 * math.pi / 180;
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      start,
+      sweep,
+      false,
+      stroke,
+    );
+
+    // Filled arrowhead on the arc's end, pointing along the clockwise travel.
+    const end = start + sweep;
+    final radial = Offset(math.cos(end), math.sin(end));
+    final tangent = Offset(-math.sin(end), math.cos(end));
+    final base = c + radial * r;
+    final head = Path()
+      ..moveTo(
+        (base + tangent * 3.4 * unit).dx,
+        (base + tangent * 3.4 * unit).dy,
+      )
+      ..lineTo((base + radial * 2.6 * unit).dx, (base + radial * 2.6 * unit).dy)
+      ..lineTo((base - radial * 2.6 * unit).dx, (base - radial * 2.6 * unit).dy)
+      ..close();
+    canvas.drawPath(
+      head,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RefreshRingPainter old) => old.color != color;
 }
