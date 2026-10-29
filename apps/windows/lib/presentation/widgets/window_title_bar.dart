@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:hub_keys/hub_keys.dart';
@@ -116,9 +115,14 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           SizedBox(
                             width: 40,
                             height: 40,
-                            child: SvgPicture.asset(
-                              'assets/dynamotivation-logo-dark.svg',
+                            // Pre-rendered at 192 px and downscaled with
+                            // mipmapped filtering: much smoother edges than
+                            // rasterising the vector straight to 40 px.
+                            child: Image.asset(
+                              'assets/dynamotivation-logo-dark-192.png',
                               fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                              semanticLabel: context.l10n.brandName,
                             ),
                           ),
                           const SizedBox(width: 14),

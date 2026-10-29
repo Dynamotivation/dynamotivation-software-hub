@@ -67,8 +67,32 @@ class WebsitePackageRepository
 
   @override
   Future<void> refresh() async {
+    final previous = _byId;
     _byId = null;
-    await _loaded();
+    try {
+      await _loaded();
+    } catch (_) {
+      _byId = previous;
+      rethrow;
+    }
+    if (previous == null) return;
+    // The website knows nothing about local installs: keep each surviving
+    // package's lifecycle state and installed version, take everything it
+    // publishes (content and releases) from the fresh catalog.
+    final fresh = _byId!;
+    for (final old in previous.values) {
+      final incoming = fresh[old.id];
+      if (incoming == null) continue;
+      fresh[old.id] = old.copyWith(
+        name: incoming.name,
+        description: incoming.description,
+        iconUrl: incoming.iconUrl,
+        latestVersion: incoming.latestVersion,
+        latestRelease: incoming.latestRelease,
+        olderReleases: incoming.olderReleases,
+        availableVersions: incoming.availableVersions,
+      );
+    }
   }
 
   /// Parses a catalog document. Throws [CatalogUnavailable] if the document is

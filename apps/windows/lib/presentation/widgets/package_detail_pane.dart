@@ -86,10 +86,10 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                     children: [
                       // Large package icon
                       Container(
-                        width: 72,
-                        height: 72,
+                        width: 104,
+                        height: 104,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: tokens.cardBorder,
                             width: 1.5,
