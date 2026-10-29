@@ -14,6 +14,15 @@ class HubUseCases {
 
   Future<List<SoftwarePackage>> listPackages() => _packages.all();
 
+  /// The last known catalog without waiting for the network, or null if the
+  /// catalog source keeps none.
+  Future<List<SoftwarePackage>?> cachedPackages() async {
+    final source = _packages;
+    return source is CachedPackageSource
+        ? (source as CachedPackageSource).cachedPackages()
+        : null;
+  }
+
   Future<void> refreshCatalog() => _packages.refresh();
 
   /// Applies the update command and returns the updated package.

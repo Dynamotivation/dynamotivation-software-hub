@@ -15,15 +15,34 @@ typedef CatalogFetcher = Future<String> Function(Uri uri);
 /// the hub is exposed to. The page slug (last segment of `url`) is the package
 /// id. The website publishes no version or install data, so packages from it
 /// carry empty versions and start as [PackageInstallationStatus.notInstalled].
-class WebsitePackageRepository implements PackageRepository {
+class WebsitePackageRepository
+    implements PackageRepository, CachedPackageSource {
   final Uri catalogUri;
   final CatalogFetcher _fetch;
+  final Future<String?> Function(Uri uri)? readCache;
 
   /// Null until the first successful load. [refresh] resets it.
   Map<String, SoftwarePackage>? _byId;
 
-  WebsitePackageRepository(this.catalogUri, {CatalogFetcher? fetch})
-    : _fetch = fetch ?? _httpGet;
+  WebsitePackageRepository(
+    this.catalogUri, {
+    CatalogFetcher? fetch,
+    this.readCache,
+  }) : _fetch = fetch ?? httpGetCatalog;
+
+  /// The catalog from the on-disk cache, if one exists and still parses. A
+  /// corrupt cache counts as no cache; the network load reports real problems.
+  @override
+  Future<List<SoftwarePackage>?> cachedPackages() async {
+    final body = await readCache?.call(catalogUri);
+    if (body == null) return null;
+    try {
+      final packages = parseCatalog(catalogUri, body);
+      return (_byId ??= {for (final p in packages) p.id: p}).values.toList();
+    } on CatalogUnavailable {
+      return null;
+    }
+  }
 
   Future<Map<String, SoftwarePackage>> _loaded() async {
     final cached = _byId;
@@ -136,7 +155,7 @@ class WebsitePackageRepository implements PackageRepository {
   }
 }
 
-Future<String> _httpGet(Uri uri) async {
+Future<String> httpGetCatalog(Uri uri) async {
   final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
   try {
     final request = await client.getUrl(uri);

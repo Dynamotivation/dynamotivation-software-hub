@@ -242,6 +242,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                 children: [
                                   PackageSidebar(
                                     packages: _controller.packages,
+                                    departingIds: _controller.departingIds,
                                     selectedPackage: _controller.selected,
                                     onSelectPackage: _controller.select,
                                     searchQuery: _searchQuery,

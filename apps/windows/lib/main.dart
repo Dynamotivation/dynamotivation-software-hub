@@ -4,12 +4,14 @@ import 'package:hub_core/hub_core.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'cache_locations.dart';
 import 'background/background_service.dart';
 import 'background/background_strings.dart';
 import 'background/hub_notifications.dart';
 import 'background/tray_surface.dart';
 import 'background/update_watch_service.dart';
 import 'presentation/controllers/hub_controller.dart';
+import 'presentation/icon_preloader.dart';
 
 /// Catalog published by the website. Override with `--catalog-url=<uri>`,
 /// e.g. the local site preview `--catalog-url=http://127.0.0.1:1111/v1/catalog.json/`.
@@ -43,8 +45,13 @@ void main(List<String> args) async {
     titleBarStyle: TitleBarStyle.hidden,
   );
 
+  final catalogCache = CatalogCache(hubCacheDirectory);
   final useCases = HubUseCases(
-    WebsitePackageRepository(catalogUri(args)),
+    WebsitePackageRepository(
+      catalogUri(args),
+      fetch: catalogCache.fetch,
+      readCache: catalogCache.readCached,
+    ),
     InMemorySettingsRepository(),
   );
 
@@ -53,6 +60,7 @@ void main(List<String> args) async {
   final watcher = CatalogUpdateWatcher(useCases);
   final controller = HubController(
     useCases,
+    preloadIcon: preloadIcon,
     onCatalogSynced: () async {
       try {
         await watcher.rebaseline();

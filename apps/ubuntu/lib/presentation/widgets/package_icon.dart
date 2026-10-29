@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hub_core/hub_core.dart';
 
 /// Ubuntu Yaru styled app icon tile with squircle border.
@@ -41,7 +40,6 @@ class _PackageIconState extends State<PackageIcon> {
 
   void _loadImage() {
     final asset = widget.package.iconAsset;
-    if (widget.package.isSvgIcon) return;
 
     if (_decodedImages.containsKey(asset)) {
       _decoded = _decodedImages[asset];
@@ -67,12 +65,7 @@ class _PackageIconState extends State<PackageIcon> {
     final pkg = widget.package;
 
     Widget content;
-    if (pkg.isSvgIcon) {
-      content = Padding(
-        padding: EdgeInsets.all(size * 0.12),
-        child: SvgPicture.asset(pkg.iconAsset),
-      );
-    } else if (_decoded != null) {
+    if (_decoded != null) {
       content = RawImage(
         image: _decoded,
         width: size,

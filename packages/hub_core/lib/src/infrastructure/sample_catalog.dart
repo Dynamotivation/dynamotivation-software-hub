@@ -255,36 +255,5 @@ List<SoftwarePackage> sampleCatalog() {
       ],
       availableVersions: const ['v0.4.2 (Latest)', 'v0.3.0'],
     ),
-    SoftwarePackage(
-      id: 'unofficial-super-mario-bros-misfit-pack',
-      name: 'Unofficial Super Mario Bros. Misfit Pack',
-      subtitle: 'Classic platformer collection with visual enhancements and widescreen',
-      description: 'Preserved retro platformer engine enhanced for modern widescreen displays with optional orchestrations and quality-of-life adjustments.',
-      currentVersion: '0.9.0',
-      latestVersion: '0.9.0',
-      iconAsset: 'assets/misfit-pack.svg',
-      isSvgIcon: true,
-      status: PackageInstallationStatus.notInstalled,
-      latestRelease: const ReleaseNote(
-        version: '0.9.0',
-        date: '2026-09-02',
-        highlights: [
-          'Native 16:9 widescreen rendering with extended camera scroll',
-          'Remastered 8-bit sound effects and optional stereo music',
-          'Custom level selector and checkpoint system',
-        ],
-      ),
-      olderReleases: const [
-        ReleaseNote(
-          version: '0.8.2',
-          date: '2026-04-19',
-          highlights: [
-            'Fixed jump momentum collision glitch on moving platforms',
-            'Game controller rumble feedback support',
-          ],
-        ),
-      ],
-      availableVersions: const ['v0.9.0 (Latest)', 'v0.8.2'],
-    ),
   ];
 }

@@ -39,7 +39,6 @@ class SoftwarePackage {
 
   /// Absolute address of the icon published by the catalog, if any.
   final String? iconUrl;
-  final bool isSvgIcon;
   final PackageInstallationStatus status;
   final double downloadProgress;
   final ReleaseNote latestRelease;
@@ -55,7 +54,6 @@ class SoftwarePackage {
     required this.latestVersion,
     required this.iconAsset,
     this.iconUrl,
-    this.isSvgIcon = false,
     required this.status,
     this.downloadProgress = 0.0,
     required this.latestRelease,
@@ -110,7 +108,6 @@ class SoftwarePackage {
     String? latestVersion,
     String? iconAsset,
     String? iconUrl,
-    bool? isSvgIcon,
     PackageInstallationStatus? status,
     double? downloadProgress,
     ReleaseNote? latestRelease,
@@ -126,7 +123,6 @@ class SoftwarePackage {
       latestVersion: latestVersion ?? this.latestVersion,
       iconAsset: iconAsset ?? this.iconAsset,
       iconUrl: iconUrl ?? this.iconUrl,
-      isSvgIcon: isSvgIcon ?? this.isSvgIcon,
       status: status ?? this.status,
       downloadProgress: downloadProgress ?? this.downloadProgress,
       latestRelease: latestRelease ?? this.latestRelease,

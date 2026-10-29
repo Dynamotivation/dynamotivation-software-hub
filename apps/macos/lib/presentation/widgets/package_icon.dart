@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hub_core/hub_core.dart';
 
 /// Rounded app-icon tile, like a macOS app icon.
@@ -16,12 +15,7 @@ class PackageIcon extends StatelessWidget {
       child: SizedBox(
         width: size,
         height: size,
-        child: package.isSvgIcon
-            ? Padding(
-                padding: EdgeInsets.all(size * 0.12),
-                child: SvgPicture.asset(package.iconAsset),
-              )
-            : Image.asset(package.iconAsset, fit: BoxFit.cover),
+        child: Image.asset(package.iconAsset, fit: BoxFit.cover),
       ),
     );
   }
