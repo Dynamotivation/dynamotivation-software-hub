@@ -4,9 +4,15 @@ import 'package:hub_core/hub_core.dart';
 /// Presentation state of the Windows frontend. Holds no business rules; every
 /// change goes through [HubUseCases].
 class HubController extends ChangeNotifier {
+  HubController(this._useCases, {this.onCatalogSynced});
+
   final HubUseCases _useCases;
 
-  HubController(this._useCases);
+  /// Called once a catalog load the user saw completes: the startup load and
+  /// every successful manual refresh. The background update watch uses it to
+  /// re-baseline itself so it never re-announces entries that were already
+  /// visible on screen.
+  final void Function()? onCatalogSynced;
 
   List<SoftwarePackage> _packages = const [];
   String? _selectedId;
@@ -32,6 +38,7 @@ class HubController extends ChangeNotifier {
     _settings = await _useCases.loadSettings();
     try {
       _packages = await _useCases.listPackages();
+      onCatalogSynced?.call();
     } on CatalogUnavailable catch (e) {
       _loadError = e;
       _packages = const [];
@@ -59,6 +66,7 @@ class HubController extends ChangeNotifier {
     try {
       await _useCases.refreshCatalog();
       _packages = await _useCases.listPackages();
+      onCatalogSynced?.call();
     } finally {
       _isRefreshing = false;
       notifyListeners();

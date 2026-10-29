@@ -58,7 +58,8 @@ class WebsitePackageRepository implements PackageRepository {
     }
     if (previous == null) return;
     // The website knows nothing about local installs: keep each surviving
-    // package's lifecycle state and versions, take only the published content.
+    // package's lifecycle state and installed version, take everything it
+    // publishes (content and releases) from the fresh catalog.
     final fresh = _byId!;
     for (final old in previous.values) {
       final incoming = fresh[old.id];
@@ -67,6 +68,10 @@ class WebsitePackageRepository implements PackageRepository {
         name: incoming.name,
         description: incoming.description,
         iconUrl: incoming.iconUrl,
+        latestVersion: incoming.latestVersion,
+        latestRelease: incoming.latestRelease,
+        olderReleases: incoming.olderReleases,
+        availableVersions: incoming.availableVersions,
       );
     }
   }
@@ -94,19 +99,47 @@ class WebsitePackageRepository implements PackageRepository {
     }
     final icon = entry['icon'] is Map ? entry['icon'] as Map : const {};
     final iconUrl = icon['url'];
+    final releases = _releases(source, entry['releases']);
+    final latest = releases.isEmpty
+        ? const ReleaseNote(version: '', date: '', highlights: [])
+        : releases.first;
     return SoftwarePackage(
       id: _idFromUrl(source, entry['url']),
       name: entry['name'] as String,
       description: _text(entry, 'description'),
       subtitle: '',
       currentVersion: '',
-      latestVersion: '',
+      latestVersion: latest.version,
       iconAsset: '',
       iconUrl: iconUrl is String && iconUrl.isNotEmpty ? iconUrl : null,
       status: PackageInstallationStatus.notInstalled,
-      latestRelease: const ReleaseNote(version: '', date: '', highlights: []),
-      olderReleases: const [],
-      availableVersions: const [],
+      latestRelease: latest,
+      olderReleases: releases.skip(1).toList(),
+      availableVersions: [for (final r in releases) r.version],
+    );
+  }
+
+  /// Releases are published newest first. Empty until the page has a release.
+  static List<ReleaseNote> _releases(Uri source, Object? value) {
+    if (value == null) return const [];
+    if (value is! List) {
+      throw CatalogUnavailable(source, 'Releases must be a list.');
+    }
+    return [for (final r in value) _toRelease(source, r)];
+  }
+
+  static ReleaseNote _toRelease(Uri source, Object? value) {
+    if (value is! Map || value['version'] is! String) {
+      throw CatalogUnavailable(source, 'Release without a version.');
+    }
+    final highlights = value['highlights'] ?? const [];
+    if (highlights is! List || highlights.any((h) => h is! String)) {
+      throw CatalogUnavailable(source, 'Release highlights must be strings.');
+    }
+    return ReleaseNote(
+      version: value['version'] as String,
+      date: _text(value, 'date'),
+      highlights: [for (final h in highlights) h as String],
     );
   }
 

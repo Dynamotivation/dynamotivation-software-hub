@@ -129,7 +129,40 @@
   "autoCheckTitle": "Automatically check for updates",
   "autoCheckDescription": "Periodically check whether installed software or the Hub has a newer version",
   "notificationsTitle": "Show notifications",
-  "notificationsDescription": "Notify me when updates or downloads complete",
+  "notificationsDescription": "Notify me when new software appears or a newer version is available",
+  "trayOpenSoftwareHub": "Open Software Hub",
+  "@trayOpenSoftwareHub": {
+    "description": "System tray menu item: show the hub window"
+  },
+  "trayEnd": "End",
+  "@trayEnd": {
+    "description": "System tray menu item: close the hub process"
+  },
+  "newSoftwareTitle": "New software available",
+  "@newSoftwareTitle": {
+    "description": "Title of the background notification for a new catalog entry"
+  },
+  "newSoftwareBody": "{name} has been added to the Software Hub.",
+  "@newSoftwareBody": {
+    "description": "Body of the background notification for a new catalog entry",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "updateNotificationBody": "{name} v{version} is available.",
+  "@updateNotificationBody": {
+    "description": "Body of the background notification for a newer release; the title is updateAvailable",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "operationFailed": "Something went wrong",
   "menuView": "View",
   "@menuView": {

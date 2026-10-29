@@ -193,7 +193,26 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notificationsDescription =>
-      'Benachrichtigen, wenn Updates oder Downloads abgeschlossen sind';
+      'Benachrichtigen, wenn neue Software erscheint oder eine neuere Version verfügbar ist';
+
+  @override
+  String get trayOpenSoftwareHub => 'Software Hub öffnen';
+
+  @override
+  String get trayEnd => 'Beenden';
+
+  @override
+  String get newSoftwareTitle => 'Neue Software verfügbar';
+
+  @override
+  String newSoftwareBody(String name) {
+    return '$name wurde dem Software Hub hinzugefügt.';
+  }
+
+  @override
+  String updateNotificationBody(String name, String version) {
+    return '$name v$version ist verfügbar.';
+  }
 
   @override
   String get operationFailed => 'Etwas ist schiefgelaufen';

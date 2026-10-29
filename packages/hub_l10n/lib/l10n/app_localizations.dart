@@ -419,8 +419,38 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Notify me when updates or downloads complete'**
+  /// **'Notify me when new software appears or a newer version is available'**
   String get notificationsDescription;
+
+  /// System tray menu item: show the hub window
+  ///
+  /// In en, this message translates to:
+  /// **'Open Software Hub'**
+  String get trayOpenSoftwareHub;
+
+  /// System tray menu item: close the hub process
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get trayEnd;
+
+  /// Title of the background notification for a new catalog entry
+  ///
+  /// In en, this message translates to:
+  /// **'New software available'**
+  String get newSoftwareTitle;
+
+  /// Body of the background notification for a new catalog entry
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has been added to the Software Hub.'**
+  String newSoftwareBody(String name);
+
+  /// Body of the background notification for a newer release; the title is updateAvailable
+  ///
+  /// In en, this message translates to:
+  /// **'{name} v{version} is available.'**
+  String updateNotificationBody(String name, String version);
 
   /// No description provided for @operationFailed.
   ///
