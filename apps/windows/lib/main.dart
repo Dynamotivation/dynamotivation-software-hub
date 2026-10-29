@@ -11,9 +11,10 @@ import 'background/tray_surface.dart';
 import 'background/update_watch_service.dart';
 import 'presentation/controllers/hub_controller.dart';
 
-/// Catalog published by the website. Override with `--catalog-url=<uri>`.
+/// Catalog published by the website. Override with `--catalog-url=<uri>`,
+/// e.g. the local site preview `--catalog-url=http://127.0.0.1:1111/v1/catalog.json/`.
 final _defaultCatalogUri = Uri.parse(
-  'http://127.0.0.1:1111/v1/catalog.json/',
+  'https://dynamotivation.com/v1/catalog.json/',
 );
 
 Uri catalogUri(List<String> args) {
