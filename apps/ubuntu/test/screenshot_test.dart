@@ -91,10 +91,10 @@ Future<void> loadRealFonts() async {
 }
 
 void main() {
-  const artifactDir =
-      'C:/Users/Daniel/.t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/antigravity-acp/brain/72089a68-6a50-4547-8dbd-c885b5d7629d';
-  const repoScreenshotsDir =
-      'D:/source/repos/DynamotivationSoftwareHub/apps/ubuntu/screenshots';
+  // Tests run from the package root; the committed images are only rewritten
+  // when UPDATE_SCREENSHOTS is set.
+  const repoScreenshotsDir = 'screenshots';
+  final updateScreenshots = Platform.environment['UPDATE_SCREENSHOTS'] != null;
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -156,11 +156,9 @@ void main() {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final bytes = byteData!.buffer.asUint8List();
 
-      final artifactFile = File('$artifactDir/$fileName');
-      await artifactFile.writeAsBytes(bytes);
-
-      final repoFile = File('$repoScreenshotsDir/$fileName');
-      await repoFile.writeAsBytes(bytes);
+      if (updateScreenshots) {
+        await File('$repoScreenshotsDir/$fileName').writeAsBytes(bytes);
+      }
 
       print('Rendered: $fileName (${bytes.length} bytes)');
     });
