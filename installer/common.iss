@@ -1,12 +1,12 @@
 ; Shared Inno Setup 5.6.1 settings for every Dynamotivation Windows app.
-; An app script defines AppId, AppName, AppVersion, AppExeName, SourceDir, OutputBase
+; An app script defines AppId (as "{{GUID}", the doubled brace is Inno's escape), AppName, AppVersion, AppExeName, SourceDir, OutputBase
 ; and MinVersion before including this file. Compile with ISCC 5.6.1 (Unicode).
 
 #define Publisher "Dynamotivation"
 #define PublisherUrl "https://dynamotivation.com/"
 
 [Setup]
-AppId={{#AppId}
+AppId={#AppId}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#Publisher}
