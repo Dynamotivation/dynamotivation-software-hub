@@ -1,0 +1,17 @@
+name: hub_images
+description: "Catalog icons for all Software Hub frontends: webp icons cached on disk, plus preloading."
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hub_core: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

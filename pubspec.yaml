@@ -10,6 +10,7 @@ workspace:
   - packages/hub_l10n
   - packages/hub_keys
   - packages/hub_scroll
+  - packages/hub_images
   - apps/macos
   - apps/windows
   - apps/ubuntu

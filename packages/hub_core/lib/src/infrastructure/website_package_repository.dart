@@ -129,7 +129,6 @@ class WebsitePackageRepository
       subtitle: '',
       currentVersion: '',
       latestVersion: latest.version,
-      iconAsset: '',
       iconUrl: iconUrl is String && iconUrl.isNotEmpty ? iconUrl : null,
       status: PackageInstallationStatus.notInstalled,
       latestRelease: latest,

@@ -1,18 +1,14 @@
-import 'dart:async';
-
+import 'package:dynamotivation_software_hub/presentation/controllers/hub_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
-import 'package:dynamotivation_software_hub/presentation/controllers/hub_controller.dart';
 
-SoftwarePackage _pkg(String id, String name, {String? icon}) => SoftwarePackage(
+SoftwarePackage _pkg(String id, String name) => SoftwarePackage(
   id: id,
   name: name,
   description: '',
   subtitle: '',
   currentVersion: '',
   latestVersion: '',
-  iconAsset: '',
-  iconUrl: icon,
   status: PackageInstallationStatus.notInstalled,
   latestRelease: const ReleaseNote(version: '', date: '', highlights: []),
   olderReleases: const [],
@@ -37,65 +33,51 @@ class _Repo implements PackageRepository, CachedPackageSource {
   Future<void> save(SoftwarePackage package) async {}
 }
 
+HubController _controller(_Repo repo, {void Function()? onSynced}) =>
+    HubController(
+      HubUseCases(repo, InMemorySettingsRepository()),
+      onCatalogSynced: onSynced,
+      departDuration: const Duration(milliseconds: 20),
+    );
+
 void main() {
   test(
-    'shows the cache at once, then text, then new apps after icons',
+    'shows the cache at once and the fresh text after the refresh',
     () async {
-      final iconGate = Completer<void>();
       var synced = 0;
-      final controller = HubController(
-        HubUseCases(
-          _Repo(
-            [_pkg('a', 'Old')],
-            [_pkg('a', 'New'), _pkg('b', 'Fresh', icon: 'b.png')],
-          ),
-          InMemorySettingsRepository(),
-        ),
-        onCatalogSynced: () => synced++,
-        departDuration: Duration.zero,
-        preloadIcon: (_) => iconGate.future,
+      final c = _controller(
+        _Repo([_pkg('a', 'Old')], [_pkg('a', 'New')]),
+        onSynced: () => synced++,
       );
-
-      await controller.load();
-      expect(controller.packages.map((p) => p.name), ['Old']);
-
-      // Let the refresh reach the icon wait.
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
-      expect(controller.packages.map((p) => p.name), ['New']);
+      await c.load();
+      expect(c.packages.map((p) => p.name), ['Old']);
       expect(synced, 0);
 
-      iconGate.complete();
-      await controller.revalidation;
-      expect(controller.packages.map((p) => p.name), ['New', 'Fresh']);
+      await c.revalidation;
+      expect(c.packages.map((p) => p.name), ['New']);
       expect(synced, 1);
     },
   );
 
   test(
-    'a removed app fades out first and hands selection to its neighbour',
+    'a removed selected app fades out and hands selection to its neighbour',
     () async {
-      final controller = HubController(
-        HubUseCases(
-          _Repo(
-            [_pkg('a', 'A'), _pkg('b', 'B'), _pkg('c', 'C')],
-            [_pkg('a', 'A'), _pkg('c', 'C')],
-          ),
-          InMemorySettingsRepository(),
+      final c = _controller(
+        _Repo(
+          [_pkg('a', 'A'), _pkg('b', 'B'), _pkg('c', 'C')],
+          [_pkg('a', 'A'), _pkg('c', 'C')],
         ),
-        departDuration: const Duration(milliseconds: 20),
       );
-      await controller.load(preferredId: 'b');
+      await c.load(preferredId: 'b');
 
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
-      expect(controller.departingIds, {'b'});
-      expect(controller.packages.map((p) => p.id), ['a', 'b', 'c']);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(c.departingIds, {'b'});
+      expect(c.packages.map((p) => p.id), ['a', 'b', 'c']);
 
-      await controller.revalidation;
-      expect(controller.departingIds, isEmpty);
-      expect(controller.packages.map((p) => p.id), ['a', 'c']);
-      expect(controller.selected?.id, 'c');
+      await c.revalidation;
+      expect(c.departingIds, isEmpty);
+      expect(c.packages.map((p) => p.id), ['a', 'c']);
+      expect(c.selected?.id, 'c');
     },
   );
 }

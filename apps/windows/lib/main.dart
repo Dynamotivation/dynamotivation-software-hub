@@ -1,32 +1,16 @@
 import 'package:flutter/widgets.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_images/hub_images.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
-import 'cache_locations.dart';
 import 'background/background_service.dart';
 import 'background/background_strings.dart';
 import 'background/hub_notifications.dart';
 import 'background/tray_surface.dart';
 import 'background/update_watch_service.dart';
 import 'presentation/controllers/hub_controller.dart';
-import 'presentation/icon_preloader.dart';
-
-/// Catalog published by the website. Override with `--catalog-url=<uri>`,
-/// e.g. the local site preview `--catalog-url=http://127.0.0.1:1111/v1/catalog.json/`.
-final _defaultCatalogUri = Uri.parse(
-  'https://dynamotivation.com/v1/catalog.json/',
-);
-
-Uri catalogUri(List<String> args) {
-  for (final arg in args) {
-    if (arg.startsWith('--catalog-url=')) {
-      return Uri.parse(arg.substring('--catalog-url='.length));
-    }
-  }
-  return _defaultCatalogUri;
-}
 
 /// Composition root of the Windows frontend.
 void main(List<String> args) async {
@@ -45,22 +29,14 @@ void main(List<String> args) async {
     titleBarStyle: TitleBarStyle.hidden,
   );
 
-  final catalogCache = CatalogCache(hubCacheDirectory);
-  final useCases = HubUseCases(
-    WebsitePackageRepository(
-      catalogUri(args),
-      fetch: catalogCache.fetch,
-      readCache: catalogCache.readCached,
-    ),
-    InMemorySettingsRepository(),
-  );
+  final services = HubServices.production(args);
+  final useCases = services.useCases;
 
   // The watcher's baseline follows what the window actually showed, so a
   // manual refresh never re-announces anything through the hourly watch.
   final watcher = CatalogUpdateWatcher(useCases);
   final controller = HubController(
     useCases,
-    preloadIcon: preloadIcon,
     onCatalogSynced: () async {
       try {
         await watcher.rebaseline();
@@ -74,7 +50,7 @@ void main(List<String> args) async {
     WidgetsBinding.instance.platformDispatcher.locale,
   );
 
-  await controller.load(preferredId: 'geo-background-generator');
+  await controller.load(preferredId: null);
   if (startDark) {
     await controller.updateSettings(
       controller.settings.copyWith(themeMode: AppThemeMode.dark),
@@ -117,9 +93,12 @@ void main(List<String> args) async {
   });
 
   runApp(
-    DynamotivationApp(
-      controller: controller,
-      initialSettingsOpen: openSettings,
+    HubImageScope(
+      icons: services.icons,
+      child: DynamotivationApp(
+        controller: controller,
+        initialSettingsOpen: openSettings,
+      ),
     ),
   );
 }

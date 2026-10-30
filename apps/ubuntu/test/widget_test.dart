@@ -4,6 +4,7 @@ import 'package:dynamotivation_software_hub_ubuntu/app.dart';
 import 'package:dynamotivation_software_hub_ubuntu/presentation/controllers/hub_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_core/testing.dart';
 
 import 'yaru_window_mock.dart';
 
@@ -17,7 +18,7 @@ void main() {
 
     final controller = HubController(
       HubUseCases(
-        InMemoryPackageRepository(refreshDelay: Duration.zero),
+        InMemoryPackageRepository(testCatalog(), refreshDelay: Duration.zero),
         InMemorySettingsRepository(),
       ),
     );
@@ -27,5 +28,6 @@ void main() {
     await tester.pumpWidget(DynamotivationUbuntuApp(controller: controller));
     await tester.pumpAndSettle();
 
-    expect(find.text(controller.selected!.name), findsWidgets);  });
+    expect(find.text(controller.selected!.name), findsWidgets);
+  });
 }

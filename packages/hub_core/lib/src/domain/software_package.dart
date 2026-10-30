@@ -35,7 +35,6 @@ class SoftwarePackage {
   final String subtitle;
   final String currentVersion;
   final String latestVersion;
-  final String iconAsset;
 
   /// Absolute address of the icon published by the catalog, if any.
   final String? iconUrl;
@@ -52,7 +51,6 @@ class SoftwarePackage {
     required this.subtitle,
     required this.currentVersion,
     required this.latestVersion,
-    required this.iconAsset,
     this.iconUrl,
     required this.status,
     this.downloadProgress = 0.0,
@@ -106,7 +104,6 @@ class SoftwarePackage {
     String? subtitle,
     String? currentVersion,
     String? latestVersion,
-    String? iconAsset,
     String? iconUrl,
     PackageInstallationStatus? status,
     double? downloadProgress,
@@ -121,7 +118,6 @@ class SoftwarePackage {
       subtitle: subtitle ?? this.subtitle,
       currentVersion: currentVersion ?? this.currentVersion,
       latestVersion: latestVersion ?? this.latestVersion,
-      iconAsset: iconAsset ?? this.iconAsset,
       iconUrl: iconUrl ?? this.iconUrl,
       status: status ?? this.status,
       downloadProgress: downloadProgress ?? this.downloadProgress,

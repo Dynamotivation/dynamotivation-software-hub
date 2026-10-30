@@ -13,7 +13,6 @@ SoftwarePackage _pkg(
   subtitle: '',
   currentVersion: '',
   latestVersion: '',
-  iconAsset: '',
   iconUrl: icon,
   status: status,
   latestRelease: const ReleaseNote(version: '', date: '', highlights: []),

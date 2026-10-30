@@ -16,6 +16,7 @@ dependencies:
   hub_l10n: any
   hub_keys: any
   hub_scroll: any
+  hub_images: any
 
   yaru: ^11.0.0
   yaru_window_manager: ^0.1.0

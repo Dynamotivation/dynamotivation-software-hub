@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_core/hub_core.dart';
 
@@ -7,7 +9,6 @@ class HubController extends ChangeNotifier {
   HubController(
     this._useCases, {
     this.onCatalogSynced,
-    this.preloadIcon,
     this.departDuration = const Duration(milliseconds: 300),
   });
 
@@ -19,19 +20,15 @@ class HubController extends ChangeNotifier {
   /// visible on screen.
   final void Function()? onCatalogSynced;
 
-  /// Waits until an icon is ready (loaded or failed). Without it, packages
-  /// that arrive after startup are shown immediately.
-  final Future<void> Function(String url)? preloadIcon;
-
   /// How long a package that left the catalog stays listed, marked in
   /// [departingIds], so the list can fade it out before it is removed.
   final Duration departDuration;
 
-  /// The background refresh started by [load] when a cached catalog was shown.
-  /// Completes when it finished; never fails (errors are reported).
+  /// Completes when the catalog stream opened by [load] has ended, i.e. the
+  /// background refresh is done. Never fails (errors are reported).
   Future<void>? revalidation;
 
-  bool _disposed = false;
+  StreamSubscription<CatalogSnapshot>? _catalog;
   Set<String> _departing = const {};
 
   List<SoftwarePackage> _packages = const [];
@@ -57,124 +54,85 @@ class HubController extends ChangeNotifier {
     return null;
   }
 
+  /// Opens the catalog and returns once something can be shown: the cached
+  /// catalog straight away, else the first network load. The rest of the
+  /// refresh keeps updating the controller afterwards.
   Future<void> load({String? preferredId}) async {
     _settings = await _useCases.loadSettings();
-    final cached = await _useCases.cachedPackages();
-    if (cached != null && cached.isNotEmpty) {
-      // Show the last known catalog at once; the network catches up behind it.
-      _packages = cached;
-      _select(preferredId);
-      notifyListeners();
-      revalidation = _revalidate();
-      return;
+    final firstShown = Completer<void>();
+    final finished = Completer<void>();
+    revalidation = finished.future;
+    var shownAny = false;
+    _catalog = _useCases
+        .openCatalog(departGrace: departDuration)
+        .listen(
+          (snapshot) {
+            _show(snapshot, preferredId, first: !shownAny);
+            shownAny = true;
+            if (!firstShown.isCompleted) firstShown.complete();
+            if (snapshot.isFinal) onCatalogSynced?.call();
+          },
+          onError: (Object error, StackTrace stack) {
+            if (!shownAny && error is CatalogUnavailable) {
+              _loadError = error;
+              notifyListeners();
+            } else if (!shownAny) {
+              if (!firstShown.isCompleted) {
+                firstShown.completeError(error, stack);
+              }
+              return;
+            } else {
+              FlutterError.reportError(
+                FlutterErrorDetails(
+                  exception: error,
+                  stack: stack,
+                  library: 'hub catalog refresh',
+                ),
+              );
+            }
+            if (!firstShown.isCompleted) firstShown.complete();
+          },
+          onDone: () {
+            if (!firstShown.isCompleted) firstShown.complete();
+            finished.complete();
+          },
+        );
+    await firstShown.future;
+  }
+
+  /// Takes over what the use case says to list. A selection that left the
+  /// catalog moves to its neighbour in the old list, not back to the top.
+  void _show(
+    CatalogSnapshot snapshot,
+    String? preferredId, {
+    required bool first,
+  }) {
+    final old = _packages;
+    _packages = snapshot.packages;
+    _departing = snapshot.departing;
+    if (first) {
+      _selectedId = _packages.any((p) => p.id == preferredId)
+          ? preferredId
+          : _packages.firstOrNull?.id;
+    } else if (!_packages.any((p) => p.id == _selectedId)) {
+      final at = old.indexWhere((p) => p.id == _selectedId);
+      bool kept(SoftwarePackage p) => _packages.any((n) => n.id == p.id);
+      final after = at < 0 ? const <SoftwarePackage>[] : old.skip(at + 1);
+      final before = at < 0
+          ? const <SoftwarePackage>[]
+          : old.take(at).toList().reversed;
+      _selectedId =
+          (after.where(kept).firstOrNull ??
+                  before.where(kept).firstOrNull ??
+                  _packages.firstOrNull)
+              ?.id;
     }
-    try {
-      _packages = await _useCases.listPackages();
-      onCatalogSynced?.call();
-    } on CatalogUnavailable catch (e) {
-      _loadError = e;
-      _packages = const [];
-    }
-    _select(preferredId);
-    notifyListeners();
-  }
-
-  void _select(String? preferredId) {
-    _selectedId = _packages.any((p) => p.id == preferredId)
-        ? preferredId
-        : _packages.firstOrNull?.id;
-  }
-
-  /// Brings the shown catalog up to date in three visible steps: text first,
-  /// then new packages (each once its icon is ready), then changed icons.
-  Future<void> _revalidate() async {
-    try {
-      await _useCases.refreshCatalog();
-      final plan = reconcileCatalog(_packages, await _useCases.listPackages());
-      if (_disposed) return;
-
-      await _applyText(plan);
-      if (_disposed) return;
-
-      await Future.wait([
-        for (final p in plan.added) _arrive(p, plan.order),
-        for (final p in plan.iconChanged) _swapIcon(p),
-      ]);
-      if (!_disposed) onCatalogSynced?.call();
-    } catch (error, stack) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stack,
-          library: 'hub catalog refresh',
-        ),
-      );
-    }
-  }
-
-  /// Swaps the text in place. Packages that left the catalog stay for
-  /// [departDuration], marked as departing, then go; if the selected one is
-  /// among them the selection moves to its neighbour, not back to the top.
-  Future<void> _applyText(CatalogReconciliation plan) async {
-    final updated = {for (final p in plan.textUpdated) p.id: p};
-    final leaving = {
-      for (final p in _packages)
-        if (!updated.containsKey(p.id)) p.id,
-    };
-    _packages = [for (final p in _packages) updated[p.id] ?? p];
-    _departing = leaving;
-    notifyListeners();
-    if (leaving.isEmpty) return;
-
-    await Future<void>.delayed(departDuration);
-    if (_disposed) return;
-    final oldIndex = _packages.indexWhere((p) => p.id == _selectedId);
-    final remaining = [
-      for (final p in _packages)
-        if (!leaving.contains(p.id)) p,
-    ];
-    if (leaving.contains(_selectedId)) {
-      final after = _packages
-          .skip(oldIndex + 1)
-          .where((p) => !leaving.contains(p.id));
-      final before = _packages
-          .take(oldIndex)
-          .toList()
-          .reversed
-          .where((p) => !leaving.contains(p.id));
-      _selectedId = (after.firstOrNull ?? before.firstOrNull)?.id;
-    }
-    _packages = remaining;
-    _departing = const {};
-    notifyListeners();
-  }
-
-  Future<void> _ready(String? url) async {
-    if (url != null) await preloadIcon?.call(url);
-  }
-
-  Future<void> _arrive(SoftwarePackage package, List<String> order) async {
-    await _ready(package.iconUrl);
-    if (_disposed) return;
-    _packages = [..._packages, package]
-      ..sort((a, b) => order.indexOf(a.id).compareTo(order.indexOf(b.id)));
-    _selectedId ??= package.id;
-    notifyListeners();
-  }
-
-  Future<void> _swapIcon(SoftwarePackage fresh) async {
-    await _ready(fresh.iconUrl);
-    if (_disposed) return;
-    _packages = [
-      for (final p in _packages)
-        p.id == fresh.id ? p.copyWith(iconUrl: fresh.iconUrl) : p,
-    ];
     notifyListeners();
   }
 
   @override
   void dispose() {
-    _disposed = true;
+    _catalog?.cancel();
     super.dispose();
   }
 

@@ -4,6 +4,7 @@ import 'package:dynamotivation_software_hub_macos/app.dart';
 import 'package:dynamotivation_software_hub_macos/presentation/controllers/hub_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_core/testing.dart';
 
 void main() {
   testWidgets('shows the selected package', (tester) async {
@@ -13,7 +14,7 @@ void main() {
 
     final controller = HubController(
       HubUseCases(
-        InMemoryPackageRepository(refreshDelay: Duration.zero),
+        InMemoryPackageRepository(testCatalog(), refreshDelay: Duration.zero),
         InMemorySettingsRepository(),
       ),
     );

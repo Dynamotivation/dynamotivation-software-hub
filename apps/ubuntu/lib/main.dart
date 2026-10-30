@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_images/hub_images.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:yaru/yaru.dart';
 import 'package:yaru_window_manager/yaru_window_manager.dart';
@@ -37,10 +38,9 @@ Future<void> main(List<String> args) async {
   );
 
   // Construct repository adapters and use cases
-  final controller = HubController(
-    HubUseCases(InMemoryPackageRepository(), InMemorySettingsRepository()),
-  );
-  await controller.load(preferredId: 'geo-background-generator');
+  final services = HubServices.production(args);
+  final controller = HubController(services.useCases);
+  await controller.load(preferredId: null);
 
   if (startDark) {
     await controller.updateSettings(
@@ -58,9 +58,12 @@ Future<void> main(List<String> args) async {
   });
 
   runApp(
-    DynamotivationUbuntuApp(
-      controller: controller,
-      initialSettingsOpen: openSettings,
+    HubImageScope(
+      icons: services.icons,
+      child: DynamotivationUbuntuApp(
+        controller: controller,
+        initialSettingsOpen: openSettings,
+      ),
     ),
   );
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_core/testing.dart';
 
 Future<HubController> _pump(
   WidgetTester tester, {
@@ -21,7 +22,7 @@ Future<HubController> _pump(
   });
   final controller = HubController(
     HubUseCases(
-      InMemoryPackageRepository(refreshDelay: Duration.zero),
+      InMemoryPackageRepository(testCatalog(), refreshDelay: Duration.zero),
       InMemorySettingsRepository(),
     ),
   );
