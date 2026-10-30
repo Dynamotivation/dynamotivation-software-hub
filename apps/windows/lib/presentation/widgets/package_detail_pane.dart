@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:hub_l10n/hub_l10n.dart';
 import 'package:hub_core/hub_core.dart';
@@ -106,15 +105,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                           ],
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: pkg.isSvgIcon
-                            ? Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: SvgPicture.asset(
-                                  pkg.iconAsset,
-                                  fit: BoxFit.contain,
-                                ),
-                              )
-                            : packageImage(pkg, BoxFit.cover),
+                        child: packageImage(pkg, BoxFit.cover),
                       ),
 
                       const SizedBox(width: 18),

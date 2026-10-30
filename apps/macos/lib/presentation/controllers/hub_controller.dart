@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:hub_core/hub_core.dart';
 
@@ -8,6 +10,7 @@ class HubController extends ChangeNotifier {
 
   HubController(this._useCases);
 
+  StreamSubscription<CatalogSnapshot>? _catalog;
   List<SoftwarePackage> _packages = const [];
   String? _selectedId;
   AppSettings _settings = const AppSettings();
@@ -24,13 +27,50 @@ class HubController extends ChangeNotifier {
     return null;
   }
 
+  /// Opens the catalog and returns once something can be shown: the cached
+  /// catalog straight away, else the first network load. The rest of the
+  /// refresh keeps updating the controller afterwards.
   Future<void> load({String? preferredId}) async {
     _settings = await _useCases.loadSettings();
-    _packages = await _useCases.listPackages();
-    _selectedId = _packages.any((p) => p.id == preferredId)
-        ? preferredId
-        : _packages.firstOrNull?.id;
-    notifyListeners();
+    final firstShown = Completer<void>();
+    var shownAny = false;
+    _catalog = _useCases
+        .openCatalog(departGrace: Duration.zero)
+        .listen(
+          (snapshot) {
+            final first = !shownAny;
+            shownAny = true;
+            _packages = snapshot.packages;
+            if (first) {
+              _selectedId = _packages.any((p) => p.id == preferredId)
+                  ? preferredId
+                  : _packages.firstOrNull?.id;
+            } else if (!_packages.any((p) => p.id == _selectedId)) {
+              _selectedId = _packages.firstOrNull?.id;
+            }
+            notifyListeners();
+            if (!firstShown.isCompleted) firstShown.complete();
+          },
+          onError: (Object error, StackTrace stack) {
+            if (shownAny) {
+              FlutterError.reportError(
+                FlutterErrorDetails(exception: error, stack: stack),
+              );
+            } else if (!firstShown.isCompleted) {
+              firstShown.completeError(error, stack);
+            }
+          },
+          onDone: () {
+            if (!firstShown.isCompleted) firstShown.complete();
+          },
+        );
+    await firstShown.future;
+  }
+
+  @override
+  void dispose() {
+    _catalog?.cancel();
+    super.dispose();
   }
 
   void select(SoftwarePackage package) {

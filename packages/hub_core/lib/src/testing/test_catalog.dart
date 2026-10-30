@@ -1,7 +1,7 @@
 import '../domain/software_package.dart';
 
-/// Sample data until a real package discovery adapter exists.
-List<SoftwarePackage> sampleCatalog() {
+/// Fixture catalog for tests. Production code reads the website catalog.
+List<SoftwarePackage> testCatalog() {
   return [
     SoftwarePackage(
       id: 'geo-background-generator',
@@ -11,7 +11,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'Generate crisp, procedural low-poly and geometric pattern wallpapers. Fine-tune color palettes, gradient angles, cell density, and lighting to export desktop and mobile backgrounds.',
       currentVersion: '1.8.2',
       latestVersion: '2.0.0',
-      iconAsset: 'assets/geo-background-generator.png',
       status: PackageInstallationStatus.updateAvailable,
       latestRelease: const ReleaseNote(
         version: '2.0.0',
@@ -54,7 +53,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'Create custom "Joins the Battle" splash screens, intro cards, and crossover reveals with authentic fonts, flares, and sound effect triggers.',
       currentVersion: '2.4.1',
       latestVersion: '2.4.1',
-      iconAsset: 'assets/joins-the-battle.png',
       status: PackageInstallationStatus.installed,
       latestRelease: const ReleaseNote(
         version: '2.4.1',
@@ -92,7 +90,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'Educational desktop place value visualizer supporting binary, decimal, octal, and hexadecimal number systems with live bundled tokens.',
       currentVersion: '1.3.0',
       latestVersion: '1.3.0',
-      iconAsset: 'assets/stellenwerttafel-plus.png',
       status: PackageInstallationStatus.installed,
       latestRelease: const ReleaseNote(
         version: '1.3.0',
@@ -122,7 +119,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'Curated collection of stream alerts, funny soundbites, and reaction noises from BenPlaysGames broadcasts.',
       currentVersion: '1.1.0',
       latestVersion: '1.1.0',
-      iconAsset: 'assets/benplaysgames-soundboard.png',
       status: PackageInstallationStatus.notInstalled,
       latestRelease: const ReleaseNote(
         version: '1.1.0',
@@ -152,7 +148,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'The definitive soundboard featuring legendary German television ads, viral video memes, and nostalgic voiceovers.',
       currentVersion: '1.0.3',
       latestVersion: '1.0.3',
-      iconAsset: 'assets/germemz.png',
       status: PackageInstallationStatus.notInstalled,
       latestRelease: const ReleaseNote(
         version: '1.0.3',
@@ -179,7 +174,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'High-intensity top-down 2D space shooter inspired by arcade classics, featuring procedural wave generation and weapon customization.',
       currentVersion: '1.2.4',
       latestVersion: '1.2.4',
-      iconAsset: 'assets/oss-space-adventure.png',
       status: PackageInstallationStatus.downloading,
       downloadProgress: 0.65,
       latestRelease: const ReleaseNote(
@@ -211,7 +205,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'High seas pirate themed custom zombies experience with unique atmosphere, custom scripting, and boss encounters.',
       currentVersion: '1.0.0',
       latestVersion: '1.0.0',
-      iconAsset: 'assets/project-tortuga.png',
       status: PackageInstallationStatus.notInstalled,
       latestRelease: const ReleaseNote(
         version: '1.0.0',
@@ -232,7 +225,6 @@ List<SoftwarePackage> sampleCatalog() {
       description: 'Technical demonstration showcasing high-speed platforming physics, loop mechanics, and responsive touch controls on mobile devices.',
       currentVersion: '0.4.2',
       latestVersion: '0.4.2',
-      iconAsset: 'assets/sonic-mania-mobile.png',
       status: PackageInstallationStatus.notInstalled,
       latestRelease: const ReleaseNote(
         version: '0.4.2',
@@ -254,37 +246,6 @@ List<SoftwarePackage> sampleCatalog() {
         ),
       ],
       availableVersions: const ['v0.4.2 (Latest)', 'v0.3.0'],
-    ),
-    SoftwarePackage(
-      id: 'unofficial-super-mario-bros-misfit-pack',
-      name: 'Unofficial Super Mario Bros. Misfit Pack',
-      subtitle: 'Classic platformer collection with visual enhancements and widescreen',
-      description: 'Preserved retro platformer engine enhanced for modern widescreen displays with optional orchestrations and quality-of-life adjustments.',
-      currentVersion: '0.9.0',
-      latestVersion: '0.9.0',
-      iconAsset: 'assets/misfit-pack.svg',
-      isSvgIcon: true,
-      status: PackageInstallationStatus.notInstalled,
-      latestRelease: const ReleaseNote(
-        version: '0.9.0',
-        date: '2026-09-02',
-        highlights: [
-          'Native 16:9 widescreen rendering with extended camera scroll',
-          'Remastered 8-bit sound effects and optional stereo music',
-          'Custom level selector and checkpoint system',
-        ],
-      ),
-      olderReleases: const [
-        ReleaseNote(
-          version: '0.8.2',
-          date: '2026-04-19',
-          highlights: [
-            'Fixed jump momentum collision glitch on moving platforms',
-            'Game controller rumble feedback support',
-          ],
-        ),
-      ],
-      availableVersions: const ['v0.9.0 (Latest)', 'v0.8.2'],
     ),
   ];
 }

@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import '../domain/app_settings.dart';
 import '../domain/software_package.dart';
+import 'catalog_reconciliation.dart';
+import 'catalog_snapshot.dart';
 import 'errors.dart';
+import 'icon_store.dart';
 import 'package_repository.dart';
 import 'settings_repository.dart';
 
@@ -9,10 +14,116 @@ import 'settings_repository.dart';
 class HubUseCases {
   final PackageRepository _packages;
   final SettingsRepository _settings;
+  final IconStore? _icons;
 
-  HubUseCases(this._packages, this._settings);
+  // ignore: prefer_initializing_formals
+  HubUseCases(this._packages, this._settings, {IconStore? icons})
+    // ignore: prefer_initializing_formals
+    : _icons = icons;
 
   Future<List<SoftwarePackage>> listPackages() => _packages.all();
+
+  /// The last known catalog without waiting for the network, or null if the
+  /// catalog source keeps none.
+  Future<List<SoftwarePackage>?> cachedPackages() async {
+    final source = _packages;
+    return source is CachedPackageSource
+        ? (source as CachedPackageSource).cachedPackages()
+        : null;
+  }
+
+  /// Opens the catalog the way a user should experience it: the last known
+  /// catalog at once, then the fresh one settling in behind it. Emits
+  /// [CatalogSnapshot]s; the last has [CatalogSnapshot.isFinal].
+  ///
+  /// With a cached catalog, the steps are:
+  ///  1. the cached catalog;
+  ///  2. text of known packages replaced, local state kept; packages that left
+  ///     the catalog stay, marked departing, for [departGrace];
+  ///  3. the departed removed;
+  ///  4. each new package once its icon is stored (or failed to be), and each
+  ///     changed icon once the new one is stored.
+  /// Without a cache the sequence is the fresh catalog alone.
+  ///
+  /// Errors reach the stream. One before any snapshot means there is nothing
+  /// to show; one after means the refresh failed behind a catalog already on
+  /// screen.
+  Stream<CatalogSnapshot> openCatalog({
+    Duration departGrace = const Duration(milliseconds: 300),
+  }) {
+    final out = StreamController<CatalogSnapshot>();
+    var cancelled = false;
+    out.onCancel = () => cancelled = true;
+    void emit(CatalogSnapshot s) {
+      if (!cancelled) out.add(s);
+    }
+
+    Future<void> run() async {
+      var shown = await cachedPackages() ?? const <SoftwarePackage>[];
+      final hadCache = shown.isNotEmpty;
+      if (hadCache) emit(CatalogSnapshot(shown, fromCache: true));
+
+      // Without a cache the first read is the load; with one, refresh it.
+      if (hadCache) await _packages.refresh();
+      final fresh = await _packages.all();
+      if (!hadCache) {
+        emit(CatalogSnapshot(fresh, isFinal: true));
+        return;
+      }
+
+      final plan = reconcileCatalog(shown, fresh);
+      final updated = {for (final p in plan.textUpdated) p.id: p};
+      final leaving = {
+        for (final p in shown)
+          if (!updated.containsKey(p.id)) p.id,
+      };
+      shown = [for (final p in shown) updated[p.id] ?? p];
+      emit(CatalogSnapshot(shown, departing: leaving));
+      if (leaving.isNotEmpty) {
+        await Future<void>.delayed(departGrace);
+        shown = [
+          for (final p in shown)
+            if (!leaving.contains(p.id)) p,
+        ];
+        emit(CatalogSnapshot(shown));
+      }
+
+      Future<void> ready(String? url) async {
+        if (url != null) await _icons?.prefetch(url);
+      }
+
+      await Future.wait([
+        for (final p in plan.added)
+          () async {
+            await ready(p.iconUrl);
+            shown = [...shown, p]
+              ..sort(
+                (a, b) => plan.order
+                    .indexOf(a.id)
+                    .compareTo(plan.order.indexOf(b.id)),
+              );
+            emit(CatalogSnapshot(shown));
+          }(),
+        for (final p in plan.iconChanged)
+          () async {
+            await ready(p.iconUrl);
+            shown = [
+              for (final s in shown)
+                s.id == p.id ? s.copyWith(iconUrl: p.iconUrl) : s,
+            ];
+            emit(CatalogSnapshot(shown));
+          }(),
+      ]);
+      emit(CatalogSnapshot(shown, isFinal: true));
+    }
+
+    run()
+        .catchError((Object error, StackTrace stack) {
+          if (!cancelled) out.addError(error, stack);
+        })
+        .whenComplete(out.close);
+    return out.stream;
+  }
 
   Future<void> refreshCatalog() => _packages.refresh();
 

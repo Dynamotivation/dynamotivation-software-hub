@@ -176,7 +176,6 @@ SoftwarePackage _named(String name, String version) {
     subtitle: '',
     currentVersion: '',
     latestVersion: version,
-    iconAsset: '',
     status: PackageInstallationStatus.notInstalled,
     latestRelease: ReleaseNote(version: version, date: '', highlights: []),
     olderReleases: const [],

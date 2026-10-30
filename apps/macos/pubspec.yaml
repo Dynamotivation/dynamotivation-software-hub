@@ -16,6 +16,7 @@ dependencies:
   hub_l10n: any
   hub_keys: any
   hub_scroll: any
+  hub_images: any
 
   cupertino_icons: ^2.0.0
   macos_ui: ^2.2.2

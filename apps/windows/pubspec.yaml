@@ -16,6 +16,7 @@ dependencies:
   hub_l10n: any
   hub_keys: any
   hub_scroll: any
+  hub_images: any
 
   fluent_ui: ^4.17.0
   window_manager: ^0.5.2

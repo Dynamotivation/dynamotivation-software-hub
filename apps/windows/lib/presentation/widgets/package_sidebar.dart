@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:hub_l10n/hub_l10n.dart';
 import 'package:hub_core/hub_core.dart';
@@ -15,6 +14,7 @@ import '../theme/dynamotivation_theme.dart';
 
 class PackageSidebar extends StatefulWidget {
   final List<SoftwarePackage> packages;
+  final Set<String> departingIds;
   final SoftwarePackage? selectedPackage;
   final ValueChanged<SoftwarePackage> onSelectPackage;
   final String searchQuery;
@@ -26,6 +26,7 @@ class PackageSidebar extends StatefulWidget {
   const PackageSidebar({
     super.key,
     required this.packages,
+    this.departingIds = const {},
     required this.selectedPackage,
     required this.onSelectPackage,
     required this.searchQuery,
@@ -86,6 +87,27 @@ class _PackageSidebarState extends State<PackageSidebar>
     _spinController.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// A tile that fades out and collapses while its package is departing.
+  Widget _tile(SoftwarePackage pkg) {
+    final departing = widget.departingIds.contains(pkg.id);
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 250);
+    return AnimatedSize(
+      key: ValueKey(pkg.id),
+      duration: duration,
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: departing
+          ? const SizedBox(width: double.infinity)
+          : _PackageTile(
+              package: pkg,
+              isSelected: widget.selectedPackage?.id == pkg.id,
+              onTap: () => widget.onSelectPackage(pkg),
+            ),
+    );
   }
 
   @override
@@ -288,13 +310,7 @@ class _PackageSidebarState extends State<PackageSidebar>
 
                   // Available list items
                   if (_availableExpanded)
-                    ...availableList.map(
-                      (pkg) => _PackageTile(
-                        package: pkg,
-                        isSelected: widget.selectedPackage?.id == pkg.id,
-                        onTap: () => widget.onSelectPackage(pkg),
-                      ),
-                    ),
+                    ...availableList.map((pkg) => _tile(pkg)),
                 ],
               ),
             ),
@@ -356,15 +372,7 @@ class _PackageTile extends StatelessWidget {
                   border: Border.all(color: tokens.cardBorder, width: 1),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: package.isSvgIcon
-                    ? Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: SvgPicture.asset(
-                          package.iconAsset,
-                          fit: BoxFit.contain,
-                        ),
-                      )
-                    : packageImage(package, BoxFit.cover),
+                child: packageImage(package, BoxFit.cover),
               ),
 
               const SizedBox(width: 10),

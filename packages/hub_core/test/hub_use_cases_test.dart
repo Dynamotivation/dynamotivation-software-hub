@@ -1,8 +1,9 @@
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_core/testing.dart';
 import 'package:test/test.dart';
 
 HubUseCases _hub() => HubUseCases(
-  InMemoryPackageRepository(refreshDelay: Duration.zero),
+  InMemoryPackageRepository(testCatalog(), refreshDelay: Duration.zero),
   InMemorySettingsRepository(),
 );
 

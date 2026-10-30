@@ -1,16 +1,15 @@
 import '../application/package_repository.dart';
 import '../domain/software_package.dart';
-import 'sample_catalog.dart';
 
 class InMemoryPackageRepository implements PackageRepository {
   final Map<String, SoftwarePackage> _byId;
   final Duration refreshDelay;
 
-  /// Seeds the repository with [sampleCatalog] unless [initial] is given.
-  InMemoryPackageRepository({
-    Iterable<SoftwarePackage>? initial,
+  /// Test double: holds [initial] in memory. See `testCatalog()`.
+  InMemoryPackageRepository(
+    Iterable<SoftwarePackage> initial, {
     this.refreshDelay = const Duration(milliseconds: 1200),
-  }) : _byId = {for (final p in initial ?? sampleCatalog()) p.id: p};
+  }) : _byId = {for (final p in initial) p.id: p};
 
   @override
   Future<List<SoftwarePackage>> all() async => _byId.values.toList();

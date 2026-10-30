@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_core/testing.dart';
 
 import 'window_manager_mock.dart';
 
@@ -17,6 +18,7 @@ void main() {
     final c = HubController(
       HubUseCases(
         InMemoryPackageRepository(
+          testCatalog(),
           refreshDelay: const Duration(milliseconds: 600),
         ),
         InMemorySettingsRepository(),

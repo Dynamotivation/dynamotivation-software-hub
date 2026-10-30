@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/widgets.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_images/hub_images.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
@@ -38,10 +39,9 @@ Future<void> main(List<String> args) async {
     );
   }
 
-  final controller = HubController(
-    HubUseCases(InMemoryPackageRepository(), InMemorySettingsRepository()),
-  );
-  await controller.load(preferredId: 'geo-background-generator');
+  final services = HubServices.production(args);
+  final controller = HubController(services.useCases);
+  await controller.load(preferredId: null);
   final forced = args.contains('--dark')
       ? AppThemeMode.dark
       : args.contains('--light')
@@ -54,6 +54,12 @@ Future<void> main(List<String> args) async {
   }
 
   runApp(
-    DynamotivationMacosApp(controller: controller, macChromePreview: preview),
+    HubImageScope(
+      icons: services.icons,
+      child: DynamotivationMacosApp(
+        controller: controller,
+        macChromePreview: preview,
+      ),
+    ),
   );
 }

@@ -8,6 +8,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
+import 'package:hub_core/testing.dart';
 
 import 'yaru_window_mock.dart';
 
@@ -111,7 +112,7 @@ void main() {
 
     final controller = HubController(
       HubUseCases(
-        InMemoryPackageRepository(refreshDelay: Duration.zero),
+        InMemoryPackageRepository(testCatalog(), refreshDelay: Duration.zero),
         InMemorySettingsRepository(),
       ),
     );
@@ -149,7 +150,8 @@ void main() {
 
     await tester.runAsync(() async {
       final boundary =
-          repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+          repaintKey.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
       final image = await boundary.toImage(pixelRatio: 1.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final bytes = byteData!.buffer.asUint8List();
@@ -164,7 +166,9 @@ void main() {
     });
   }
 
-  testWidgets('Render Ubuntu Frontend Screenshots with Real Fonts and Icons', (tester) async {
+  testWidgets('Render Ubuntu Frontend Screenshots with Real Fonts and Icons', (
+    tester,
+  ) async {
     addTearDown(tester.view.resetPhysicalSize);
 
     await captureScreen(

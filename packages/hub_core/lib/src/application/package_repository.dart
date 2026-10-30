@@ -12,3 +12,12 @@ abstract interface class PackageRepository {
   /// Re-reads the catalog from its source.
   Future<void> refresh();
 }
+
+/// Optional capability of a [PackageRepository]: a catalog snapshot that is
+/// available without waiting for the network, so a frontend can show something
+/// at once and refresh afterwards.
+abstract interface class CachedPackageSource {
+  /// The last known catalog, or null if there is none. Loading it makes it the
+  /// repository's current catalog; [PackageRepository.refresh] replaces it.
+  Future<List<SoftwarePackage>?> cachedPackages();
+}

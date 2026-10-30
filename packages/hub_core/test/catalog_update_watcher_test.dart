@@ -39,7 +39,6 @@ SoftwarePackage _package(String id, {String? latestVersion, String name = ''}) {
     subtitle: '',
     currentVersion: '',
     latestVersion: version,
-    iconAsset: '',
     status: PackageInstallationStatus.notInstalled,
     latestRelease: ReleaseNote(version: version, date: '', highlights: []),
     olderReleases: const [],
