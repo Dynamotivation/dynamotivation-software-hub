@@ -109,8 +109,11 @@ jobs:
           if ('${{ steps.cert.outputs.enabled }}' -eq 'true') {
             $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
               Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+            # A small wrapper keeps the /S value free of embedded quotes, which pwsh mangles.
+            $signCmd = Join-Path $env:RUNNER_TEMP 'sign.cmd'
+            Set-Content $signCmd -Encoding ascii -Value "@`"$($signtool.FullName)`" sign /f `"%PFX_PATH%`" /p `"%PFX_PASSWORD%`" /fd sha256 /tr http://timestamp.digicert.com /td sha256 %1"
             $isccArgs += '/DSignEnabled'
-            $isccArgs += "/Sdyn=`"$($signtool.FullName)`" sign /f `"$env:PFX_PATH`" /p `"$env:PFX_PASSWORD`" /fd sha256 /tr http://timestamp.digicert.com /td sha256 `$f"
+            $isccArgs += "/Sdyn=$signCmd `$f"
           }
           & $iscc @isccArgs installer\software-hub.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
