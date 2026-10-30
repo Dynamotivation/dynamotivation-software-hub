@@ -95,8 +95,31 @@ jobs:
           }
           $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
           [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+          # A small wrapper keeps ISCC's /S value free of embedded quotes, which pwsh mangles.
+          $signCmd = Join-Path $env:RUNNER_TEMP 'sign.cmd'
+          Set-Content $signCmd -Encoding ascii -Value "@`"$($signtool.FullName)`" sign /f `"%PFX_PATH%`" /p `"%PFX_PASSWORD%`" /fd sha256 /tr http://timestamp.digicert.com /td sha256 %1"
           echo "path=$pfx" >> $env:GITHUB_OUTPUT
+          echo "signcmd=$signCmd" >> $env:GITHUB_OUTPUT
           echo 'enabled=true' >> $env:GITHUB_OUTPUT
+
+      # Sign every executable and DLL we ship (app, Flutter engine, plugins) before packaging.
+      - name: Sign application files
+        if: steps.cert.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          PFX_PATH: ${{ steps.cert.outputs.path }}
+          PFX_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          $files = Get-ChildItem apps\windows\build\windows\x64\runner\Release -Recurse -Include *.exe,*.dll
+          foreach ($f in $files) {
+            & '${{ steps.cert.outputs.signcmd }}' "`"$($f.FullName)`""
+            if ($LASTEXITCODE -ne 0) { throw "Signing failed for $($f.Name)" }
+          }
+          $unsigned = $files | Where-Object { (Get-AuthenticodeSignature $_.FullName).SignerCertificate -eq $null }
+          if ($unsigned) { throw "Unsigned files: $($unsigned.Name -join ', ')" }
+          "Signed $($files.Count) files"
 
       - name: Compile installer
         shell: pwsh
@@ -107,13 +130,8 @@ jobs:
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 5\ISCC.exe"
           $isccArgs = @("/DAppVersion=${{ steps.version.outputs.value }}")
           if ('${{ steps.cert.outputs.enabled }}' -eq 'true') {
-            $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
-              Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
-            # A small wrapper keeps the /S value free of embedded quotes, which pwsh mangles.
-            $signCmd = Join-Path $env:RUNNER_TEMP 'sign.cmd'
-            Set-Content $signCmd -Encoding ascii -Value "@`"$($signtool.FullName)`" sign /f `"%PFX_PATH%`" /p `"%PFX_PASSWORD%`" /fd sha256 /tr http://timestamp.digicert.com /td sha256 %1"
             $isccArgs += '/DSignEnabled'
-            $isccArgs += "/Sdyn=$signCmd `$f"
+            $isccArgs += "/Sdyn=${{ steps.cert.outputs.signcmd }} `$f"
           }
           & $iscc @isccArgs installer\software-hub.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
