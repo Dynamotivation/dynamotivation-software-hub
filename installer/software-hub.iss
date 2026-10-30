@@ -4,7 +4,7 @@
   #error Pass /DAppVersion=x.y.z
 #endif
 #define AppId "{{6F0B3E52-2C58-4C0B-9F5E-1D7A4B8E9C31}"
-#define AppName "Software Hub"
+#define AppName "Dynamotivation Software Hub"
 #define AppExeName "dynamotivation_software_hub.exe"
 #define OutputBase "Dynamotivation-Software-Hub-Setup"
 #define MinVersion "10.0.10240"
