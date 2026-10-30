@@ -108,7 +108,7 @@ jobs:
           $isccArgs = @("/DAppVersion=${{ steps.version.outputs.value }}")
           if ('${{ steps.cert.outputs.enabled }}' -eq 'true') {
             $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
-              Where-Object { $_.FullName -match '\x64\' } | Sort-Object FullName -Descending | Select-Object -First 1
+              Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
             $isccArgs += '/DSignEnabled'
             $isccArgs += "/Sdyn=`"$($signtool.FullName)`" sign /f `"$env:PFX_PATH`" /p `"$env:PFX_PASSWORD`" /fd sha256 /tr http://timestamp.digicert.com /td sha256 `$f"
           }
