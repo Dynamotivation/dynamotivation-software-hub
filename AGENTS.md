@@ -52,6 +52,7 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 - The CI Windows job builds the app, installs Inno from the official URL (pinned SHA-256), compiles the installer and uploads it with a `.sha256` file as an artifact. Flutter cannot cross-compile, so this job needs a Windows runner; the Linux jobs only analyze and test.
 - Signing uses a self-signed `CN=Dynamotivation` certificate (valid to 2036-10-30) stored as the repo secrets `SIGNING_CERT_PFX_BASE64` and `SIGNING_CERT_PASSWORD`. When the secret is absent, the installer is built unsigned. It gives a consistent publisher name but no public trust or SmartScreen benefit. Replacing it with a real certificate only means replacing the two secrets.
 - The installer wizard languages mirror the app: `[Languages]` in `installer/common.iss` must list exactly the `app_*.arb` locales (enforced by `packages/hub_l10n/test/l10n_test.dart`). Add a locale to both together; use Inno's bundled `compiler:Languages\<Name>.isl`, and add German/other translations for any custom strings.
+- The wizard has no install-folder page and no language picker: the install path is fixed and the language follows the Windows UI language (`ShowLanguageDialog=no`). Branding images live in `installer/assets/` (`setup-logo.svg` is the source; `setup.ico`, `wizard-large.bmp` 164x314 and `wizard-small.bmp` 55x55 are rendered from it).
 - Known gaps: Inno 5.6.1 high-DPI rendering and XP execution are untested, and the installer scripts have not been compiled locally.
 
 ## Errors
