@@ -22,8 +22,10 @@ DisableProgramGroupPage=yes
 DisableDirPage=yes
 ShowLanguageDialog=no
 SetupIconFile=assets\setup.ico
-WizardImageFile=assets\wizard-large.bmp
-WizardSmallImageFile=assets\wizard-small.bmp
+; Per-DPI wizard artwork, rendered from setup-logo.svg by installer\tools\render_assets.py.
+; Inno picks the best match at runtime; sizes follow Inno's own recommended table.
+WizardImageFile=assets\wizard-large-100.bmp,assets\wizard-large-125.bmp,assets\wizard-large-150.bmp,assets\wizard-large-175.bmp,assets\wizard-large-200.bmp,assets\wizard-large-225.bmp,assets\wizard-large-250.bmp
+WizardSmallImageFile=assets\wizard-small-100.bmp,assets\wizard-small-125.bmp,assets\wizard-small-150.bmp,assets\wizard-small-175.bmp,assets\wizard-small-200.bmp,assets\wizard-small-225.bmp,assets\wizard-small-250.bmp
 PrivilegesRequired=lowest
 MinVersion={#MinVersion}
 ArchitecturesInstallIn64BitMode=x64
