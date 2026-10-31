@@ -26,4 +26,23 @@ void main() {
       }
     },
   );
+
+  test('the Windows installer offers exactly the app locales', () {
+    final appLocales = Directory('lib/l10n')
+        .listSync()
+        .map((e) => e.uri.pathSegments.last)
+        .where((n) => RegExp(r'^app_\w+\.arb$').hasMatch(n))
+        .map((n) => n.substring(4, n.length - 4))
+        .toSet();
+    final iss = File('../../installer/common.iss').readAsStringSync();
+    final installerLocales = RegExp(
+      r'^Name: "(\w+)"; MessagesFile:',
+      multiLine: true,
+    ).allMatches(iss).map((m) => m.group(1)!).toSet();
+    expect(
+      installerLocales,
+      appLocales,
+      reason: 'installer/common.iss [Languages] must match app_*.arb',
+    );
+  });
 }
