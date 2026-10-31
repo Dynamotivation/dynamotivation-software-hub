@@ -81,12 +81,18 @@ def installer_mark() -> str:
 
 
 def large_svg() -> str:
-    """164x314 side panel: software logo above installer logo, burgundy line, Rubik wordmark."""
+    """164x314 side panel: official full roundel above the installer mark, burgundy line, Rubik wordmark."""
+    full_logo = (ASSETS / "full-logo.svg").read_text(encoding="utf-8")
+    # strip the outer <svg> wrapper, keep the <defs> and drawing group, and
+    # rename the borrowed gradient id so it cannot collide with ours
+    inner = full_logo.split("<svg", 1)[1].split(">", 1)[1].rsplit("</svg>", 1)[0]
+    inner = inner.replace('id="a"', 'id="brandstem"').replace('url(#a)', 'url(#brandstem)')
+    mark = 78  # upper and lower marks render at the same size
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="164" height="314" viewBox="0 0 164 314">
   <defs>{GRADIENT_DEFS}</defs>
   <rect width="164" height="314" fill="#ffffff"/>
-  <g transform="translate(50,48) scale(0.667)">{product_mark()}</g>
-  <g transform="translate(50,108) scale(0.667)">{installer_mark()}</g>
+  <g transform="translate(43,32) scale({78 / 315.23:.6f})">{inner}</g>
+  <g transform="translate(43,116) scale({mark / 96:.6f})">{installer_mark()}</g>
   <rect x="47" y="226" width="70" height="5" rx="2.5" fill="url(#badge)"/>
   <text x="82" y="257" font-family="Rubik" font-weight="700" font-size="13.5" fill="#2c2c2c" text-anchor="middle">Dynamotivation</text>
   <text x="82" y="277" font-family="Rubik" font-weight="400" font-size="10" fill="#893750" text-anchor="middle">Software Hub</text>
@@ -108,7 +114,8 @@ def setup_icon_svg() -> str:
   <defs>{GRADIENT_DEFS}
     <mask id="bitethrough">
       <rect width="96" height="96" fill="#ffffff"/>
-      <circle cx="72" cy="72" r="24" fill="#000000"/>
+      <!-- flush with the badge circle (r 21 + 0.8 anti-aliasing headroom) -->
+      <circle cx="72" cy="72" r="21.8" fill="#000000"/>
     </mask>
   </defs>
   <g mask="url(#bitethrough)">
