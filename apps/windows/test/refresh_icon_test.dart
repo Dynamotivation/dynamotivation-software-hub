@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -67,19 +66,5 @@ void main() {
         expect(centre, const Offset(60, 60));
       });
     }
-    await tester.runAsync(() async {
-      final w = frames.first.width, h = frames.first.height;
-      final rec = ui.PictureRecorder();
-      final c = Canvas(rec);
-      for (var i = 0; i < frames.length; i++) {
-        c.drawImage(frames[i], Offset(i * w.toDouble(), 0), Paint());
-      }
-      final img = await rec.endRecording().toImage(w * frames.length, h);
-      File('D:/worktrees/DynamotivationSoftwareHub/spin_montage.png')
-          .writeAsBytesSync(
-            (await img.toByteData(format: ui.ImageByteFormat.png))!.buffer
-                .asUint8List(),
-          );
-    });
   });
 }

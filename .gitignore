@@ -40,3 +40,4 @@ Thumbs.db
 /dist/
 err.txt
 out.txt
+installer/assets/.render-tmp/

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.dynamotivation" "\0"
-            VALUE "FileDescription", "dynamotivation_software_hub" "\0"
+            VALUE "CompanyName", "Dynamotivation" "\0"
+            VALUE "FileDescription", "Dynamotivation Software Hub" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "dynamotivation_software_hub" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.dynamotivation. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Dynamotivation. All rights reserved." "\0"
             VALUE "OriginalFilename", "dynamotivation_software_hub.exe" "\0"
-            VALUE "ProductName", "dynamotivation_software_hub" "\0"
+            VALUE "ProductName", "Dynamotivation Software Hub" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,0 +1,153 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.8
+
+jobs:
+  # Analyze and test every workspace member on Linux (cheap, fast).
+  check:
+    name: Check ${{ matrix.member }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        member:
+          - packages/hub_core
+          - packages/hub_images
+          - packages/hub_keys
+          - packages/hub_l10n
+          - packages/hub_scroll
+          - apps/windows
+          - apps/macos
+          - apps/ubuntu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+        working-directory: ${{ matrix.member }}
+      - run: flutter test
+        working-directory: ${{ matrix.member }}
+
+  # Linux analyze/test runs on every push and PR (cheap). Flutter cannot cross-compile, so the
+  # Windows build + installer runs only on demand or for release tags to save free CI minutes.
+  windows-installer:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    name: Windows installer
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          version=$(grep -m1 '^version:' apps/windows/pubspec.yaml | sed -E 's/version:[[:space:]]*([0-9.]+).*/\1/')
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build Windows app
+        working-directory: apps/windows
+        run: flutter build windows --release
+
+      # Inno Setup 5.6.1 is the last release that produces installers for Windows XP and newer.
+      - name: Install Inno Setup 5.6.1
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+          Invoke-WebRequest 'https://files.jrsoftware.org/is/5/innosetup-5.6.1-unicode.exe' -OutFile $installer
+          $hash = (Get-FileHash $installer -Algorithm SHA256).Hash
+          if ($hash -ne '27D49E9BC769E9D1B214C153011978DB90DC01C2ACD1DDCD9ED7B3FE3B96B538') {
+            throw "Inno Setup download hash mismatch: $hash"
+          }
+          Start-Process $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-' -Wait
+
+      - name: Prepare signing certificate
+        id: cert
+        shell: pwsh
+        env:
+          PFX_BASE64: ${{ secrets.SIGNING_CERT_PFX_BASE64 }}
+        run: |
+          if ([string]::IsNullOrEmpty($env:PFX_BASE64)) {
+            echo 'enabled=false' >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+          # A small wrapper keeps ISCC's /S value free of embedded quotes, which pwsh mangles.
+          $signCmd = Join-Path $env:RUNNER_TEMP 'sign.cmd'
+          Set-Content $signCmd -Encoding ascii -Value "@`"$($signtool.FullName)`" sign /f `"%PFX_PATH%`" /p `"%PFX_PASSWORD%`" /fd sha256 /tr http://timestamp.digicert.com /td sha256 %1"
+          echo "path=$pfx" >> $env:GITHUB_OUTPUT
+          echo "signcmd=$signCmd" >> $env:GITHUB_OUTPUT
+          echo 'enabled=true' >> $env:GITHUB_OUTPUT
+
+      # Sign every executable and DLL we ship (app, Flutter engine, plugins) before packaging.
+      - name: Sign application files
+        if: steps.cert.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          PFX_PATH: ${{ steps.cert.outputs.path }}
+          PFX_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          $files = Get-ChildItem apps\windows\build\windows\x64\runner\Release -Recurse -Include *.exe,*.dll
+          foreach ($f in $files) {
+            & '${{ steps.cert.outputs.signcmd }}' "`"$($f.FullName)`""
+            if ($LASTEXITCODE -ne 0) { throw "Signing failed for $($f.Name)" }
+          }
+          $unsigned = $files | Where-Object { (Get-AuthenticodeSignature $_.FullName).SignerCertificate -eq $null }
+          if ($unsigned) { throw "Unsigned files: $($unsigned.Name -join ', ')" }
+          "Signed $($files.Count) files"
+
+      - name: Compile installer
+        shell: pwsh
+        env:
+          PFX_PATH: ${{ steps.cert.outputs.path }}
+          PFX_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 5\ISCC.exe"
+          $isccArgs = @("/DAppVersion=${{ steps.version.outputs.value }}")
+          if ('${{ steps.cert.outputs.enabled }}' -eq 'true') {
+            $isccArgs += '/DSignEnabled'
+            $isccArgs += "/Sdyn=${{ steps.cert.outputs.signcmd }} `$f"
+          }
+          & $iscc @isccArgs installer\software-hub.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+
+      - name: Hash installer
+        shell: pwsh
+        run: |
+          Get-ChildItem dist\*.exe | ForEach-Object {
+            "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" | Out-File "$($_.FullName).sha256" -Encoding ascii
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: software-hub-installer
+          path: dist/*
+          if-no-files-found: error
