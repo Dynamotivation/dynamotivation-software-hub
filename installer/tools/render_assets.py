@@ -72,12 +72,9 @@ def product_mark() -> str:
 
 # The installer mark: product D with the burgundy download badge (no white ring).
 def installer_mark() -> str:
-    return (
-        product_mark()
-        + '<circle cx="72" cy="72" r="21" fill="url(#badge)"/>'
-        + '<g fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">'
-          '<path d="M72 62v14"/><path d="M66 70.5 72 76.5 78 70.5"/><path d="M64.5 82h15"/></g>'
-    )
+    master = (ASSETS / "setup-icon.svg").read_text(encoding="utf-8")
+    return master.split(">", 1)[1].rsplit("</svg>", 1)[0]
+
 
 
 def large_svg() -> str:
@@ -106,30 +103,6 @@ def small_svg() -> str:
   <rect width="147" height="147" fill="#ffffff"/>
   <g transform="translate(11,11) scale(1.30)">{installer_mark()}</g>
 </svg>"""
-
-
-def setup_icon_svg() -> str:
-    """96x96 installer icon: product D with the badge cut out of it."""
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-  <defs>{GRADIENT_DEFS}
-    <mask id="bitethrough">
-      <rect width="96" height="96" fill="#ffffff"/>
-      <!-- flush with the badge circle (r 21 + 0.8 anti-aliasing headroom) -->
-      <circle cx="72" cy="72" r="21.8" fill="#000000"/>
-    </mask>
-  </defs>
-  <g mask="url(#bitethrough)">
-    <g transform="scale(.875)">
-      <path d="{D_BODY}" fill="#893750"/>
-      <path d="{D_OUTLINE}" fill="url(#stem)"/>
-    </g>
-  </g>
-  <circle cx="72" cy="72" r="21" fill="url(#badge)"/>
-  <g fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M72 62v14"/><path d="M66 70.5 72 76.5 78 70.5"/><path d="M64.5 82h15"/>
-  </g>
-</svg>"""
-
 
 
 def convert_fonts(temp: Path) -> str:
@@ -168,13 +141,15 @@ def main() -> None:
     font_dir = convert_fonts(tmp)
 
     # Installer icon (D with the badge cut out), as a multi-size .ico.
-    svg_file = tmp / "setup-icon.svg"
-    svg_file.write_text(setup_icon_svg(), encoding="utf-8")
+    # One human-editable master feeds the setup, app icon, and wizard marks.
+    master = ASSETS / "setup-icon.svg"
     icon_png = tmp / "setup-icon.png"
-    subprocess.run([resvg, "--width", "256", "--height", "256", "--use-fonts-dir", font_dir, str(svg_file), str(icon_png)], check=True)
+    subprocess.run([resvg, "--width", "256", "--height", "256", "--use-fonts-dir", font_dir, str(master), str(icon_png)], check=True)
     icon = Image.open(icon_png)
     icon.save(ASSETS / "setup.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    print("setup.ico")
+    app_icon = ASSETS.parents[1] / "apps/windows/windows/runner/resources/app_icon.ico"
+    app_icon.write_bytes((ASSETS / "setup.ico").read_bytes())
+    print("setup.ico + app_icon.ico")
 
     for name, svg_text, sizes in (("wizard-large", large_svg(), LARGE_SIZES), ("wizard-small", small_svg(), SMALL_SIZES)):
         svg_file = tmp / f"{name}.svg"

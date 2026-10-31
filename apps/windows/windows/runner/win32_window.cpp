@@ -144,6 +144,19 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
+  // Supply both window icon sizes explicitly for the title bar and taskbar.
+  const auto module = GetModuleHandle(nullptr);
+  SendMessage(window, WM_SETICON, ICON_BIG,
+              reinterpret_cast<LPARAM>(LoadImage(
+                  module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
+                  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
+                  LR_SHARED)));
+  SendMessage(window, WM_SETICON, ICON_SMALL,
+              reinterpret_cast<LPARAM>(LoadImage(
+                  module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
+                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                  LR_SHARED)));
+
   UpdateTheme(window);
 
   return OnCreate();
