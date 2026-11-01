@@ -140,6 +140,15 @@ class _SettingsViewState extends State<SettingsView>
                               focusNode: _appearanceFocus,
                               isExpanded: true,
                               value: settings.themeMode,
+                              // ComboBox already supplies the selected value as
+                              // its semantic label. Keep the painted copy from
+                              // repeating it in the merged row announcement.
+                              selectedItemBuilder: (context) => [
+                                for (final mode in AppThemeMode.values)
+                                  ExcludeSemantics(
+                                    child: Text(themeName(mode)),
+                                  ),
+                              ],
                               items: [
                                 for (final mode in AppThemeMode.values)
                                   ComboBoxItem(

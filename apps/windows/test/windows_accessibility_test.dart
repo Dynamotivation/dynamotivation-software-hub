@@ -386,8 +386,7 @@ void main() {
     final data = tester.getSemantics(combo).getSemanticsData();
     // Narrator previously announced only the value ("Light, button"); the
     // merged row adds the field name.
-    expect(data.label, contains('Appearance'));
-    expect(data.label, contains('System')); // current themeName(system)
+    expect(data.label, 'Appearance\nSystem');
     expect(data.flagsCollection.isButton, isTrue);
     for (var i = 0; i < 15 && !_focusWithin(combo); i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);

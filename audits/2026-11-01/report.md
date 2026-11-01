@@ -429,6 +429,46 @@ native focus-event/announcement issue and independent verification of toggle
 state therefore remain **open**. Narrator was stopped after the check. Do not
 infer that this role correction completes Windows reader acceptance.
 
+### Isolated Narrator follow-up
+
+On a fresh Debug session after `7397e22`, Windows 11 25H2 build 26200.9711,
+100% text and dark theme, Narrator and the helper reported keyboard focus on
+Appearance and all four switches in order. Narrator's speech recap recorded:
+
+> Appearance System System, button
+>
+> Autostart in background check box unchecked
+>
+> Keep running in background check box checked
+>
+> Automatically check for updates check box checked
+>
+> Show notifications check box checked
+
+This supersedes the earlier conclusion that these controls could not be
+announced in that session: the earlier checks did not consistently establish
+foreground focus and allowed the recap window to overlap the target. The
+controls' name, role and initial state are verified for this path. A later
+session still showed an intermittent mismatch (painted focus on Appearance,
+helper reporting the pane and Narrator cursor on Back), so a general focus
+event failure is not established or closed. No AXTree errors appeared in the
+sampled `flutter run` output during the successful traversal.
+
+Space visibly changed Autostart from off to on, but the recap recorded only
+`Space`, not the new checked state; the setting was restored. The selected
+package was announced as `All-Out Attack Generator, button`, with no selected
+state in that utterance. The enabled overflow item was announced as
+`Uninstall`, with no role in that utterance; the helper tree described it as
+text. State-change announcements, row selection announcement and menu-item
+role remain open native accessibility findings. Narrator was stopped.
+
+The duplicate Appearance value was subsequently removed from the selected
+visual copy; the widget semantics regression now asserts exactly
+`Appearance\nSystem`. A freshly rebuilt native helper tree reports `button
+Appearance System`; in that later session the focus mismatch described above
+prevented confirming a corresponding Narrator utterance. Reader verification
+of that final adjustment remains open.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
