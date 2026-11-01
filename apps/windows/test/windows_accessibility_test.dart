@@ -5,6 +5,7 @@ import 'package:dynamotivation_software_hub/platform/windows_accessibility.dart'
 import 'package:dynamotivation_software_hub/presentation/controllers/hub_controller.dart';
 import 'package:dynamotivation_software_hub/presentation/pages/software_hub_page.dart';
 import 'package:dynamotivation_software_hub/presentation/theme/dynamotivation_theme.dart';
+import 'package:dynamotivation_software_hub/presentation/widgets/accessible_switch.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -342,11 +343,10 @@ void main() {
   ) async {
     final handle = tester.ensureSemantics();
     final c = await _pump(tester, settings: true);
-    final toggle = find.byWidgetPredicate(
-      (w) =>
-          w is ToggleSwitch &&
-          w.semanticLabel == 'Automatically check for updates',
-    );
+    // The third of the four switches in the System Integration card.
+    final toggle = find.byType(AccessibleSwitch).at(2);
+    final rowTitle = find.text('Automatically check for updates');
+    expect(rowTitle, findsOneWidget);
     await tester.ensureVisible(toggle);
     await tester.pumpAndSettle();
     final before = c.settings.autoCheckUpdates;

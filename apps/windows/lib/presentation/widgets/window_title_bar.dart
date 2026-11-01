@@ -387,26 +387,23 @@ class _CaptionButton extends StatelessWidget {
       child: HoverButton(
         onPressed: onPressed,
         semanticLabel: label,
-        builder: (context, states) => Semantics(
-          button: true,
-          child: FocusBorder(
-            focused: states.isFocused,
-            child: Container(
-              width: 46,
-              height: 32,
-              decoration: BoxDecoration(
-                color: states.isHovered || states.isPressed
-                    ? (close && !contrast
-                          ? DynamotivationTheme.captionCloseHover
-                          : tokens.headerHover)
-                    : Colors.transparent,
-                border: contrast && states.isHovered
-                    ? Border.all(color: tokens.text)
-                    : null,
-              ),
-              child: Center(
-                child: Icon(icon, size: 12, color: tokens.headerForeground),
-              ),
+        builder: (context, states) => FocusBorder(
+          focused: states.isFocused,
+          child: Container(
+            width: 46,
+            height: 32,
+            decoration: BoxDecoration(
+              color: states.isHovered || states.isPressed
+                  ? (close && !contrast
+                        ? DynamotivationTheme.captionCloseHover
+                        : tokens.headerHover)
+                  : Colors.transparent,
+              border: contrast && states.isHovered
+                  ? Border.all(color: tokens.text)
+                  : null,
+            ),
+            child: Center(
+              child: Icon(icon, size: 12, color: tokens.headerForeground),
             ),
           ),
         ),

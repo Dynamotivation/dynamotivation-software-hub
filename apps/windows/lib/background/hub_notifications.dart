@@ -26,9 +26,7 @@ class HubNotifications {
   }
 
   Future<void> show({required String title, required String body}) async {
-    await localNotifier.notify(
-      LocalNotification(title: title, body: body),
-    );
+    await localNotifier.notify(LocalNotification(title: title, body: body));
   }
 }
 

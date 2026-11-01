@@ -4,10 +4,8 @@ import 'package:hub_core/hub_core.dart';
 
 /// Scripted watcher: poll results play back in order.
 class _ScriptedWatcher extends CatalogUpdateWatcher {
-  _ScriptedWatcher({
-    required this.results,
-    required this.errors,
-  }) : super(HubUseCases(_NullRepository(), InMemorySettingsRepository()));
+  _ScriptedWatcher({required this.results, required this.errors})
+    : super(HubUseCases(_NullRepository(), InMemorySettingsRepository()));
 
   final List<CatalogUpdates?> results;
   final List<Object?> errors;
@@ -49,44 +47,44 @@ class _FixedTexts implements WatchTexts {
       'update: $name $version';
 }
 
-AppSettings _settings(bool autoCheck, [bool show = true]) => AppSettings(
-  autoCheckUpdates: autoCheck,
-  showNotifications: show,
-);
+AppSettings _settings(bool autoCheck, [bool show = true]) =>
+    AppSettings(autoCheckUpdates: autoCheck, showNotifications: show);
 
 void main() {
-  test('a poll with changes notifies each new entry and each newer release',
-      () async {
-    final watcher = _ScriptedWatcher(
-      results: [
-        null, // First successful check only settles the baseline.
-        CatalogUpdates(
-          newPackages: [_named('New Tool', '1.0')],
-          versionUpdates: [_named('Installed Tool', '2.0')],
-        ),
-      ],
-      errors: [null, null],
-    );
-    final shown = <String>[];
-    final service = UpdateWatchService(
-      watcher: watcher,
-      settings: () => _settings(true),
-      notify: ({required title, required body}) async {
-        shown.add('$title | $body');
-      },
-      texts: _FixedTexts(),
-    );
+  test(
+    'a poll with changes notifies each new entry and each newer release',
+    () async {
+      final watcher = _ScriptedWatcher(
+        results: [
+          null, // First successful check only settles the baseline.
+          CatalogUpdates(
+            newPackages: [_named('New Tool', '1.0')],
+            versionUpdates: [_named('Installed Tool', '2.0')],
+          ),
+        ],
+        errors: [null, null],
+      );
+      final shown = <String>[];
+      final service = UpdateWatchService(
+        watcher: watcher,
+        settings: () => _settings(true),
+        notify: ({required title, required body}) async {
+          shown.add('$title | $body');
+        },
+        texts: _FixedTexts(),
+      );
 
-    await service.check();
-    expect(shown, isEmpty);
+      await service.check();
+      expect(shown, isEmpty);
 
-    await service.check();
+      await service.check();
 
-    expect(shown, [
-      'new-title | new: New Tool',
-      'update-title | update: Installed Tool 2.0',
-    ]);
-  });
+      expect(shown, [
+        'new-title | new: New Tool',
+        'update-title | update: Installed Tool 2.0',
+      ]);
+    },
+  );
 
   test('without automatic checks nothing is fetched', () async {
     final watcher = _ScriptedWatcher(results: [null], errors: [null]);
@@ -105,9 +103,7 @@ void main() {
   test('with notifications off the catalog is still fetched', () async {
     final watcher = _ScriptedWatcher(
       results: [
-        CatalogUpdates(
-          newPackages: [_named('New Tool', '1.0')],
-        ),
+        CatalogUpdates(newPackages: [_named('New Tool', '1.0')]),
       ],
       errors: [null],
     );

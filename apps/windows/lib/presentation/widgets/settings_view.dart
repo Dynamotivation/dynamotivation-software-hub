@@ -6,6 +6,7 @@ import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
 import 'accessible_icon_button.dart';
+import 'accessible_switch.dart';
 
 /// Settings in the style of the Windows 11 Settings app: a page title, then
 /// cards whose rows pair a title and description with a control on the right.
@@ -121,26 +122,23 @@ class _SettingsViewState extends State<SettingsView>
                       title: l10n.appearance,
                       control: SizedBox(
                         width: 180,
-                        child: Semantics(
-                          label: l10n.appearance,
-                          child: ComboBox<AppThemeMode>(
-                            isExpanded: true,
-                            value: settings.themeMode,
-                            items: [
-                              for (final mode in AppThemeMode.values)
-                                ComboBoxItem(
-                                  value: mode,
-                                  child: Text(themeName(mode)),
-                                ),
-                            ],
-                            onChanged: (mode) {
-                              if (mode != null) {
-                                onSettingsChanged(
-                                  settings.copyWith(themeMode: mode),
-                                );
-                              }
-                            },
-                          ),
+                        child: ComboBox<AppThemeMode>(
+                          isExpanded: true,
+                          value: settings.themeMode,
+                          items: [
+                            for (final mode in AppThemeMode.values)
+                              ComboBoxItem(
+                                value: mode,
+                                child: Text(themeName(mode)),
+                              ),
+                          ],
+                          onChanged: (mode) {
+                            if (mode != null) {
+                              onSettingsChanged(
+                                settings.copyWith(themeMode: mode),
+                              );
+                            }
+                          },
                         ),
                       ),
                     ),
@@ -342,7 +340,7 @@ class _SettingRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Semantics(hint: description, child: control),
+          control,
         ],
       ),
     );
@@ -367,20 +365,11 @@ class _ToggleRow extends StatelessWidget {
     return _SettingRow(
       title: title,
       description: description,
-      control: ToggleSwitch(
-        checked: value,
+      control: AccessibleSwitch(
+        value: value,
         onChanged: onChanged,
-        semanticLabel: title,
-        style: MediaQuery.highContrastOf(context)
-            ? null
-            : ToggleSwitchThemeData(
-                checkedDecoration: WidgetStateProperty.all(
-                  BoxDecoration(
-                    color: DynTokens.of(context).brandAccent,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                ),
-              ),
+        label: title,
+        description: description,
       ),
     );
   }
