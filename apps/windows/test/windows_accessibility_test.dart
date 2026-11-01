@@ -456,4 +456,110 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('startup focus and search traversal follow defined rules', (
+    tester,
+  ) async {
+    final c = await _pump(tester);
+    // Entry: the search field owns focus so typing can start immediately.
+    expect(_focusWithin(find.byType(EditableText)), isTrue);
+    // Ctrl+F re-enters search after any trip away from it.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    expect(_focusWithin(find.byType(EditableText)), isTrue);
+    // Forward Tab leaves the search field into the sidebar rows.
+    await tester.enterText(find.byType(EditableText), 'Geo');
+    await tester.pumpAndSettle();
+    final filtered = c.packages
+        .where((p) => p.name.toLowerCase().contains('geo'))
+        .first;
+    final tile = find.byKey(ValueKey('package-${filtered.id}'));
+    for (var i = 0; i < 20 && !_focusWithin(tile); i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+    }
+    expect(
+      _focusWithin(tile),
+      isTrue,
+      reason: 'forward traversal goes search -> package list',
+    );
+    // Enter selects the package.
+    _semanticTap(tester, tile);
+    await tester.pumpAndSettle();
+    expect(c.selected, isNotNull);
+    // Shift+Tab walks back into the header group (the settings button).
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    for (
+      var i = 0;
+      i < 10 &&
+          FocusManager.instance.primaryFocus?.debugLabel != 'Settings button';
+      i++
+    ) {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+    }
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings button');
+  });
+
+  testWidgets('Escape clears an active search but never the selection', (
+    tester,
+  ) async {
+    final c = await _pump(tester);
+    // The app starts with the first package selected; Escape must keep it.
+    final initial = c.selected;
+    expect(initial, isNotNull);
+    await tester.enterText(find.byType(EditableText), 'Geo');
+    await tester.pumpAndSettle();
+    // The auto-selected first package keeps its title in the detail pane;
+    // assert the sidebar filter instead: non-matching rows disappear.
+    expect(
+      find.byKey(const ValueKey('package-joins-the-battle-meme-generator')),
+      findsNothing,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).controller.text,
+      isEmpty,
+    );
+    expect(c.selected!.id, initial!.id);
+    // Switching selection, then searching, still survives Escape.
+    final target = c.packages.where((p) => p.isInstalled).first;
+    _semanticTap(tester, find.byKey(ValueKey('package-${target.id}')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), 'x');
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(c.selected!.id, target.id);
+  });
+
+  testWidgets('settings return focus goes to the entry point', (tester) async {
+    await _pump(tester);
+    // Reach the title-bar settings button via keyboard and open with it.
+    for (
+      var i = 0;
+      i < 30 &&
+          FocusManager.instance.primaryFocus?.debugLabel != 'Settings button';
+      i++
+    ) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+    }
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings button');
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings back');
+    // Escape returns focus to the button that opened the page.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings button');
+  });
 }
