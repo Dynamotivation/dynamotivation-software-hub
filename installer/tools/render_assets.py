@@ -89,7 +89,7 @@ def large_svg() -> str:
   <defs>{GRADIENT_DEFS}</defs>
   <rect width="164" height="314" fill="#ffffff"/>
   <g transform="translate(43,32) scale({78 / 315.23:.6f})">{inner}</g>
-  <g transform="translate(43,116) scale({mark / 96:.6f})">{installer_mark()}</g>
+  <g transform="translate(43,134) scale({mark / 96:.6f})">{installer_mark()}</g>
   <rect x="47" y="226" width="70" height="5" rx="2.5" fill="url(#badge)"/>
   <text x="82" y="257" font-family="Rubik" font-weight="700" font-size="13.5" fill="#2c2c2c" text-anchor="middle">Dynamotivation</text>
   <text x="82" y="277" font-family="Rubik" font-weight="400" font-size="10" fill="#893750" text-anchor="middle">Software Hub</text>

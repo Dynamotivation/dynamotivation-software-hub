@@ -38,8 +38,10 @@ UninstallDisplayIcon={app}\{#AppExeName}
 UninstallDisplayName={#AppName}
 OutputDir=..\dist
 OutputBaseFilename={#OutputBase}-{#AppVersion}
+#ifdef SignEnabled
 SignTool=dyn
 SignedUninstaller=yes
+#endif
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
