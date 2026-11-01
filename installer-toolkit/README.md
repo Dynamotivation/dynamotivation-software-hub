@@ -32,6 +32,14 @@ assets/…                  example generated output for the Software Hub
 ISCC /DAppVersion=x.y.z [/DSignEnabled] setup\<app>.iss
 ```
 
+Pass the built Release folder explicitly, because Inno resolves relative
+`Source:` paths against the shell's working directory, against which a
+double-up relative SourceDir is situational:
+
+```
+ISCC /DAppVersion=x.y.z /DSourceDir=C:\path\to\app\build\...\Release setup\<app>.iss
+```
+
 Local Inno lives at `D:\tools\InnoSetup5` (5.6.1). `common.iss` expects the app
 script to define `AppId` (GUID, doubled brace), `AppName`, `AppExeName`,
 `MinVersion` and `SourceDir` (the built Release folder) before including it.
