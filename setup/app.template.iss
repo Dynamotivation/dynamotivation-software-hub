@@ -12,7 +12,7 @@
 #define AppId "{{<GUID>, one per app, regenerates on merge}}"
 #define AppName "<Product name exactly as it should appear>"
 #define AppExeName "<exe file name inside the bundle>"
-#define OutputBase "<Product>-Setup"
+#define OutputBase "<product-slug>"
 ; Brand elements live one level above setup/ so the toolkit layout works as a subtree too.
 #define AssetDir "..\assets"
 ; Optional publisher override (default Dynamotivation).
