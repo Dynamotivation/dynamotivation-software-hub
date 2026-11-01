@@ -11,6 +11,8 @@
 #ifndef SourceDir
   #define SourceDir "..\apps\windows\build\windows\x64\runner\Release"
 #endif
+; Assets live one level above setup/ so the toolkit layout works as a subtree too.
+#define AssetDir "..\assets"
 
 #include "common.iss"
 

@@ -72,7 +72,7 @@ def main():
                        if line.startswith("version:"))
         source = subprocess.check_output(["winepath", "-w", str(bundle)], text=True).strip()
         iss = subprocess.check_output(
-            ["winepath", "-w", str(ROOT / "installer/software-hub.iss")],
+            ["winepath", "-w", str(ROOT / "installer-toolkit/setup/software-hub.iss")],
             text=True).strip()
         token = secrets.token_hex(32)
 

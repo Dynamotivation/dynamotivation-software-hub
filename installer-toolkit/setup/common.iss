@@ -2,7 +2,9 @@
 ; An app script defines AppId (as "{{GUID}", the doubled brace is Inno's escape), AppName, AppVersion, AppExeName, SourceDir, OutputBase
 ; and MinVersion before including this file. Compile with ISCC 5.6.1 (Unicode).
 
-#define Publisher "Dynamotivation"
+#ifndef Publisher
+  #define Publisher "Dynamotivation"
+#endif
 #define PublisherUrl "https://dynamotivation.com/"
 
 [Setup]
@@ -21,11 +23,14 @@ DefaultGroupName={#Publisher}
 DisableProgramGroupPage=yes
 DisableDirPage=yes
 ShowLanguageDialog=no
-SetupIconFile=assets\setup.ico
+#ifndef AssetDir
+  #define AssetDir "assets"
+#endif
+SetupIconFile={#AssetDir}\setup.ico
 ; Per-DPI wizard artwork, rendered from setup-icon.svg and full-logo.svg by installer\tools\render_assets.py.
 ; Inno picks the best match at runtime; sizes follow Inno's own recommended table.
-WizardImageFile=assets\wizard-large-100.bmp,assets\wizard-large-125.bmp,assets\wizard-large-150.bmp,assets\wizard-large-175.bmp,assets\wizard-large-200.bmp,assets\wizard-large-225.bmp,assets\wizard-large-250.bmp
-WizardSmallImageFile=assets\wizard-small-100.bmp,assets\wizard-small-125.bmp,assets\wizard-small-150.bmp,assets\wizard-small-175.bmp,assets\wizard-small-200.bmp,assets\wizard-small-225.bmp,assets\wizard-small-250.bmp
+WizardImageFile={#AssetDir}\wizard-large-100.bmp,{#AssetDir}\wizard-large-125.bmp,{#AssetDir}\wizard-large-150.bmp,{#AssetDir}\wizard-large-175.bmp,{#AssetDir}\wizard-large-200.bmp,{#AssetDir}\wizard-large-225.bmp,{#AssetDir}\wizard-large-250.bmp
+WizardSmallImageFile={#AssetDir}\wizard-small-100.bmp,{#AssetDir}\wizard-small-125.bmp,{#AssetDir}\wizard-small-150.bmp,{#AssetDir}\wizard-small-175.bmp,{#AssetDir}\wizard-small-200.bmp,{#AssetDir}\wizard-small-225.bmp,{#AssetDir}\wizard-small-250.bmp
 PrivilegesRequired=lowest
 MinVersion={#MinVersion}
 ArchitecturesInstallIn64BitMode=x64
@@ -38,8 +43,10 @@ UninstallDisplayIcon={app}\{#AppExeName}
 UninstallDisplayName={#AppName}
 OutputDir=..\dist
 OutputBaseFilename={#OutputBase}-{#AppVersion}
+#ifdef SignEnabled
 SignTool=dyn
 SignedUninstaller=yes
+#endif
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
