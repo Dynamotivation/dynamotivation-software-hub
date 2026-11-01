@@ -34,7 +34,7 @@ void main() {
         .where((n) => RegExp(r'^app_\w+\.arb$').hasMatch(n))
         .map((n) => n.substring(4, n.length - 4))
         .toSet();
-    final iss = File('../../installer/common.iss').readAsStringSync();
+    final iss = File('../../installer-toolkit/setup/common.iss').readAsStringSync();
     final installerLocales = RegExp(
       r'^Name: "(\w+)"; MessagesFile:',
       multiLine: true,
