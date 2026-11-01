@@ -86,7 +86,6 @@ class _AccessibleSwitchState extends State<AccessibleSwitch> {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      button: true,
       enabled: _enabled,
       focusable: _enabled,
       focused: _focus.hasFocus,

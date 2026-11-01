@@ -418,6 +418,8 @@ void main() {
       final data = tester.getSemantics(target).getSemanticsData();
       expect(data.flagsCollection.isFocused, Tristate.isTrue);
       expect(data.flagsCollection.isToggled, isNot(Tristate.none));
+      // Windows maps button before toggled; setting both loses the switch role.
+      expect(data.flagsCollection.isButton, isFalse);
       expect(data.label, tester.widget<AccessibleSwitch>(target).label);
       expect(data.hint, tester.widget<AccessibleSwitch>(target).description);
     }

@@ -410,6 +410,25 @@ that native build and is covered by analysis/tests, not a fresh native tree.
 Ubuntu apps. These results are regression evidence, not a native acceptance
 claim.
 
+### Windows switch role follow-up
+
+The pinned Flutter Windows bridge's `SetRoleFromFlutterUpdate` checks the
+button flag before the toggled flag, and only attaches checked state when the
+resulting role is a switch. `AccessibleSwitch` set both flags, so the bridge
+mapped it as a button instead of a stateful switch. The button flag has been
+removed; a regression asserts that each switch has toggled state without the
+button flag, in addition to name, hint and focused semantics.
+
+After rebuilding the Debug app, the native helper tree exposed all four as
+named `check box` controls rather than `button` controls. This is consistent
+with the Windows bridge's switch mapping; the helper's abbreviated tree does
+not show the toggle pattern or its value. In a subsequent Narrator run, visual
+Tab focus reached Appearance and Autostart, but the helper reported the pane
+as focused and speech recap did not show corresponding announcements. The
+native focus-event/announcement issue and independent verification of toggle
+state therefore remain **open**. Narrator was stopped after the check. Do not
+infer that this role correction completes Windows reader acceptance.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
