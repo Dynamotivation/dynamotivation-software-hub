@@ -264,6 +264,22 @@ install software on disk).
   were therefore not captured. Do not infer a product failure from that
   tooling limitation.
 
+### Retest attempt after overflow fix
+
+At commit `7bda82a`, `flutter build windows --debug` succeeded and the rebuilt
+Debug executable exposed a Software Hub window. The native keyboard retest
+could not be performed: the desktop helper reported “failed to activate
+captured window” both initially and after rediscovery. Inspect.exe remained
+running at higher integrity; an attempt to close its window did not stop it,
+and `Stop-Process` returned access denied, so it could not be restarted from
+this session. This is a tooling limitation, not evidence of app behavior.
+
+The prior menu finding remains **pending native re-verification**; the fix
+commit alone is not acceptance evidence. Repeat overflow → Uninstall → Cancel,
+verify focus returns to More options and the flyout is closed, and separately
+check arrow/Enter/Escape behavior. The UIA menu-item pattern and screen-reader
+announcement investigation also remains open.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
