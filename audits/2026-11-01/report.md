@@ -122,6 +122,48 @@ The macOS test named “Tab reaches toolbar buttons and Enter activates” sends
 
 **Required fix:** Replace name-only coverage with concrete focus-target, activation, state, label, geometry, motion and contrast assertions. Keep native assistive-technology testing as a separate acceptance gate.
 
+## Addendum — 2026-11-01 Windows remediation status
+
+Status after the accessibility remediation commits on this branch. The
+original findings text above is retained for context.
+
+Closed (Windows):
+
+- A02 (code): shared scrolling no longer strips accessibility actions —
+  standard physics are restored and wheel easing moved to the position level;
+  semantic scroll actions and touch drag are asserted in `hub_scroll` tests.
+  Touch/trackpad and physical device verification remain acceptance work.
+- A04 (Windows side): switches expose one named, described, stateful node
+  (`AccessibleSwitch`); the unnamed forked nodes are gone (probe reports zero
+  unnamed flagged nodes). Caption buttons no longer fork unnamed nodes.
+- A05 (Windows): no layout exceptions at 560×580 at 100% and 200% in the
+  probe; long-translation coverage is still outstanding.
+- A06: list rows paint a visible `FocusBorder` and expose selected semantics.
+- A08 (Windows side): toast switcher, spin decorations and wheel easing
+  honor reduced motion; probes confirm immediate wheel jumps and zero
+  transition durations.
+- A09 (Windows): the entry/return contract is pinned by tests — startup and
+  Ctrl+F own the search field, forward traversal goes search → rows, Escape
+  clears the query without dropping selection, settings return focus goes to
+  the control that opened it, and dialog dismissal restores the trigger.
+- A10: search clear and overflow controls are named `AccessibleIconButton`s.
+- A11 (Windows): toasts are live regions with a dismiss control; errors
+  persist until dismissed; repeated identical messages re-announce (keyed
+  sequence); covered by tests.
+- A12: contrast is now measured, not only spot-checked — composited pairs
+  (text/muted/subtle/status across surfaces, both header stops, button
+  hover/pressed states, row tints, badges, focus strokes, system palettes)
+  are asserted in `windows_contrast_matrix_test.dart` at AA minimums.
+- A14 (Windows tests): replaced name-only coverage with focus-target,
+  activation, semantics-state, live-region, motion and contrast assertions.
+
+Still open — not remediable by code alone, and the work above does not
+substitute for them: real Narrator/NVDA sessions on Windows (roles, states,
+utterance quality, no traps), native preference propagation while settings
+change mid-session, color-vision simulations, long-translation passes at
+minimum sizes, and the macOS/Ubuntu findings A01, A03, A04 (macOS/Ubuntu
+side), A07, A12 (macOS/Ubuntu side), and the remaining A13 matrix.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
