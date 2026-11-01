@@ -6,7 +6,7 @@ import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
 import 'package_image.dart';
-import 'accessible_icon_button.dart';
+import 'overflow_menu.dart';
 import 'version_label.dart';
 
 class PackageDetailPane extends StatefulWidget {
@@ -329,49 +329,13 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                           ),
                         ),
                         if (pkg.isInstalled)
-                          DropDownButton(
-                            placement: FlyoutPlacementMode.bottomRight,
-                            buttonBuilder: (context, onOpen) =>
-                                AccessibleIconButton(
-                                  label: context.l10n.moreOptions,
-                                  icon: const Icon(
-                                    FluentIcons.more_vertical,
-                                    size: 16,
-                                  ),
-                                  focusNode: widget.overflowFocus,
-                                  onPressed: onOpen,
-                                ),
-                            items: [
-                              MenuFlyoutItem(
-                                leading: const Icon(
-                                  FluentIcons.open_folder_horizontal,
-                                  size: 14,
-                                ),
-                                text: Text(context.l10n.openInstallFolder),
-                                onPressed: () {},
-                              ),
-                              MenuFlyoutItem(
-                                leading: const Icon(
-                                  FluentIcons.verified_brand,
-                                  size: 14,
-                                ),
-                                text: Text(context.l10n.verifyFiles),
-                                onPressed: () {},
-                              ),
-                              const MenuFlyoutSeparator(),
-                              MenuFlyoutItem(
-                                leading: Icon(
-                                  FluentIcons.delete,
-                                  size: 14,
-                                  color: tokens.critical,
-                                ),
-                                text: Text(
-                                  context.l10n.uninstall,
-                                  style: TextStyle(color: tokens.critical),
-                                ),
-                                onPressed: widget.onUninstall,
-                              ),
-                            ],
+                          OverflowMenu(
+                            triggerLabel: context.l10n.moreOptions,
+                            openFolderLabel: context.l10n.openInstallFolder,
+                            verifyLabel: context.l10n.verifyFiles,
+                            uninstallLabel: context.l10n.uninstall,
+                            onUninstall: widget.onUninstall,
+                            triggerFocus: widget.overflowFocus,
                           ),
                       ],
                     ),

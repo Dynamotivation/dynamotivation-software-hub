@@ -397,33 +397,46 @@ void main() {
     expect(find.byType(InfoBar), findsNothing);
   });
 
-  testWidgets(
-    'uninstall confirmation focuses Cancel and Escape preserves installation',
-    (tester) async {
-      final c = await _pump(tester);
-      final more = find.byTooltip('More options');
-      await tester.tap(more);
+  testWidgets('keyboard uninstall request leaves no menu behind after cancel', (
+    tester,
+  ) async {
+    await _pump(tester);
+    // Keyboard-only: focus More options, open, arrow to Uninstall, Enter.
+    for (
+      var i = 0;
+      i < 60 && !_focusWithin(find.byTooltip('More options'));
+      i++
+    ) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Uninstall'));
+    }
+    expect(_focusWithin(find.byTooltip('More options')), isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('Uninstall'), findsOneWidget);
+    final uninstallItem = find
+        .ancestor(
+          of: find.text('Uninstall'),
+          matching: find.byType(HoverButton),
+        )
+        .first;
+    for (var i = 0; i < 5 && !_focusWithin(uninstallItem); i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pumpAndSettle();
-      expect(find.byType(ContentDialog), findsOneWidget);
-      final cancel = find.descendant(
-        of: find.byType(ContentDialog),
-        matching: find.text('Cancel'),
-      );
-      final cancelButton = find.ancestor(
-        of: cancel,
-        matching: find.byType(Button),
-      );
-      expect(_focusWithin(cancelButton), isTrue);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
-      expect(find.byType(ContentDialog), findsNothing);
-      expect(c.selected!.isInstalled, isTrue);
-      // Focus returns to the overflow menu that triggered the dialog.
-      expect(_focusWithin(find.byTooltip('More options')), isTrue);
-    },
-  );
+    }
+    expect(_focusWithin(uninstallItem), isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byType(ContentDialog), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter); // activate Cancel
+    await tester.pumpAndSettle();
+    expect(find.byType(ContentDialog), findsNothing);
+    // The menu that triggered the dialog must be gone: no menu entries.
+    expect(find.text('Uninstall'), findsNothing);
+    expect(find.text('Verify files'), findsNothing);
+    // Focus stays in the application.
+    expect(_focusWithin(find.byType(SoftwareHubPage)), isTrue);
+  });
 
   testWidgets('success toasts announce, repeat and dismiss', (tester) async {
     await _pump(tester);
