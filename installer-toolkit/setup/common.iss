@@ -45,7 +45,7 @@ UninstallDisplayName={#AppName}
   #define OutputDir "..\dist"
 #endif
 OutputDir={#OutputDir}
-OutputBaseFilename={#OutputBase}-{#AppVersion}
+OutputBaseFilename={#OutputBase}_Setup_{#AppVersion}
 #ifdef SignEnabled
 SignTool=dyn
 SignedUninstaller=yes
