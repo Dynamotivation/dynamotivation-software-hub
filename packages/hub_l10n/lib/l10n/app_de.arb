@@ -36,6 +36,8 @@
   "aboutThisSoftware": "Über diese Software",
   "whatsNew": "Neuigkeiten",
   "olderReleases": "Ältere Versionen ({count})",
+  "olderReleasesLoadFailed": "Ältere Versionen konnten nicht geladen werden. Prüfe deine Verbindung.",
+  "retry": "Erneut versuchen",
   "searchSoftware": "Software suchen...",
   "checkForUpdates": "Nach Updates suchen",
   "appearance": "Darstellung",

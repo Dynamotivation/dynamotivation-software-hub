@@ -127,6 +127,19 @@ class HubUseCases {
 
   Future<void> refreshCatalog() => _packages.refresh();
 
+  /// The package with its older releases fetched, for the details view. The
+  /// catalog carries only the latest release; this loads the rest. A source
+  /// that has no separate history returns the package as it is.
+  Future<SoftwarePackage> loadReleaseHistory(String id) async {
+    final source = _packages;
+    if (source is ReleaseHistorySource) {
+      return (source as ReleaseHistorySource).loadReleaseHistory(id);
+    }
+    final package = await _packages.find(id);
+    if (package == null) throw PackageNotFound(id);
+    return package;
+  }
+
   /// Applies the update command and returns the updated package.
   Future<SoftwarePackage> updatePackage(String id) =>
       _apply(id, (p) => p.update());

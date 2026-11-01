@@ -308,6 +308,18 @@ abstract class AppLocalizations {
   /// **'What\'s new'**
   String get whatsNew;
 
+  /// Shown in place of the older release notes when fetching them failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Older releases could not be loaded. Check your connection.'**
+  String get olderReleasesLoadFailed;
+
+  /// Button that repeats a failed action.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get retry;
+
   /// No description provided for @olderReleases.
   ///
   /// In en, this message translates to:

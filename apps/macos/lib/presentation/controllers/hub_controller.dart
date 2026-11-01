@@ -76,6 +76,27 @@ class HubController extends ChangeNotifier {
   void select(SoftwarePackage package) {
     _selectedId = package.id;
     notifyListeners();
+    unawaited(_loadHistory(package.id));
+  }
+
+  /// The catalog lists only the latest release; fetch the older ones when the
+  /// details view opens. A failure is reported, not shown (design preview).
+  Future<void> _loadHistory(String id) async {
+    try {
+      final loaded = await _useCases.loadReleaseHistory(id);
+      if (loaded.olderReleases.isNotEmpty) {
+        _packages = await _useCases.listPackages();
+        notifyListeners();
+      }
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'hub release history',
+        ),
+      );
+    }
   }
 
   Future<void> updateSettings(AppSettings settings) async {
