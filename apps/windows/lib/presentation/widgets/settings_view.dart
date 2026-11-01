@@ -5,6 +5,7 @@ import 'package:hub_core/hub_core.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'accessible_icon_button.dart';
 
 /// Settings in the style of the Windows 11 Settings app: a page title, then
 /// cards whose rows pair a title and description with a control on the right.
@@ -12,12 +13,14 @@ class SettingsView extends StatefulWidget {
   final AppSettings settings;
   final ValueChanged<AppSettings> onSettingsChanged;
   final VoidCallback onBack;
+  final FocusNode? backFocusNode;
 
   const SettingsView({
     super.key,
     required this.settings,
     required this.onSettingsChanged,
     required this.onBack,
+    this.backFocusNode,
   });
 
   @override
@@ -86,12 +89,11 @@ class _SettingsViewState extends State<SettingsView>
             padding: const EdgeInsets.fromLTRB(8, 4, 16, 12),
             child: Row(
               children: [
-                Tooltip(
-                  message: l10n.backToSoftware,
-                  child: IconButton(
-                    icon: const Icon(FluentIcons.chevron_left, size: 16),
-                    onPressed: widget.onBack,
-                  ),
+                AccessibleIconButton(
+                  label: l10n.backToSoftware,
+                  icon: const Icon(FluentIcons.chevron_left, size: 16),
+                  focusNode: widget.backFocusNode,
+                  onPressed: widget.onBack,
                 ),
                 const SizedBox(width: 8),
                 Semantics(
@@ -119,23 +121,26 @@ class _SettingsViewState extends State<SettingsView>
                       title: l10n.appearance,
                       control: SizedBox(
                         width: 180,
-                        child: ComboBox<AppThemeMode>(
-                          isExpanded: true,
-                          value: settings.themeMode,
-                          items: [
-                            for (final mode in AppThemeMode.values)
-                              ComboBoxItem(
-                                value: mode,
-                                child: Text(themeName(mode)),
-                              ),
-                          ],
-                          onChanged: (mode) {
-                            if (mode != null) {
-                              onSettingsChanged(
-                                settings.copyWith(themeMode: mode),
-                              );
-                            }
-                          },
+                        child: Semantics(
+                          label: l10n.appearance,
+                          child: ComboBox<AppThemeMode>(
+                            isExpanded: true,
+                            value: settings.themeMode,
+                            items: [
+                              for (final mode in AppThemeMode.values)
+                                ComboBoxItem(
+                                  value: mode,
+                                  child: Text(themeName(mode)),
+                                ),
+                            ],
+                            onChanged: (mode) {
+                              if (mode != null) {
+                                onSettingsChanged(
+                                  settings.copyWith(themeMode: mode),
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -219,7 +224,7 @@ class _SettingsViewState extends State<SettingsView>
                       control: Icon(
                         FluentIcons.verified_brand,
                         size: 18,
-                        color: DynamotivationTheme.coralPrimary,
+                        color: DynTokens.of(context).brandAccent,
                       ),
                     ),
                   ],
@@ -247,7 +252,7 @@ class _SmoothSettingsList extends StatefulWidget {
 }
 
 class _SmoothSettingsListState extends State<_SmoothSettingsList> {
-  final _scroll = ScrollController();
+  final _scroll = SmoothScrollController();
 
   @override
   void dispose() {
@@ -337,7 +342,7 @@ class _SettingRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          control,
+          Semantics(hint: description, child: control),
         ],
       ),
     );
@@ -366,14 +371,16 @@ class _ToggleRow extends StatelessWidget {
         checked: value,
         onChanged: onChanged,
         semanticLabel: title,
-        style: ToggleSwitchThemeData(
-          checkedDecoration: WidgetStateProperty.all(
-            BoxDecoration(
-              color: DynamotivationTheme.coralPrimary,
-              borderRadius: BorderRadius.circular(100),
-            ),
-          ),
-        ),
+        style: MediaQuery.highContrastOf(context)
+            ? null
+            : ToggleSwitchThemeData(
+                checkedDecoration: WidgetStateProperty.all(
+                  BoxDecoration(
+                    color: DynTokens.of(context).brandAccent,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
+              ),
       ),
     );
   }

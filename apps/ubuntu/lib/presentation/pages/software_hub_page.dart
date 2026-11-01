@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:hub_scroll/hub_scroll.dart';
 import 'package:yaru/yaru.dart';
 
 import '../controllers/hub_controller.dart';
@@ -29,7 +30,7 @@ class SoftwareHubPage extends StatefulWidget {
 
 class _SoftwareHubPageState extends State<SoftwareHubPage> {
   final _searchFocusNode = FocusNode();
-  final _detailScrollController = ScrollController();
+  final _detailScrollController = SmoothScrollController();
   late bool _isSettingsOpen;
   String _searchQuery = '';
   _ToastState? _toast;

@@ -631,6 +631,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This action is not available for the package right now.'**
   String get errorActionRejected;
+
+  /// Accessible label and tooltip for clearing the software search field
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
 }
 
 class _AppLocalizationsDelegate

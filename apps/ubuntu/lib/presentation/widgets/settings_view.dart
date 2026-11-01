@@ -24,7 +24,7 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  final _scroll = ScrollController();
+  final _scroll = SmoothScrollController();
 
   AppSettings get _s => widget.settings;
 

@@ -321,4 +321,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorActionRejected =>
       'This action is not available for the package right now.';
+
+  @override
+  String get clearSearch => 'Clear search';
 }

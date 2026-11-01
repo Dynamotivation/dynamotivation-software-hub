@@ -9,6 +9,7 @@ import 'package:hub_scroll/hub_scroll.dart';
 
 import '../shortcuts.dart';
 import 'package_image.dart';
+import 'accessible_icon_button.dart';
 import 'version_label.dart';
 import '../theme/dynamotivation_theme.dart';
 
@@ -45,7 +46,7 @@ class _PackageSidebarState extends State<PackageSidebar>
   bool _availableExpanded = true;
   late TextEditingController _searchController;
   late AnimationController _spinController;
-  final _scroll = ScrollController();
+  final _scroll = SmoothScrollController();
 
   @override
   void initState() {
@@ -63,7 +64,10 @@ class _PackageSidebarState extends State<PackageSidebar>
     if (widget.searchQuery != _searchController.text) {
       _searchController.text = widget.searchQuery;
     }
-    if (widget.isRefreshing && !oldWidget.isRefreshing) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _spinController.stop();
+      _spinController.reset();
+    } else if (widget.isRefreshing && !oldWidget.isRefreshing) {
       _spinController.repeat();
     } else if (!widget.isRefreshing && oldWidget.isRefreshing) {
       // Finish the turn in progress instead of snapping back, so even an
@@ -78,6 +82,17 @@ class _PackageSidebarState extends State<PackageSidebar>
           .whenComplete(() {
             if (mounted && !widget.isRefreshing) _spinController.reset();
           });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _spinController.stop();
+      _spinController.reset();
+    } else if (widget.isRefreshing && !_spinController.isAnimating) {
+      _spinController.repeat();
     }
   }
 
@@ -137,24 +152,31 @@ class _PackageSidebarState extends State<PackageSidebar>
           // Search box area
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-            child: TextBox(
-              controller: _searchController,
-              focusNode: widget.searchFocusNode,
-              placeholder: context.l10n.searchSoftware,
-              prefix: const Padding(
-                padding: EdgeInsets.only(left: 10, right: 6),
-                child: Icon(FluentIcons.search, size: 14),
-              ),
-              suffix: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(FluentIcons.clear, size: 12),
-                      onPressed: () {
-                        _searchController.clear();
-                        widget.onSearchChanged('');
-                      },
-                    )
-                  : null,
-              onChanged: widget.onSearchChanged,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextBox(
+                    controller: _searchController,
+                    focusNode: widget.searchFocusNode,
+                    placeholder: context.l10n.searchSoftware,
+                    prefix: const Padding(
+                      padding: EdgeInsets.only(left: 10, right: 6),
+                      child: Icon(FluentIcons.search, size: 14),
+                    ),
+                    onChanged: widget.onSearchChanged,
+                  ),
+                ),
+                if (_searchController.text.isNotEmpty)
+                  AccessibleIconButton(
+                    label: context.l10n.clearSearch,
+                    icon: const Icon(FluentIcons.clear, size: 12),
+                    onPressed: () {
+                      _searchController.clear();
+                      widget.onSearchChanged('');
+                      widget.searchFocusNode?.requestFocus();
+                    },
+                  ),
+              ],
             ),
           ),
 
@@ -217,9 +239,12 @@ class _PackageSidebarState extends State<PackageSidebar>
                             AppShortcuts.refresh,
                           ),
                           child: IconButton(
-                            icon: RotationTransition(
-                              turns: _spinController,
-                              child: const SpinnableRefreshIcon(size: 14),
+                            icon: Semantics(
+                              label: context.l10n.checkForUpdates,
+                              child: RotationTransition(
+                                turns: _spinController,
+                                child: const SpinnableRefreshIcon(size: 14),
+                              ),
                             ),
                             onPressed: widget.onRefresh,
                           ),
@@ -257,52 +282,59 @@ class _PackageSidebarState extends State<PackageSidebar>
                       });
                     },
                     builder: (context, states) {
-                      return Container(
-                        padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-                        decoration: BoxDecoration(
-                          color: states.isHovered
-                              ? (tokens.hover)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _availableExpanded
-                                  ? FluentIcons.chevron_down
-                                  : FluentIcons.chevron_right,
-                              size: 11,
-                              color: tokens.textMuted,
+                      return Semantics(
+                        button: true,
+                        expanded: _availableExpanded,
+                        child: FocusBorder(
+                          focused: states.isFocused,
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                            decoration: BoxDecoration(
+                              color: states.isHovered
+                                  ? (tokens.hover)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              context.l10n.available,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: tokens.textMuted,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: tokens.hover,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${availableList.length}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _availableExpanded
+                                      ? FluentIcons.chevron_down
+                                      : FluentIcons.chevron_right,
+                                  size: 11,
                                   color: tokens.textMuted,
                                 ),
-                              ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  context.l10n.available,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: tokens.textMuted,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: tokens.hover,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${availableList.length}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: tokens.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     },
@@ -339,103 +371,128 @@ class _PackageTile extends StatelessWidget {
     final tileBg = isSelected ? (tokens.selected) : Colors.transparent;
 
     final tileBorder = isSelected
-        ? (tokens.primary.withValues(alpha: 0.4))
+        ? (MediaQuery.highContrastOf(context)
+              ? tokens.text
+              : tokens.primary.withValues(alpha: 0.4))
         : Colors.transparent;
 
     return HoverButton(
+      key: ValueKey('package-${package.id}'),
       onPressed: onTap,
       builder: (context, states) {
         final isHover = states.isHovered;
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? tileBg
-                : (isHover ? (tokens.hover) : Colors.transparent),
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: isSelected
-                  ? tileBorder
-                  : (isHover ? (tokens.cardBorder) : Colors.transparent),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Package App Icon
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: tokens.cardBorder, width: 1),
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          child: FocusBorder(
+            focused: states.isFocused,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? tileBg
+                    : (isHover ? (tokens.hover) : Colors.transparent),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
+                  color: isSelected
+                      ? tileBorder
+                      : (isHover ? (tokens.cardBorder) : Colors.transparent),
+                  width: 1,
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: packageImage(package, BoxFit.cover),
               ),
-
-              const SizedBox(width: 10),
-
-              // Title and version
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      package.name,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        color: tokens.text,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    if (package.hasUpdate)
-                      Text.rich(
-                        TextSpan(
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: tokens.textMuted,
-                          ),
-                          children: [
-                            TextSpan(text: 'v${package.currentVersion} '),
-                            TextSpan(
-                              text: '→ v${package.latestVersion}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: DynTokens.of(context).brandRed,
-                              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    child: isSelected
+                        ? ExcludeSemantics(
+                            child: Icon(
+                              FluentIcons.check_mark,
+                              size: 12,
+                              color: tokens.text,
                             ),
-                          ],
-                        ),
-                      )
-                    else
-                      Text(
-                        versionLabel(package.currentVersion),
-                        style: TextStyle(fontSize: 11, color: tokens.textMuted),
-                      ),
-                  ],
-                ),
-              ),
-
-              // Downloading indicator or status pip
-              if (package.isDownloading)
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: ProgressRing(
-                    value: package.downloadProgress * 100,
-                    strokeWidth: 2.2,
-                    activeColor: DynamotivationTheme.coralPrimary,
+                          )
+                        : null,
                   ),
-                ),
-            ],
+                  // Package App Icon
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: tokens.cardBorder, width: 1),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: packageImage(package, BoxFit.cover),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  // Title and version
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          package.name,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: tokens.text,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        if (package.hasUpdate)
+                          Text.rich(
+                            TextSpan(
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: tokens.textMuted,
+                              ),
+                              children: [
+                                TextSpan(text: 'v${package.currentVersion} '),
+                                TextSpan(
+                                  text: '→ v${package.latestVersion}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: DynTokens.of(context).brandRed,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Text(
+                            versionLabel(package.currentVersion),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: tokens.textMuted,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Downloading indicator or status pip
+                  if (package.isDownloading)
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: ProgressRing(
+                        value: package.downloadProgress * 100,
+                        strokeWidth: 2.2,
+                        activeColor: DynamotivationTheme.coralPrimary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         );
       },

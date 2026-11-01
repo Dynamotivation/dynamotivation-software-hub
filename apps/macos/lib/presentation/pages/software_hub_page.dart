@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:hub_scroll/hub_scroll.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -43,8 +44,8 @@ class SoftwareHubPage extends StatefulWidget {
 class _SoftwareHubPageState extends State<SoftwareHubPage> with WindowListener {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
-  final _sidebarScroll = ScrollController();
-  final _contentScroll = ScrollController();
+  final _sidebarScroll = SmoothScrollController();
+  final _contentScroll = SmoothScrollController();
   String? _status;
   Timer? _statusTimer;
   bool _showSettings = false;

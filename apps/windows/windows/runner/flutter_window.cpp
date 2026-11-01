@@ -1,6 +1,7 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <flutter/standard_method_codec.h>
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -25,6 +26,40 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  contrast_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), "dynamotivation/windows_accessibility",
+      &flutter::StandardMethodCodec::GetInstance());
+  contrast_channel_->SetMethodCallHandler(
+      [](const auto& call, auto result) {
+        if (call.method_name() != "readContrast") {
+          result->NotImplemented();
+          return;
+        }
+        HIGHCONTRASTW contrast = {};
+        contrast.cbSize = sizeof(contrast);
+        if (!SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(contrast), &contrast, 0)) {
+          result->Error("windows_accessibility", "Could not read Windows high contrast",
+                        flutter::EncodableValue(static_cast<int64_t>(GetLastError())));
+          return;
+        }
+        auto color = [](int index) {
+          const COLORREF value = GetSysColor(index);
+          return flutter::EncodableValue(static_cast<int64_t>(
+              0xFF000000u | (GetRValue(value) << 16) |
+              (GetGValue(value) << 8) | GetBValue(value)));
+        };
+        result->Success(flutter::EncodableMap{
+            {flutter::EncodableValue("enabled"), flutter::EncodableValue(
+                (contrast.dwFlags & HCF_HIGHCONTRASTON) != 0)},
+            {flutter::EncodableValue("window"), color(COLOR_WINDOW)},
+            {flutter::EncodableValue("text"), color(COLOR_WINDOWTEXT)},
+            {flutter::EncodableValue("button"), color(COLOR_BTNFACE)},
+            {flutter::EncodableValue("buttonText"), color(COLOR_BTNTEXT)},
+            {flutter::EncodableValue("highlight"), color(COLOR_HIGHLIGHT)},
+            {flutter::EncodableValue("highlightText"), color(COLOR_HIGHLIGHTTEXT)},
+            {flutter::EncodableValue("disabled"), color(COLOR_GRAYTEXT)},
+        });
+      });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +75,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  contrast_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -51,6 +87,11 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Broadcast settings changes must reach Dart even if a plugin handles them.
+  if (contrast_channel_ && (message == WM_SETTINGCHANGE ||
+      message == WM_SYSCOLORCHANGE || message == WM_THEMECHANGED)) {
+    contrast_channel_->InvokeMethod("changed", nullptr);
+  }
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

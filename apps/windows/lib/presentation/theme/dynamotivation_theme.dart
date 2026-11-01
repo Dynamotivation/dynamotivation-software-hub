@@ -1,5 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../../platform/windows_accessibility.dart';
+
 /// Dynamotivation colour tokens.
 /// Keep names and values in sync with that file so both apps look the same.
 class DynTokens {
@@ -158,49 +160,56 @@ class DynTokens {
     textSubtle: Color(0x99FFFFFF),
   );
 
+  /// Use the chosen Windows contrast colors without brand substitutions.
+  static DynTokens fromSystem(WindowsContrastPalette palette) => DynTokens._(
+    isDark: palette.window.computeLuminance() < 0.5,
+    headerGradient: LinearGradient(colors: [palette.window, palette.window]),
+    headerForeground: palette.text,
+    headerMuted: palette.text,
+    headerHover: palette.window,
+    headerPill: palette.window,
+    brandAccent: palette.text,
+    brandRed: palette.text,
+    critical: palette.text,
+    success: palette.text,
+    primary: palette.highlight,
+    primaryHover: palette.highlight,
+    primaryPressed: palette.highlight,
+    secondary: palette.button,
+    secondaryHover: palette.button,
+    secondaryPressed: palette.button,
+    secondaryBorder: palette.text,
+    updateBadge: palette.window,
+    neutralBadge: palette.window,
+    window: palette.window,
+    card: palette.window,
+    cardBorder: palette.text,
+    popup: palette.window,
+    hover: palette.window,
+    selected: palette.window,
+    divider: palette.text,
+    scrollbarThumb: palette.text,
+    progressTrack: palette.window,
+    text: palette.text,
+    textMuted: palette.text,
+    textSubtle: palette.text,
+  );
+
   /// Tokens for users with high contrast enabled: translucent text and
   /// hairlines become fully opaque, overlays and borders grow stronger.
   /// Contrast requirements trump both brand and Fluent-light styling.
-  static DynTokens highContrast(DynTokens base) {
-    final isDark = base.isDark;
-    return DynTokens._(
-      isDark: base.isDark,
-      headerGradient: base.headerGradient,
-      headerForeground: base.headerForeground,
-      headerMuted: base.headerMuted,
-      headerHover: isDark ? const Color(0x33FFFFFF) : const Color(0x33000000),
-      headerPill: isDark ? const Color(0x40FFFFFF) : const Color(0x40000000),
-      brandAccent: base.brandAccent,
-      brandRed: base.brandRed,
-      critical: base.critical,
-      success: isDark ? const Color(0xFF8DFFC4) : const Color(0xFF006734),
-      primary: base.primary,
-      primaryHover: base.primaryHover,
-      primaryPressed: base.primaryPressed,
-      secondary: base.secondary,
-      secondaryHover: base.secondaryHover,
-      secondaryPressed: base.secondaryPressed,
-      secondaryBorder: isDark
-          ? const Color(0xFF6A6F7B)
-          : const Color(0xFF8A7D84),
-      updateBadge: base.updateBadge,
-      neutralBadge: base.neutralBadge,
-      window: base.window,
-      card: base.card,
-      cardBorder: isDark ? const Color(0xFF4A4E58) : const Color(0xFF8A7D84),
-      popup: base.popup,
-      hover: isDark ? const Color(0x1FFFFFFF) : const Color(0x1F000000),
-      selected: isDark ? const Color(0x33FFFFFF) : const Color(0x33000000),
-      divider: isDark ? const Color(0xFF4A4E58) : const Color(0xFF8A7D84),
-      scrollbarThumb: isDark
-          ? const Color(0xFFB8BEC8)
-          : const Color(0xFF5A5560),
-      progressTrack: isDark ? const Color(0x33FFFFFF) : const Color(0x33000000),
-      text: base.text,
-      textMuted: base.text,
-      textSubtle: base.text,
-    );
-  }
+  static DynTokens highContrast(DynTokens base) => fromSystem(
+    WindowsContrastPalette(
+      enabled: true,
+      window: base.isDark ? Colors.black : Colors.white,
+      text: base.isDark ? Colors.white : Colors.black,
+      button: base.isDark ? Colors.black : Colors.white,
+      buttonText: base.isDark ? Colors.white : Colors.black,
+      highlight: base.isDark ? Colors.white : Colors.black,
+      highlightText: base.isDark ? Colors.black : Colors.white,
+      disabled: base.isDark ? Colors.white : Colors.black,
+    ),
+  );
 
   /// The tokens for the current brightness, with strengthened contrast when
   /// the user has high contrast enabled.
@@ -208,11 +217,14 @@ class DynTokens {
     final tokens = FluentTheme.of(context).brightness == Brightness.dark
         ? dark
         : light;
+    final palette = WindowsContrastScope.of(context);
+    if (palette != null) return palette.enabled ? fromSystem(palette) : tokens;
     return MediaQuery.highContrastOf(context) ? highContrast(tokens) : tokens;
   }
 }
 
 class DynamotivationTheme {
+  static const captionCloseHover = Color(0xFFE81123);
   // Signature Dynamotivation coral/crimson brand accent
   static const Color coralPrimary = Color(0xFFE22050);
   static const Color coralDark = Color(0xFFC91A45);
@@ -254,6 +266,149 @@ class DynamotivationTheme {
     'lighter': Color(0xFFFF6B6B),
     'lightest': Color(0xFFFF8B8B),
   });
+
+  static FluentThemeData systemContrastTheme(WindowsContrastPalette palette) {
+    final brightness = palette.window.computeLuminance() < 0.5
+        ? Brightness.dark
+        : Brightness.light;
+    final resources = ResourceDictionary.raw(
+      textFillColorPrimary: palette.text,
+      textFillColorSecondary: palette.text,
+      textFillColorTertiary: palette.text,
+      textFillColorDisabled: palette.disabled,
+      textFillColorInverse: palette.highlightText,
+      accentTextFillColorDisabled: palette.disabled,
+      textOnAccentFillColorSelectedText: palette.highlightText,
+      textOnAccentFillColorPrimary: palette.highlightText,
+      textOnAccentFillColorSecondary: palette.highlightText,
+      textOnAccentFillColorDisabled: palette.disabled,
+      controlFillColorDefault: palette.button,
+      controlFillColorSecondary: palette.button,
+      controlFillColorTertiary: palette.button,
+      controlFillColorQuarternary: palette.button,
+      controlFillColorDisabled: palette.button,
+      controlFillColorTransparent: palette.window,
+      controlFillColorInputActive: palette.button,
+      controlStrongFillColorDefault: palette.button,
+      controlStrongFillColorDisabled: palette.disabled,
+      controlSolidFillColorDefault: palette.button,
+      subtleFillColorTransparent: palette.window,
+      subtleFillColorSecondary: palette.window,
+      subtleFillColorTertiary: palette.window,
+      subtleFillColorDisabled: palette.window,
+      controlAltFillColorTransparent: palette.window,
+      controlAltFillColorSecondary: palette.button,
+      controlAltFillColorTertiary: palette.button,
+      controlAltFillColorQuarternary: palette.button,
+      controlAltFillColorDisabled: palette.button,
+      controlOnImageFillColorDefault: palette.button,
+      controlOnImageFillColorSecondary: palette.button,
+      controlOnImageFillColorTertiary: palette.button,
+      controlOnImageFillColorDisabled: palette.button,
+      accentFillColorDisabled: palette.highlight,
+      controlStrokeColorDefault: palette.text,
+      controlStrokeColorSecondary: palette.text,
+      controlStrokeColorOnAccentDefault: palette.text,
+      controlStrokeColorOnAccentSecondary: palette.text,
+      controlStrokeColorOnAccentTertiary: palette.text,
+      controlStrokeColorOnAccentDisabled: palette.disabled,
+      controlStrokeColorForStrongFillWhenOnImage: palette.text,
+      cardStrokeColorDefault: palette.text,
+      cardStrokeColorDefaultSolid: palette.text,
+      controlStrongStrokeColorDefault: palette.text,
+      controlStrongStrokeColorDisabled: palette.disabled,
+      surfaceStrokeColorDefault: palette.text,
+      surfaceStrokeColorFlyout: palette.text,
+      surfaceStrokeColorInverse: palette.text,
+      dividerStrokeColorDefault: palette.text,
+      focusStrokeColorOuter: palette.text,
+      focusStrokeColorInner: palette.text,
+      cardBackgroundFillColorDefault: palette.window,
+      cardBackgroundFillColorSecondary: palette.window,
+      cardBackgroundFillColorTertiary: palette.window,
+      smokeFillColorDefault: palette.window,
+      layerFillColorDefault: palette.window,
+      layerFillColorAlt: palette.window,
+      layerOnAcrylicFillColorDefault: palette.window,
+      layerOnAccentAcrylicFillColorDefault: palette.window,
+      layerOnMicaBaseAltFillColorDefault: palette.window,
+      layerOnMicaBaseAltFillColorSecondary: palette.window,
+      layerOnMicaBaseAltFillColorTertiary: palette.window,
+      layerOnMicaBaseAltFillColorTransparent: palette.window,
+      solidBackgroundFillColorBase: palette.window,
+      solidBackgroundFillColorSecondary: palette.window,
+      solidBackgroundFillColorTertiary: palette.window,
+      solidBackgroundFillColorQuarternary: palette.window,
+      solidBackgroundFillColorQuinary: palette.window,
+      solidBackgroundFillColorSenary: palette.window,
+      solidBackgroundFillColorTransparent: palette.window,
+      solidBackgroundFillColorBaseAlt: palette.window,
+      systemFillColorSuccess: palette.text,
+      systemFillColorCaution: palette.text,
+      systemFillColorCritical: palette.text,
+      systemFillColorNeutral: palette.text,
+      systemFillColorSolidNeutral: palette.text,
+      systemFillColorAttentionBackground: palette.window,
+      systemFillColorSuccessBackground: palette.window,
+      systemFillColorCautionBackground: palette.window,
+      systemFillColorCriticalBackground: palette.window,
+      systemFillColorNeutralBackground: palette.window,
+      systemFillColorSolidAttentionBackground: palette.window,
+      systemFillColorSolidNeutralBackground: palette.window,
+    );
+    return FluentThemeData(
+      brightness: brightness,
+      resources: resources,
+      typography: Typography.fromBrightness(color: palette.text),
+      accentColor: AccentColor.swatch({
+        for (final key in [
+          'darkest',
+          'darker',
+          'dark',
+          'normal',
+          'light',
+          'lighter',
+          'lightest',
+        ])
+          key: palette.highlight,
+      }),
+      activeColor: palette.highlightText,
+      inactiveColor: palette.text,
+      inactiveBackgroundColor: palette.button,
+      scaffoldBackgroundColor: palette.window,
+      cardColor: palette.window,
+      menuColor: palette.window,
+      micaBackgroundColor: palette.window,
+      acrylicBackgroundColor: palette.window,
+      acrylicFallbackColor: palette.window,
+      selectionColor: palette.highlight,
+      shadowColor: Colors.transparent,
+      iconTheme: IconThemeData(color: palette.text),
+      focusTheme: FocusThemeData(
+        primaryBorder: BorderSide(color: palette.text, width: 2),
+        secondaryBorder: BorderSide(color: palette.window),
+        glowFactor: 0,
+      ),
+      buttonTheme: ButtonThemeData(
+        defaultButtonStyle: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(palette.button),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.isDisabled ? palette.disabled : palette.buttonText,
+          ),
+        ),
+        filledButtonStyle: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.isDisabled ? palette.button : palette.highlight,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.isDisabled ? palette.disabled : palette.highlightText,
+          ),
+        ),
+      ),
+    );
+  }
 
   static FluentThemeData lightTheme() {
     return FluentThemeData(

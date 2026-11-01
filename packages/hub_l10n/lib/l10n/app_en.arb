@@ -301,5 +301,9 @@
   },
   "errorCatalogUnavailable": "The software catalog could not be loaded. Check your connection and try again.",
   "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
-  "errorActionRejected": "This action is not available for the package right now."
+  "errorActionRejected": "This action is not available for the package right now.",
+  "clearSearch": "Clear search",
+  "@clearSearch": {
+    "description": "Accessible label and tooltip for clearing the software search field"
+  }
 }

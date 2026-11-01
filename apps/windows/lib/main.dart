@@ -5,6 +5,7 @@ import 'package:hub_images/hub_images.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'platform/windows_accessibility.dart';
 import 'background/background_service.dart';
 import 'background/background_strings.dart';
 import 'background/hub_notifications.dart';
@@ -15,6 +16,9 @@ import 'presentation/controllers/hub_controller.dart';
 /// Composition root of the Windows frontend.
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final accessibility = WindowsAccessibility();
+  await accessibility.initialize();
 
   final startDark = args.contains('--dark');
   final startLight = args.contains('--light');
@@ -97,6 +101,7 @@ void main(List<String> args) async {
       icons: services.icons,
       child: DynamotivationApp(
         controller: controller,
+        accessibility: accessibility,
         initialSettingsOpen: openSettings,
       ),
     ),

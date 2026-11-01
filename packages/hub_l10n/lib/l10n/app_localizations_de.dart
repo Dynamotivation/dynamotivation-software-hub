@@ -323,4 +323,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get errorActionRejected =>
       'Diese Aktion ist für das Paket derzeit nicht verfügbar.';
+
+  @override
+  String get clearSearch => 'Suche löschen';
 }
