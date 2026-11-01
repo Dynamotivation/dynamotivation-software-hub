@@ -297,6 +297,47 @@ recorded above for this path; it is not a complete accessibility acceptance.
 The helper's tree still labels the flyout entry as text. UIA menu-item patterns
 and actual Narrator/NVDA announcements remain open for separate investigation.
 
+### Continued native acceptance — text size and Narrator
+
+On Windows 11 25H2 build 26200.9711, the rebuilt Debug app was resized by
+dragging its edges to its declared minimum (captured client image 546×573;
+the declared outer minimum is 560×580). The Windows Text size slider started
+at 100%; 150% and 200% were applied while the app ran and then 100% was
+restored. Display scaling was not independently measured.
+
+- At 150%, the minimum-width catalog used a single-pane layout. Opening the
+  installed package showed the detail view; scrolling upward exposed its
+  wrapped title, status, Launch and More options. Settings scrolled to the
+  lower switches and About section. At 200%, the detail header and actions
+  were visible, and Settings scrolled down to Show notifications and About.
+  These are sampled screenshots and wheel paths, not proof that every string,
+  dialog, control or focus target is usable at each scale. Long translations
+  and a complete 100/150/200% keyboard matrix remain open.
+- At 100% in dark mode, Tab reached the caption buttons, Update Hub and
+  Settings with visible outlines; in light mode at minimum size, outlines
+  were visible on Update Hub, Settings, Back, Launch, More options, Appearance
+  and the Autostart switch. Space changed Autostart and a second Space restored
+  its original state. Focus contrast was not measured from screenshots, and
+  unselected package rows were unavailable in the one-item production catalog.
+- Windows Animation effects was turned off while the app ran. A sampled
+  Settings-to-detail transition appeared settled in the first screenshot
+  after activation. This snapshot cannot establish animation timing or prove
+  toast, switch, spinner and wheel behavior; those live checks remain open.
+  Animation effects was restored to On, and the app appearance to System.
+- Narrator was started and its speech recap inspected. It announced Back to
+  Software and Settings as buttons, and the Appearance value as “Light,
+  button”, without the Appearance name in that utterance. The recap also
+  contained a single group announcement combining several settings labels and
+  descriptions. During a sampled Tab traversal, the painted focus moved to
+  Appearance and then Autostart, but the recap did not show a distinct
+  Autostart name, switch role or on/off state for that sequence. This is a
+  **native-reader defect/concern under WCAG 2.2 SC 4.1.2 Name, Role, Value**;
+  repeat with detailed UIA patterns and NVDA, including activation and state
+  changes. It supersedes any implication that the Windows-side A04 code-level
+  closure alone establishes reader acceptance. Narrator was stopped after the
+  sample. The helper's screenshot capture itself produces Narrator messages,
+  so the recap was interpreted with that interference in mind.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
