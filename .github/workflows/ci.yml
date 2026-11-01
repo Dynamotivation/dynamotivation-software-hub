@@ -115,8 +115,8 @@ jobs:
         with:
           name: software-hub-installer
           path: |
-            dist/DynamotivationSoftwareHub_Setup_*.exe
-            dist/DynamotivationSoftwareHub_Setup_*.exe.sha256
+            dist/dynamotivation-software-hub-setup-*.exe
+            dist/dynamotivation-software-hub-setup-*.exe.sha256
           if-no-files-found: error
       - name: Report manual verification result
         if: always() && github.event_name == 'workflow_dispatch'
