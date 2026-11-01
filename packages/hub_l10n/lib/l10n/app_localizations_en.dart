@@ -131,6 +131,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsNew => 'What\'s new';
 
   @override
+  String get olderReleasesLoadFailed =>
+      'Older releases could not be loaded. Check your connection.';
+
+  @override
+  String get retry => 'Try again';
+
+  @override
   String olderReleases(int count) {
     return 'Older releases ($count)';
   }

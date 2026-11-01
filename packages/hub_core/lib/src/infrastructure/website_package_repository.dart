@@ -13,10 +13,17 @@ typedef CatalogFetcher = Future<String> Function(Uri uri);
 /// The version is part of the URL (`/v1/catalog.json/`), not the document. The
 /// document holds a `software` array, and the website lists only the entries
 /// the hub is exposed to. The page slug (last segment of `url`) is the package
-/// id. The website publishes no version or install data, so packages from it
-/// carry empty versions and start as [PackageInstallationStatus.notInstalled].
+/// id. The website publishes no install data, so packages from it carry an
+/// empty installed version and start as
+/// [PackageInstallationStatus.notInstalled].
+///
+/// An entry's `releases` holds only the newest release (with its download
+/// links). `release_count` says how many exist and `releases_url` serves all
+/// of them (`{"releases": [...]}`, newest first); [loadReleaseHistory] fetches
+/// that on demand so the catalog itself stays small. A catalog that still
+/// lists every release inline works too.
 class WebsitePackageRepository
-    implements PackageRepository, CachedPackageSource {
+    implements PackageRepository, CachedPackageSource, ReleaseHistorySource {
   final Uri catalogUri;
   final CatalogFetcher _fetch;
   final Future<String?> Function(Uri uri)? readCache;
@@ -83,16 +90,50 @@ class WebsitePackageRepository
     for (final old in previous.values) {
       final incoming = fresh[old.id];
       if (incoming == null) continue;
-      fresh[old.id] = old.copyWith(
-        name: incoming.name,
-        description: incoming.description,
-        iconUrl: incoming.iconUrl,
-        latestVersion: incoming.latestVersion,
-        latestRelease: incoming.latestRelease,
-        olderReleases: incoming.olderReleases,
-        availableVersions: incoming.availableVersions,
-      );
+      fresh[old.id] = old
+          .copyWith(
+            name: incoming.name,
+            description: incoming.description,
+            iconUrl: incoming.iconUrl,
+          )
+          .withReleasesOf(incoming);
     }
+  }
+
+  @override
+  Future<SoftwarePackage> loadReleaseHistory(String id) async {
+    final package = (await _loaded())[id];
+    if (package == null) throw StateError('Unknown package $id');
+    final url = package.releaseHistoryUrl;
+    if (url == null || !package.hasUnloadedHistory) return package;
+    final source = Uri.parse(url);
+    final releases = parseReleaseHistory(source, await _fetch(source));
+    // The user may have refreshed the catalog while this was in flight.
+    final current = (await _loaded())[id] ?? package;
+    final complete = current.copyWith(
+      olderReleases: [
+        for (final r in releases)
+          if (r.version != current.latestVersion) r,
+      ],
+      availableVersions: [for (final r in releases) r.version],
+    );
+    (await _loaded())[id] = complete;
+    return complete;
+  }
+
+  /// Parses a per-software release history. Throws [CatalogUnavailable] if the
+  /// document is not the expected shape.
+  static List<ReleaseNote> parseReleaseHistory(Uri source, String body) {
+    final Object? root;
+    try {
+      root = jsonDecode(body);
+    } on FormatException catch (e) {
+      throw CatalogUnavailable(source, 'Not valid JSON: ${e.message}');
+    }
+    if (root is! Map || root['releases'] is! List) {
+      throw CatalogUnavailable(source, 'Unsupported release history shape.');
+    }
+    return _releases(source, root['releases']);
   }
 
   /// Parses a catalog document. Throws [CatalogUnavailable] if the document is
@@ -134,6 +175,10 @@ class WebsitePackageRepository
       latestRelease: latest,
       olderReleases: releases.skip(1).toList(),
       availableVersions: [for (final r in releases) r.version],
+      releaseCount: _count(entry['release_count'], releases.length),
+      releaseHistoryUrl: _text(entry, 'releases_url').isEmpty
+          ? null
+          : _text(entry, 'releases_url'),
     );
   }
 
@@ -158,8 +203,35 @@ class WebsitePackageRepository
       version: value['version'] as String,
       date: _text(value, 'date'),
       highlights: [for (final h in highlights) h as String],
+      downloads: _downloads(source, value['downloads']),
     );
   }
+
+  static List<DownloadLink> _downloads(Uri source, Object? value) {
+    if (value == null) return const [];
+    if (value is! List) {
+      throw CatalogUnavailable(source, 'Downloads must be a list.');
+    }
+    return [
+      for (final d in value)
+        if (d is Map && d['url'] is String)
+          DownloadLink(
+            platform: _text(d, 'platform'),
+            arch: _text(d, 'arch'),
+            runtime: _text(d, 'runtime'),
+            variant: _text(d, 'variant'),
+            url: d['url'] as String,
+            sha256: _text(d, 'sha256'),
+            size: d['size'] is int ? d['size'] as int : 0,
+          )
+        else
+          throw CatalogUnavailable(source, 'Download without a url.'),
+    ];
+  }
+
+  /// The catalog's total, but never less than what is listed inline.
+  static int _count(Object? reported, int listed) =>
+      reported is int && reported > listed ? reported : listed;
 
   /// The page slug is the last non-empty path segment of the software page URL.
   static String _idFromUrl(Uri source, Object? url) {

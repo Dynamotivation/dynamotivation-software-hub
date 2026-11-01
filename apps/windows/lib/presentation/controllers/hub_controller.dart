@@ -36,6 +36,9 @@ class HubController extends ChangeNotifier {
   AppSettings _settings = const AppSettings();
   bool _isRefreshing = false;
   Object? _loadError;
+  bool _disposed = false;
+  final Set<String> _loadingHistory = {};
+  final Map<String, Object> _historyErrors = {};
 
   List<SoftwarePackage> get packages => _packages;
 
@@ -46,6 +49,12 @@ class HubController extends ChangeNotifier {
   Object? get loadError => _loadError;
   AppSettings get settings => _settings;
   bool get isRefreshing => _isRefreshing;
+
+  /// True while the older releases of [id] are being fetched.
+  bool isLoadingHistory(String id) => _loadingHistory.contains(id);
+
+  /// Why the older releases of [id] could not be fetched, until a retry.
+  Object? historyError(String id) => _historyErrors[id];
 
   SoftwarePackage? get selected {
     for (final p in _packages) {
@@ -108,7 +117,20 @@ class HubController extends ChangeNotifier {
     required bool first,
   }) {
     final old = _packages;
-    _packages = snapshot.packages;
+    // The catalog entry carries no older releases; keep the ones already fetched.
+    _packages = [
+      for (final p in snapshot.packages)
+        switch (old.where((o) => o.id == p.id).firstOrNull) {
+          final o?
+              when o.latestVersion == p.latestVersion &&
+                  o.olderReleases.length > p.olderReleases.length =>
+            p.copyWith(
+              olderReleases: o.olderReleases,
+              availableVersions: o.availableVersions,
+            ),
+          _ => p,
+        },
+    ];
     _departing = snapshot.departing;
     if (first) {
       _selectedId = _packages.any((p) => p.id == preferredId)
@@ -128,10 +150,50 @@ class HubController extends ChangeNotifier {
               ?.id;
     }
     notifyListeners();
+    loadSelectedHistory();
+  }
+
+  /// Fetches the older releases of the selected package if the catalog listed
+  /// only its latest one. Starts as soon as the details view opens.
+  void loadSelectedHistory() {
+    final id = _selectedId;
+    if (id != null) unawaited(loadHistory(id));
+  }
+
+  /// Fetches the older releases of [id] once; a failure is kept in
+  /// [historyError] for the details view to show, and a call retries it.
+  Future<void> loadHistory(String id) async {
+    final package = _packages.where((p) => p.id == id).firstOrNull;
+    if (package == null ||
+        !package.hasUnloadedHistory ||
+        _loadingHistory.contains(id)) {
+      return;
+    }
+    _loadingHistory.add(id);
+    _historyErrors.remove(id);
+    notifyListeners();
+    try {
+      final loaded = await _useCases.loadReleaseHistory(id);
+      _packages = [
+        for (final p in _packages)
+          p.id == id && p.latestVersion == loaded.latestVersion
+              ? p.copyWith(
+                  olderReleases: loaded.olderReleases,
+                  availableVersions: loaded.availableVersions,
+                )
+              : p,
+      ];
+    } catch (error) {
+      _historyErrors[id] = error;
+    } finally {
+      _loadingHistory.remove(id);
+      if (!_disposed) notifyListeners();
+    }
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _catalog?.cancel();
     super.dispose();
   }
@@ -139,6 +201,7 @@ class HubController extends ChangeNotifier {
   void select(SoftwarePackage package) {
     _selectedId = package.id;
     notifyListeners();
+    loadSelectedHistory();
   }
 
   Future<void> updateSettings(AppSettings settings) async {
@@ -158,6 +221,7 @@ class HubController extends ChangeNotifier {
       _isRefreshing = false;
       notifyListeners();
     }
+    loadSelectedHistory();
   }
 
   /// Updates the selected package. Throws [HubException] or

@@ -104,6 +104,10 @@
   "uninstall": "Uninstall",
   "aboutThisSoftware": "About this software",
   "whatsNew": "What's new",
+  "olderReleasesLoadFailed": "Older releases could not be loaded. Check your connection.",
+  "@olderReleasesLoadFailed": {"description": "Shown in place of the older release notes when fetching them failed."},
+  "retry": "Try again",
+  "@retry": {"description": "Button that repeats a failed action."},
   "olderReleases": "Older releases ({count})",
   "@olderReleases": {
     "placeholders": {

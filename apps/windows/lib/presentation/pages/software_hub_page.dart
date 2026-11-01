@@ -260,6 +260,15 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       onLaunch: _handleLaunchPackage,
                                       onInstall: _handleInstallPackage,
                                       onUninstall: _handleUninstallPackage,
+                                      historyLoading: _controller
+                                          .isLoadingHistory(
+                                            _controller.selected?.id ?? '',
+                                          ),
+                                      historyError: _controller.historyError(
+                                        _controller.selected?.id ?? '',
+                                      ),
+                                      onRetryHistory:
+                                          _controller.loadSelectedHistory,
                                     ),
                                   ),
                                 ],
