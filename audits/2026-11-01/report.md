@@ -200,6 +200,40 @@ remain applicable. Repeat the native pass in an interactive desktop session,
 including actual Narrator or NVDA utterances and all requested preference and
 scaling combinations, before closing the acceptance work.
 
+### Follow-up after desktop unlock
+
+The app was restarted in the unlocked session, and screenshots and the
+desktop automation tool's UI Automation tree were obtained. The earlier
+activation failure was a locked-session limitation. Observations below are
+partial, at the default window size in the dark brand theme; effective
+display and text scaling were not measured.
+
+- With Settings open, changing Windows Contrast themes from None to Night
+  sky changed the running app to black surfaces and white text and borders.
+  Returning the OS setting to None restored the dark brand surface and red
+  header without restarting the app. This verifies this one palette and view,
+  not every control, palette, or contrast ratio.
+- Tab from the Settings back button reached Appearance, then the Autostart
+  switch. Screenshots showed a light focus outline on each in dark mode.
+  This is a sample, not a complete traversal or measured focus contrast.
+- The UI Automation tree presents the four named settings switches as
+  **buttons**, and its printed summary does not show their on/off states;
+  Appearance appears as nested buttons rather than a combobox. The root
+  content is nested under a button whose name combines the application title,
+  caption labels, update message, and “Minimize”; separate Maximize and Close
+  entries within that content appeared as text. This is a **native semantics
+  concern** for WCAG 2.2 SC 4.1.2 (Name, Role, Value), requiring inspection of
+  the actual UIA patterns and Narrator/NVDA utterances before determining the
+  full impact. The tool's abbreviated tree alone does not prove that a toggle
+  pattern or state is absent. The earlier Windows A04/A10 code-level closures
+  do not establish native-reader acceptance.
+- Narrator was not exercised; no speech or activation announcements were
+  observed. Inspect.exe was not used. Full keyboard traversal, both brand
+  themes, Escape and uninstall-dialog restoration, reduced-motion propagation,
+  minimum-size text scaling, and other acceptance items remain open. The
+  production catalog showed only one available package, so an unselected row
+  and installed/uninstall state were unavailable in this session.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
