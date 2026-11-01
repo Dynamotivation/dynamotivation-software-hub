@@ -365,6 +365,10 @@ void main() {
       await tester.pumpAndSettle();
     }
     expect(_focusWithin(toggle), isTrue);
+    expect(
+      tester.getSemantics(toggle).getSemanticsData().flagsCollection.isFocused,
+      Tristate.isTrue,
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pumpAndSettle();
     expect(c.settings.autoCheckUpdates, before);
@@ -385,6 +389,38 @@ void main() {
     expect(data.label, contains('Appearance'));
     expect(data.label, contains('System')); // current themeName(system)
     expect(data.flagsCollection.isButton, isTrue);
+    for (var i = 0; i < 15 && !_focusWithin(combo); i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+    }
+    expect(_focusWithin(combo), isTrue);
+    expect(
+      tester.getSemantics(combo).getSemanticsData().flagsCollection.isFocused,
+      Tristate.isTrue,
+    );
+    handle.dispose();
+  });
+
+  testWidgets('each settings switch exposes its own focused semantics', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pump(tester, settings: true);
+    final switches = find.byType(AccessibleSwitch);
+    expect(switches, findsNWidgets(4));
+    for (var index = 0; index < 4; index++) {
+      final target = switches.at(index);
+      for (var attempt = 0; attempt < 20 && !_focusWithin(target); attempt++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pumpAndSettle();
+      }
+      expect(_focusWithin(target), isTrue);
+      final data = tester.getSemantics(target).getSemanticsData();
+      expect(data.flagsCollection.isFocused, Tristate.isTrue);
+      expect(data.flagsCollection.isToggled, isNot(Tristate.none));
+      expect(data.label, tester.widget<AccessibleSwitch>(target).label);
+      expect(data.hint, tester.widget<AccessibleSwitch>(target).description);
+    }
     handle.dispose();
   });
 

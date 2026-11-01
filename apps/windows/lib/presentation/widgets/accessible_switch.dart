@@ -32,6 +32,7 @@ class AccessibleSwitch extends StatefulWidget {
 class _AccessibleSwitchState extends State<AccessibleSwitch> {
   late FocusNode _focus;
   bool _visibleFocus = false;
+  void _focusChanged() => setState(() {});
 
   bool get _enabled => widget.onChanged != null;
 
@@ -43,20 +44,24 @@ class _AccessibleSwitchState extends State<AccessibleSwitch> {
   void initState() {
     super.initState();
     _focus = widget.focusNode ?? FocusNode(debugLabel: widget.label);
-    _focus.addListener(() => setState(() {}));
+    _focus.addListener(_focusChanged);
   }
 
   @override
   void didUpdateWidget(AccessibleSwitch oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusNode != widget.focusNode) {
+      _focus.removeListener(_focusChanged);
+      if (oldWidget.focusNode == null) _focus.dispose();
       _focus = widget.focusNode ?? FocusNode(debugLabel: widget.label);
+      _focus.addListener(_focusChanged);
     }
   }
 
   @override
   void dispose() {
     // An externally owned node is not ours to dispose.
+    _focus.removeListener(_focusChanged);
     if (widget.focusNode == null) _focus.dispose();
     super.dispose();
   }
@@ -79,9 +84,12 @@ class _AccessibleSwitchState extends State<AccessibleSwitch> {
     final Color knobColor = highContrast ? tokens.window : tokens.card;
 
     return Semantics(
+      container: true,
+      excludeSemantics: true,
       button: true,
       enabled: _enabled,
       focusable: _enabled,
+      focused: _focus.hasFocus,
       label: widget.label,
       hint: widget.description,
       toggled: widget.value,

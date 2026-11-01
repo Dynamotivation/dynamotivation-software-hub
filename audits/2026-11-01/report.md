@@ -382,6 +382,34 @@ entries were visually disabled. These observations do not establish UIA
 patterns, enabled/selected state, or Narrator's behavior in an independent
 manual session; those investigations remain open.
 
+### Settings semantics remediation and native recheck
+
+Following the `ee980f9` retest, the Windows frontend now publishes keyboard
+focus on each `AccessibleSwitch` semantics node, maintains the focus listener
+when an externally owned node changes, and excludes the duplicate visual row
+labels from semantics. Appearance also publishes its focus state. Caption
+buttons have independent named semantic boundaries; the Update Hub control
+has its own boundary and name. Widget regressions assert the focused semantics
+of Appearance and all four switches, including each switch's name, hint and
+toggled state.
+
+On the real Windows Debug window, the helper tree showed the switch card as an
+unnamed group with four separately named button children; the previous combined
+label was gone. The caption buttons appeared separately, and the page was no
+longer nested under the Minimize button. With Narrator running, however, Tab
+painted focus on Appearance and Autostart while the helper continued to report
+the containing pane rather than the corresponding control. This native focus
+and announcement issue remains **open**; passing Flutter semantics assertions
+do not establish that Narrator receives the correct focus event. UIA menu-item
+patterns and a full independent reader session also remain open. Narrator was
+stopped after the check. The final Update Hub name adjustment was made after
+that native build and is covered by analysis/tests, not a fresh native tree.
+
+`flutter analyze --no-pub` and `flutter test --no-pub` passed in each of
+`hub_core`, `hub_l10n`, `hub_keys`, `hub_scroll`, and the Windows, macOS and
+Ubuntu apps. These results are regression evidence, not a native acceptance
+claim.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.

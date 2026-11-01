@@ -277,7 +277,9 @@ class _UpdateHubPill extends StatelessWidget {
           ? context.l10n.hubUpdateAvailableTooltip(hubUpdateVersion!)
           : context.l10n.hubUpToDate,
       child: Semantics(
+        container: true,
         button: true,
+        label: context.l10n.updateHub,
         child: HoverButton(
           semanticLabel: context.l10n.updateHub,
           onPressed:
@@ -366,7 +368,7 @@ class _UpdateHubPill extends StatelessWidget {
 /// The window_manager caption widgets are pointer-only. Keep native commands,
 /// standard caption dimensions, and add the same keyboard/semantics support as
 /// other Fluent controls.
-class _CaptionButton extends StatelessWidget {
+class _CaptionButton extends StatefulWidget {
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
@@ -379,31 +381,63 @@ class _CaptionButton extends StatelessWidget {
   });
 
   @override
+  State<_CaptionButton> createState() => _CaptionButtonState();
+}
+
+class _CaptionButtonState extends State<_CaptionButton> {
+  late final FocusNode _focus = FocusNode()..addListener(_changed);
+
+  void _changed() => setState(() {});
+
+  @override
+  void dispose() {
+    _focus.removeListener(_changed);
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tokens = DynTokens.of(context);
     final contrast = MediaQuery.highContrastOf(context);
-    return Tooltip(
-      message: label,
-      child: HoverButton(
-        onPressed: onPressed,
-        semanticLabel: label,
-        builder: (context, states) => FocusBorder(
-          focused: states.isFocused,
-          child: Container(
-            width: 46,
-            height: 32,
-            decoration: BoxDecoration(
-              color: states.isHovered || states.isPressed
-                  ? (close && !contrast
-                        ? DynamotivationTheme.captionCloseHover
-                        : tokens.headerHover)
-                  : Colors.transparent,
-              border: contrast && states.isHovered
-                  ? Border.all(color: tokens.text)
-                  : null,
-            ),
-            child: Center(
-              child: Icon(icon, size: 12, color: tokens.headerForeground),
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      button: true,
+      enabled: true,
+      focusable: true,
+      focused: _focus.hasFocus,
+      label: widget.label,
+      onTap: widget.onPressed,
+      onFocus: _focus.requestFocus,
+      child: Tooltip(
+        message: widget.label,
+        child: HoverButton(
+          focusNode: _focus,
+          onPressed: widget.onPressed,
+          semanticLabel: widget.label,
+          builder: (context, states) => FocusBorder(
+            focused: states.isFocused,
+            child: Container(
+              width: 46,
+              height: 32,
+              decoration: BoxDecoration(
+                color: states.isHovered || states.isPressed
+                    ? (widget.close && !contrast
+                          ? DynamotivationTheme.captionCloseHover
+                          : tokens.headerHover)
+                    : Colors.transparent,
+                border: contrast && states.isHovered
+                    ? Border.all(color: tokens.text)
+                    : null,
+              ),
+              child: Center(
+                child: Icon(
+                  widget.icon,
+                  size: 12,
+                  color: tokens.headerForeground,
+                ),
+              ),
             ),
           ),
         ),

@@ -30,6 +30,9 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView>
     with SingleTickerProviderStateMixin {
+  late final FocusNode _appearanceFocus = FocusNode(debugLabel: 'Appearance')
+    ..addListener(_appearanceFocusChanged);
+  void _appearanceFocusChanged() => setState(() {});
   late final _entrance = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 240),
@@ -47,6 +50,8 @@ class _SettingsViewState extends State<SettingsView>
 
   @override
   void dispose() {
+    _appearanceFocus.removeListener(_appearanceFocusChanged);
+    _appearanceFocus.dispose();
     _entrance.dispose();
     super.dispose();
   }
@@ -123,27 +128,33 @@ class _SettingsViewState extends State<SettingsView>
                     // "Appearance" together with the value, not the value
                     // alone ("Light, button").
                     MergeSemantics(
-                      child: _SettingRow(
-                        title: l10n.appearance,
-                        control: SizedBox(
-                          width: 180,
-                          child: ComboBox<AppThemeMode>(
-                            isExpanded: true,
-                            value: settings.themeMode,
-                            items: [
-                              for (final mode in AppThemeMode.values)
-                                ComboBoxItem(
-                                  value: mode,
-                                  child: Text(themeName(mode)),
-                                ),
-                            ],
-                            onChanged: (mode) {
-                              if (mode != null) {
-                                onSettingsChanged(
-                                  settings.copyWith(themeMode: mode),
-                                );
-                              }
-                            },
+                      child: Semantics(
+                        container: true,
+                        focusable: true,
+                        focused: _appearanceFocus.hasFocus,
+                        child: _SettingRow(
+                          title: l10n.appearance,
+                          control: SizedBox(
+                            width: 180,
+                            child: ComboBox<AppThemeMode>(
+                              focusNode: _appearanceFocus,
+                              isExpanded: true,
+                              value: settings.themeMode,
+                              items: [
+                                for (final mode in AppThemeMode.values)
+                                  ComboBoxItem(
+                                    value: mode,
+                                    child: Text(themeName(mode)),
+                                  ),
+                              ],
+                              onChanged: (mode) {
+                                if (mode != null) {
+                                  onSettingsChanged(
+                                    settings.copyWith(themeMode: mode),
+                                  );
+                                }
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -309,11 +320,13 @@ class _SettingRow extends StatelessWidget {
   final String title;
   final String? description;
   final Widget control;
+  final bool controlLabelsRow;
 
   const _SettingRow({
     required this.title,
     required this.control,
     this.description,
+    this.controlLabelsRow = false,
   });
 
   @override
@@ -324,25 +337,28 @@ class _SettingRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: tokens.text,
-                  ),
-                ),
-                if (description != null) ...[
-                  const SizedBox(height: 2),
+            child: ExcludeSemantics(
+              excluding: controlLabelsRow,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    description!,
-                    style: TextStyle(fontSize: 12, color: tokens.textMuted),
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: tokens.text,
+                    ),
                   ),
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description!,
+                      style: TextStyle(fontSize: 12, color: tokens.textMuted),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -371,6 +387,7 @@ class _ToggleRow extends StatelessWidget {
     return _SettingRow(
       title: title,
       description: description,
+      controlLabelsRow: true,
       control: AccessibleSwitch(
         value: value,
         onChanged: onChanged,
