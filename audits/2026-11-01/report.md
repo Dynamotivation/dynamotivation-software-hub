@@ -280,6 +280,23 @@ verify focus returns to More options and the flyout is closed, and separately
 check arrow/Enter/Escape behavior. The UIA menu-item pattern and screen-reader
 announcement investigation also remains open.
 
+### Overflow retest after Inspect was closed
+
+**Resolved on the tested keyboard path.** With Inspect closed, the rebuilt
+`7bda82a` Debug executable was tested in the real Windows window in dark
+mode. The in-memory Install action exposed the installed state. From Search,
+Tab reached More options; Enter opened the flyout, Down focused Uninstall
+(the other two entries were disabled), and Enter opened the confirmation with
+Cancel focused. Enter on Cancel closed the dialog and flyout. After the
+transition settled, the screenshot showed no menu and a focus outline on More
+options; the automation tree identified the focused element as `button More
+options`. Reopening the flyout with Enter and pressing Escape also closed it
+and returned focus to that button. This resolves the menu-after-cancel finding
+recorded above for this path; it is not a complete accessibility acceptance.
+
+The helper's tree still labels the flyout entry as text. UIA menu-item patterns
+and actual Narrator/NVDA announcements remain open for separate investigation.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
