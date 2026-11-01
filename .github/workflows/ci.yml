@@ -3,20 +3,39 @@ name: CI
 on:
   push:
     branches: [main]
-    tags: ['v*']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 env:
   FLUTTER_VERSION: 3.47.8
 
 jobs:
+  version:
+    name: Version increment
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test version gate
+        run: python3 -m unittest discover -s ci -p 'test_*.py'
+      - name: Require a release version increase
+        id: version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 ci/check_version.py
+
   # Analyze and test every workspace member on Linux (cheap, fast).
   check:
     name: Check ${{ matrix.member }}
@@ -48,7 +67,8 @@ jobs:
 
   windows-installer:
     name: Signed Windows installer (Linux)
-    needs: check
+    if: github.event_name != 'pull_request'
+    needs: [version, check]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -86,3 +106,24 @@ jobs:
             dist/Dynamotivation-Software-Hub-Setup-*.exe
             dist/Dynamotivation-Software-Hub-Setup-*.exe.sha256
           if-no-files-found: error
+
+  release:
+    name: Publish signed Windows release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [version, check, windows-installer]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: software-hub-installer
+          path: dist
+      - name: Tag this main commit and publish the signed setup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: bash ci/publish_release.sh
