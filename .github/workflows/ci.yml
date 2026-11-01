@@ -49,9 +49,9 @@ jobs:
 
   windows-installer:
     name: Signed Windows installer (Linux)
-    # Signing credentials are unavailable to fork PRs. Main pushes, tags and
-    # manual runs always build signed artifacts; PRs run every Linux check.
-    if: github.event_name != 'pull_request'
+    # Same-repository PRs validate the full signed build. Fork PRs cannot access
+    # signing credentials and run the Linux analysis/test matrix only.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: check
     runs-on: ubuntu-24.04
     timeout-minutes: 45
