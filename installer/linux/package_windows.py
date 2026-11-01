@@ -103,7 +103,7 @@ def main():
                 text=True).strip()
             try:
                 run("wine", compiler, f"/DAppVersion={version}", f"/DSourceDir={source}",
-                    f'/Sdyn=$q{bridge}$q $f', iss)
+                    f"/DOutputDir={ROOT / 'dist'}", f'/Sdyn=$q{bridge}$q $f', iss)
             finally:
                 server.shutdown()
                 thread.join()

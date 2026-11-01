@@ -41,7 +41,10 @@ CloseApplications=yes
 RestartApplications=no
 UninstallDisplayIcon={app}\{#AppExeName}
 UninstallDisplayName={#AppName}
-OutputDir=..\dist
+#ifndef OutputDir
+  #define OutputDir "..\dist"
+#endif
+OutputDir={#OutputDir}
 OutputBaseFilename={#OutputBase}-{#AppVersion}
 #ifdef SignEnabled
 SignTool=dyn
