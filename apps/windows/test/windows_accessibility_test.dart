@@ -371,6 +371,23 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('Appearance announces the field name with its value', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pump(tester, settings: true);
+    final combo = find.byType(ComboBox<AppThemeMode>);
+    await tester.ensureVisible(combo);
+    await tester.pumpAndSettle();
+    final data = tester.getSemantics(combo).getSemanticsData();
+    // Narrator previously announced only the value ("Light, button"); the
+    // merged row adds the field name.
+    expect(data.label, contains('Appearance'));
+    expect(data.label, contains('System')); // current themeName(system)
+    expect(data.flagsCollection.isButton, isTrue);
+    handle.dispose();
+  });
+
   testWidgets('errors persist until dismissed and expose a live region', (
     tester,
   ) async {

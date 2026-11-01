@@ -118,27 +118,33 @@ class _SettingsViewState extends State<SettingsView>
               children: [
                 _Card(
                   children: [
-                    _SettingRow(
-                      title: l10n.appearance,
-                      control: SizedBox(
-                        width: 180,
-                        child: ComboBox<AppThemeMode>(
-                          isExpanded: true,
-                          value: settings.themeMode,
-                          items: [
-                            for (final mode in AppThemeMode.values)
-                              ComboBoxItem(
-                                value: mode,
-                                child: Text(themeName(mode)),
-                              ),
-                          ],
-                          onChanged: (mode) {
-                            if (mode != null) {
-                              onSettingsChanged(
-                                settings.copyWith(themeMode: mode),
-                              );
-                            }
-                          },
+                    // The combobox node itself only carries the current value
+                    // ("Light"), so the row is merged: the reader gets
+                    // "Appearance" together with the value, not the value
+                    // alone ("Light, button").
+                    MergeSemantics(
+                      child: _SettingRow(
+                        title: l10n.appearance,
+                        control: SizedBox(
+                          width: 180,
+                          child: ComboBox<AppThemeMode>(
+                            isExpanded: true,
+                            value: settings.themeMode,
+                            items: [
+                              for (final mode in AppThemeMode.values)
+                                ComboBoxItem(
+                                  value: mode,
+                                  child: Text(themeName(mode)),
+                                ),
+                            ],
+                            onChanged: (mode) {
+                              if (mode != null) {
+                                onSettingsChanged(
+                                  settings.copyWith(themeMode: mode),
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),
