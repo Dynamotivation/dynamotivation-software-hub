@@ -164,6 +164,42 @@ change mid-session, color-vision simulations, long-translation passes at
 minimum sizes, and the macOS/Ubuntu findings A01, A03, A04 (macOS/Ubuntu
 side), A07, A12 (macOS/Ubuntu side), and the remaining A13 matrix.
 
+## Acceptance addendum — 2026-11-01 Windows native attempt
+
+**Status: incomplete; no native acceptance claim.** The native pass was
+attempted at commit `37f7129` on Windows 11, version 25H2, build
+26200.9711 (the Windows registry's legacy ProductName reports Windows 10
+Home). Display scaling and text size were not established; 100%, 150%, and
+200% were not tested. The registry reports `Win8DpiScaling=0`, which does
+not establish the effective scaling on the display.
+
+- Rebuilt the Windows Debug runner successfully with `flutter build windows
+  --debug`. The prebuilt executable did not expose a window immediately;
+  `flutter run -d windows --debug --no-pub` subsequently exposed a window
+  titled “Software Hub”. Startup timing was not measured, so this is not a
+  finding about startup failure.
+- The desktop automation helper reported **“failed to activate captured
+  window”** on both the initial activation and a retry after rediscovering
+  the window. No screenshot, keyboard traversal, or UI Automation tree was
+  captured. Consequently focus-ring contrast, Tab/Shift+Tab order, control
+  activation, Escape and dialog focus restoration remain unverified on screen.
+- Narrator is installed (`C:\Windows\System32\Narrator.exe`); it was not
+  exercised and no announcements were observed. NVDA availability was not
+  established. Inspect.exe is installed in the Windows SDK, but its UIA tree
+  was not inspected. No screen reader was used in this attempt.
+- Live contrast-theme and animation-preference changes, minimum-window
+  reflow at each requested text size, scrolling, the uninstall cancel path,
+  and both brand themes remain untested. No OS preferences were changed.
+  Color-vision simulation, long translations, and physical input paths also
+  remain open as recorded above.
+
+The activation failure is a limitation of this test setup, not evidence of
+an application defect or a WCAG failure. No new product defects can be
+substantiated from this attempt; the earlier findings and their WCAG context
+remain applicable. Repeat the native pass in an interactive desktop session,
+including actual Narrator or NVDA utterances and all requested preference and
+scaling combinations, before closing the acceptance work.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
