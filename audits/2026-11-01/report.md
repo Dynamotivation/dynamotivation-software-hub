@@ -234,6 +234,36 @@ display and text scaling were not measured.
   production catalog showed only one available package, so an unselected row
   and installed/uninstall state were unavailable in this session.
 
+### Continued native keyboard pass
+
+The previous `flutter run` connection was lost when its Debug process was
+stopped during the restart after unlocking; a subsequently launched Debug
+process remained available for this pass. The catalog's in-memory install
+command was used to expose the installed state (this implementation does not
+install software on disk).
+
+- In dark mode, Tab moved from Settings through Search, Check for updates,
+  the selected installed row, Available disclosure, Launch, and More options.
+  Each showed a visible focus treatment in the captured screenshot. From More
+  options, Enter opened the menu, Down moved through its three entries, and
+  Enter on Uninstall opened the confirmation with Cancel focused. Enter on
+  Cancel dismissed the confirmation without uninstalling. This is not a full
+  traversal or a measured contrast result.
+- **New finding — menu remains open after dialog cancellation (WCAG 2.2
+  SC 2.1.1 Keyboard, 2.4.3 Focus Order).** After that Cancel action the
+  overflow menu remained visible. Escape did not close it in the observed
+  state, and Down moved the visible focus to Older releases behind the menu.
+  A pointer click outside dismissed it. The menu items were presented as text
+  in the automation tree rather than identified as menu items; confirm their
+  UIA patterns and reader announcements as part of SC 4.1.2 investigation.
+- Switched the app to light appearance and captured Settings. The full
+  light-mode traversal, minimum-size matrix, motion tests and reader pass are
+  still outstanding. Inspect.exe was launched, but reported higher integrity
+  than the automation helper; afterward the helper failed to activate the app
+  on both an attempt and a fresh-window retry. Inspect's detailed patterns
+  were therefore not captured. Do not infer a product failure from that
+  tooling limitation.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
