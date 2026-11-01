@@ -6,7 +6,7 @@
 #define AppId "{{6F0B3E52-2C58-4C0B-9F5E-1D7A4B8E9C31}"
 #define AppName "Dynamotivation Software Hub"
 #define AppExeName "dynamotivation_software_hub.exe"
-#define OutputBase "Dynamotivation-Software-Hub-Setup"
+#define OutputBase "DynamotivationSoftwareHub"
 #define MinVersion "10.0.10240"
 #ifndef SourceDir
   #define SourceDir "..\apps\windows\build\windows\x64\runner\Release"

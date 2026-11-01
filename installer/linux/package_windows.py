@@ -104,11 +104,11 @@ def main():
                 text=True).strip()
             try:
                 run("wine", compiler, f"/DAppVersion={version}", f"/DSourceDir={source}",
-                    f"/DOutputDir={dist}", f'/Sdyn=$q{bridge}$q $f', iss)
+                    "/DSignEnabled", f"/DOutputDir={dist}", f'/Sdyn=$q{bridge}$q $f', iss)
             finally:
                 server.shutdown()
                 thread.join()
-        setup = ROOT / f"dist/Dynamotivation-Software-Hub-Setup-{version}.exe"
+        setup = ROOT / f"dist/DynamotivationSoftwareHub_Setup_{version}.exe"
         run("osslsigncode", "verify", "-CAfile", trust, "-in", setup)
         digest = hashlib.sha256(setup.read_bytes()).hexdigest()
         setup.with_suffix(".exe.sha256").write_text(f"{digest}  {setup.name}\n")
