@@ -79,7 +79,14 @@ def roundel_inner(assets: Path, args: argparse.Namespace, tmp: Path) -> str | No
     if args.layout == "single":
         return None
     roundel = assets / "full-logo.svg"
-    if roundel.exists():
+    if not roundel.exists():
+        # The publisher mark is shared across all apps: fall back to the toolkit's copy.
+        toolkit_roundel = Path(__file__).resolve().parent.parent / "assets" / "full-logo.svg"
+        if toolkit_roundel.exists():
+            roundel = toolkit_roundel
+        else:
+            roundel = None
+    if roundel is not None:
         return inline_outer_svg(roundel)
     raster = args.logo_image
     if (assets / "logo.png").exists():
@@ -89,7 +96,7 @@ def roundel_inner(assets: Path, args: argparse.Namespace, tmp: Path) -> str | No
     if raster:
         (assets / "full-logo.svg").write_text(raster_logo_svg(Path(raster), tmp), encoding="utf-8")
         return inline_outer_svg(assets / "full-logo.svg")
-    sys.exit(f"layout '{args.layout}' needs {roundel}, or a raster logo in assets/ (logo.png/webp), or --logo-image")
+    sys.exit(f"layout '{args.layout}' needs {assets / 'full-logo.svg'}, or the publisher logo in the toolkit, or a raster logo")
 
 
 def large_svg(assets: Path, args: argparse.Namespace, tmp: Path) -> str:
