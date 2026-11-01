@@ -338,6 +338,50 @@ restored. Display scaling was not independently measured.
   sample. The helper's screenshot capture itself produces Narrator messages,
   so the recap was interpreted with that interference in mind.
 
+### Narrator retest at `ee980f9`
+
+`flutter build windows --debug` succeeded; the fresh Debug executable was
+started with `--settings` on Windows 11 25H2 build 26200.9711, text size 100%,
+dark theme. Narrator was running with speech recap open. No Inspect.exe was
+used. Narrator was stopped afterward.
+
+**Appearance: still open for native-reader acceptance.** The helper's UIA
+tree now exposes a single `button Appearance System System`, confirming that
+the name is present in that tree, albeit with the value repeated. On Tab from
+Back to Software, the app painted a focus ring around Appearance, but the
+helper continued to identify the focused element as `button Back to Software`.
+The speech recap recorded `Back to Software, button,` and did **not** record
+an Appearance utterance for that Tab. Therefore an exact name/value/role
+announcement cannot be reported and the prior finding is not closed by this
+test. Capture and Narrator-cursor interactions may affect this observation;
+repeat with a human listening and independently inspect focus events.
+
+**Switches: still open.** Successive Tabs visibly painted focus on Autostart
+in background, Keep running in background, Automatically check for updates,
+and Show notifications, in that order. For **each of the four**, the speech
+recap showed no corresponding individual switch utterance in this sequence;
+the helper's focused element remained `button Back to Software` throughout.
+The recap did not repeat the earlier aggregate announcement in this sequence.
+The current UIA tree nevertheless contains the following aggregate group
+name (followed by four individually named `button` children):
+
+> Autostart in background Start the Software Hub silently when you log in Keep running in background Stay in the system tray when the window is closed Automatically check for updates Periodically check whether installed software or the Hub has a newer version Show notifications Notify me when new software appears or a newer version is available
+
+That is the helper's exact group text, not an utterance observed during this
+retest. The tree summary does not establish toggle patterns or their states.
+
+**Package and menu: still open.** The selected All-Out Attack Generator row
+was exposed in the tree as `button All-Out Attack Generator`; the summary did
+not show selection state. Tab painted its focus ring, while the helper reported
+the focused element as `pane` and the recap showed no corresponding row
+utterance. After the in-memory Install action, the overflow tree listed
+`text Open install folder`, `text Verify files`, and `text Uninstall`. Down
+painted focus on the enabled Uninstall entry, while the helper still reported
+`pane` and the recap showed no corresponding menu announcement. The two other
+entries were visually disabled. These observations do not establish UIA
+patterns, enabled/selected state, or Narrator's behavior in an independent
+manual session; those investigations remain open.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
