@@ -105,38 +105,90 @@ class _MenuSurface extends StatelessWidget {
         child: MenuFlyout(
           items: [
             if (state.widget.openFolderLabel != null)
-              MenuFlyoutItem(
-                leading: const Icon(
-                  FluentIcons.open_folder_horizontal,
-                  size: 14,
+              MenuFlyoutItemBuilder(
+                builder: (context) => _AccessibleMenuItem(
+                  leading: const Icon(
+                    FluentIcons.open_folder_horizontal,
+                    size: 14,
+                  ),
+                  label: state.widget.openFolderLabel!,
+                  onPressed: state._closeWith(state.widget.onOpenInstallFolder),
                 ),
-                text: Text(state.widget.openFolderLabel!),
-                closeAfterClick: false,
-                onPressed: state._closeWith(state.widget.onOpenInstallFolder),
               ),
             if (state.widget.verifyLabel != null)
-              MenuFlyoutItem(
-                leading: const Icon(FluentIcons.verified_brand, size: 14),
-                text: Text(state.widget.verifyLabel!),
-                closeAfterClick: false,
-                onPressed: state._closeWith(state.widget.onVerifyFiles),
+              MenuFlyoutItemBuilder(
+                builder: (context) => _AccessibleMenuItem(
+                  leading: const Icon(FluentIcons.verified_brand, size: 14),
+                  label: state.widget.verifyLabel!,
+                  onPressed: state._closeWith(state.widget.onVerifyFiles),
+                ),
               ),
-            MenuFlyoutItem(
-              leading: Icon(
-                FluentIcons.delete,
-                size: 14,
-                color: tokens.critical,
+            MenuFlyoutItemBuilder(
+              builder: (context) => _AccessibleMenuItem(
+                leading: Icon(
+                  FluentIcons.delete,
+                  size: 14,
+                  color: tokens.critical,
+                ),
+                label: state.widget.uninstallLabel,
+                textStyle: TextStyle(color: tokens.critical),
+                onPressed: state._closeWith(state.widget.onUninstall),
               ),
-              text: Text(
-                state.widget.uninstallLabel,
-                style: TextStyle(color: tokens.critical),
-              ),
-              closeAfterClick: false,
-              onPressed: state._closeWith(state.widget.onUninstall),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Fluent's menu tile exposes only its text on Windows. Keep its keyboard and
+/// visual behavior, while giving the native bridge an actionable named node.
+class _AccessibleMenuItem extends StatefulWidget {
+  const _AccessibleMenuItem({
+    required this.label,
+    required this.leading,
+    required this.onPressed,
+    this.textStyle,
+  });
+
+  final String label;
+  final Widget leading;
+  final VoidCallback? onPressed;
+  final TextStyle? textStyle;
+
+  @override
+  State<_AccessibleMenuItem> createState() => _AccessibleMenuItemState();
+}
+
+class _AccessibleMenuItemState extends State<_AccessibleMenuItem> {
+  late final FocusNode _focus = FocusNode()..addListener(_changed);
+  void _changed() => setState(() {});
+
+  @override
+  void dispose() {
+    _focus.removeListener(_changed);
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    excludeSemantics: true,
+    button: true,
+    enabled: widget.onPressed != null,
+    focusable: widget.onPressed != null,
+    focused: _focus.hasFocus,
+    label: widget.label,
+    onTap: widget.onPressed,
+    onFocus: widget.onPressed == null ? null : _focus.requestFocus,
+    child: MenuFlyoutItem(
+      leading: widget.leading,
+      text: Text(widget.label, style: widget.textStyle),
+      focusNode: _focus,
+      closeAfterClick: false,
+      onPressed: widget.onPressed,
+    ).build(context),
+  );
 }

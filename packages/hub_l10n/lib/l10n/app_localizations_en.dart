@@ -323,5 +323,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'This action is not available for the package right now.';
 
   @override
+  String get selectedPackage => 'Selected';
+
+  @override
   String get clearSearch => 'Clear search';
 }

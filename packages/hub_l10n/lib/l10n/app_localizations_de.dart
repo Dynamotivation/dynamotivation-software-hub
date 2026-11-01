@@ -325,5 +325,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Aktion ist für das Paket derzeit nicht verfügbar.';
 
   @override
+  String get selectedPackage => 'Ausgewählt';
+
+  @override
   String get clearSearch => 'Suche löschen';
 }

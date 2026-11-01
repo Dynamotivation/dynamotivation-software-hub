@@ -469,6 +469,35 @@ Appearance System`; in that later session the focus mismatch described above
 prevented confirming a corresponding Narrator utterance. Reader verification
 of that final adjustment remains open.
 
+On a fresh Debug rebuild on the same Windows build, Narrator's speech recap
+subsequently recorded `Appearance System, button` when Tab moved from Back to
+Appearance. The helper simultaneously reported `button Appearance System` as
+focused. This resolves the duplicate Appearance value for that tested path.
+After opening and closing the speech recap, a later attempt to resume the
+switch check reported the window itself as focused, so it provides no new
+evidence about switch feedback. Narrator was closed after the session.
+
+### Windows reader remediation — 2026-11-02
+
+The package row now includes a localized selection cue in its accessible
+label. In a real Windows Narrator session, Tab to the selected package was
+announced as `Selected All-Out Attack Generator, button`. The overflow menu
+now supplies independently named, enabled/disabled, focused and actionable
+semantics around its Fluent items. Narrator announced `Uninstall, button`,
+and the helper exposed `button Uninstall` instead of static text. Keyboard
+arrow navigation, Enter and the cancel path remain covered by the regression
+test. This addresses the missing action role, but a native **menu-item** role
+and disabled-state announcement still need investigation.
+
+Two candidate fixes for switch state-change feedback were tested and removed:
+one Flutter `sendAnnouncement` call produced two identical Narrator `Alert`
+utterances for a single Space activation, while a separate live-region node
+produced no state announcement in the sampled session. Neither is accepted as
+a completed fix. Initial checked/unchecked announcements work on the clean
+focus path recorded above; the state-change feedback and intermittent native
+focus mismatch remain open. Narrator and the temporary test setting were
+restored after testing.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.

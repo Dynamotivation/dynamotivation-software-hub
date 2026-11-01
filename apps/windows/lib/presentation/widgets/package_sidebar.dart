@@ -384,6 +384,7 @@ class _PackageTile extends StatelessWidget {
         return Semantics(
           button: true,
           selected: isSelected,
+          label: isSelected ? context.l10n.selectedPackage : null,
           child: FocusBorder(
             focused: states.isFocused,
             child: Container(

@@ -241,6 +241,10 @@ void main() {
       tester.getSemantics(tile).getSemanticsData().flagsCollection.isSelected,
       Tristate.isTrue,
     );
+    expect(
+      tester.getSemantics(tile).getSemanticsData().label,
+      contains('Selected'),
+    );
     handle.dispose();
   });
 
@@ -290,6 +294,11 @@ void main() {
     _semanticTap(tester, more);
     await tester.pumpAndSettle();
     expect(find.text('Uninstall'), findsOneWidget);
+    final disabledItem = tester
+        .getSemantics(find.text('Open install folder'))
+        .getSemanticsData();
+    expect(disabledItem.flagsCollection.isEnabled, Tristate.isFalse);
+    expect(disabledItem.hasAction(SemanticsAction.tap), isFalse);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(find.text('Uninstall'), findsNothing);
@@ -454,6 +463,7 @@ void main() {
   testWidgets('keyboard uninstall request leaves no menu behind after cancel', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
     await _pump(tester);
     // Keyboard-only: focus More options, open, arrow to Uninstall, Enter.
     for (
@@ -479,6 +489,13 @@ void main() {
       await tester.pumpAndSettle();
     }
     expect(_focusWithin(uninstallItem), isTrue);
+    final menuData = tester
+        .getSemantics(find.text('Uninstall'))
+        .getSemanticsData();
+    expect(menuData.label, 'Uninstall');
+    expect(menuData.flagsCollection.isButton, isTrue);
+    expect(menuData.flagsCollection.isFocused, Tristate.isTrue);
+    expect(menuData.hasAction(SemanticsAction.tap), isTrue);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(find.byType(ContentDialog), findsOneWidget);
@@ -490,6 +507,7 @@ void main() {
     expect(find.text('Verify files'), findsNothing);
     // Focus stays in the application.
     expect(_focusWithin(find.byType(SoftwareHubPage)), isTrue);
+    semantics.dispose();
   });
 
   testWidgets('success toasts announce, repeat and dismiss', (tester) async {
