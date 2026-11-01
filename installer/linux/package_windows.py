@@ -71,6 +71,7 @@ def main():
                        for line in (ROOT / "apps/windows/pubspec.yaml").read_text().splitlines()
                        if line.startswith("version:"))
         source = subprocess.check_output(["winepath", "-w", str(bundle)], text=True).strip()
+        dist = subprocess.check_output(["winepath", "-w", str(ROOT / "dist")], text=True).strip()
         iss = subprocess.check_output(
             ["winepath", "-w", str(ROOT / "installer-toolkit/setup/software-hub.iss")],
             text=True).strip()
@@ -103,7 +104,7 @@ def main():
                 text=True).strip()
             try:
                 run("wine", compiler, f"/DAppVersion={version}", f"/DSourceDir={source}",
-                    f"/DOutputDir={ROOT / 'dist'}", f'/Sdyn=$q{bridge}$q $f', iss)
+                    f"/DOutputDir={dist}", f'/Sdyn=$q{bridge}$q $f', iss)
             finally:
                 server.shutdown()
                 thread.join()
