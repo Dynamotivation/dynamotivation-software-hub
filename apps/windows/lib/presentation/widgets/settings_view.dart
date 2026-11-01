@@ -8,7 +8,7 @@ import '../theme/dynamotivation_theme.dart';
 
 /// Settings in the style of the Windows 11 Settings app: a page title, then
 /// cards whose rows pair a title and description with a control on the right.
-class SettingsView extends StatelessWidget {
+class SettingsView extends StatefulWidget {
   final AppSettings settings;
   final ValueChanged<AppSettings> onSettingsChanged;
   final VoidCallback onBack;
@@ -21,7 +21,54 @@ class SettingsView extends StatelessWidget {
   });
 
   @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView>
+    with SingleTickerProviderStateMixin {
+  late final _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 240),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _entrance.value = 1;
+    } else if (_entrance.isDismissed) {
+      _entrance.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
+  }
+
+  // A fixed logical-pixel offset keeps the entrance subtle at every window size.
+  Widget _enter(Widget child, {double delay = 0}) {
+    final progress = _entrance.drive(
+      CurveTween(curve: Interval(delay, 1, curve: Curves.easeOutCubic)),
+    );
+    return FadeTransition(
+      opacity: progress,
+      child: AnimatedBuilder(
+        animation: progress,
+        child: child,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(0, 16 * (1 - progress.value)),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final settings = widget.settings;
+    final onSettingsChanged = widget.onSettingsChanged;
     final l10n = context.l10n;
     final tokens = DynTokens.of(context);
 
@@ -34,148 +81,153 @@ class SettingsView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 16, 12),
-          child: Row(
-            children: [
-              Tooltip(
-                message: l10n.backToSoftware,
-                child: IconButton(
-                  icon: const Icon(FluentIcons.chevron_left, size: 16),
-                  onPressed: onBack,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Semantics(
-                header: true,
-                child: Text(
-                  l10n.settings,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.text,
+        _enter(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 16, 12),
+            child: Row(
+              children: [
+                Tooltip(
+                  message: l10n.backToSoftware,
+                  child: IconButton(
+                    icon: const Icon(FluentIcons.chevron_left, size: 16),
+                    onPressed: widget.onBack,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.settings,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         Expanded(
-          child: _SmoothSettingsList(
-            children: [
-              _Card(
-                children: [
-                  _SettingRow(
-                    title: l10n.appearance,
-                    control: SizedBox(
-                      width: 180,
-                      child: ComboBox<AppThemeMode>(
-                        isExpanded: true,
-                        value: settings.themeMode,
-                        items: [
-                          for (final mode in AppThemeMode.values)
-                            ComboBoxItem(
-                              value: mode,
-                              child: Text(themeName(mode)),
-                            ),
-                        ],
-                        onChanged: (mode) {
-                          if (mode != null) {
-                            onSettingsChanged(
-                              settings.copyWith(themeMode: mode),
-                            );
-                          }
-                        },
+          child: _enter(
+            _SmoothSettingsList(
+              children: [
+                _Card(
+                  children: [
+                    _SettingRow(
+                      title: l10n.appearance,
+                      control: SizedBox(
+                        width: 180,
+                        child: ComboBox<AppThemeMode>(
+                          isExpanded: true,
+                          value: settings.themeMode,
+                          items: [
+                            for (final mode in AppThemeMode.values)
+                              ComboBoxItem(
+                                value: mode,
+                                child: Text(themeName(mode)),
+                              ),
+                          ],
+                          onChanged: (mode) {
+                            if (mode != null) {
+                              onSettingsChanged(
+                                settings.copyWith(themeMode: mode),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.only(left: 2, bottom: 8),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.systemIntegration,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text,
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 8),
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    l10n.systemIntegration,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.text,
+                ),
+                _Card(
+                  children: [
+                    _ToggleRow(
+                      title: l10n.autostartTitle,
+                      description: l10n.autostartDescription,
+                      value: settings.autostartInBackground,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(autostartInBackground: v),
+                      ),
+                    ),
+                    _ToggleRow(
+                      title: l10n.keepRunningTitle,
+                      description: l10n.keepRunningDescription,
+                      value: settings.keepRunningInBackground,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(keepRunningInBackground: v),
+                      ),
+                    ),
+                    _ToggleRow(
+                      title: l10n.autoCheckTitle,
+                      description: l10n.autoCheckDescription,
+                      value: settings.autoCheckUpdates,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(autoCheckUpdates: v),
+                      ),
+                    ),
+                    _ToggleRow(
+                      title: l10n.notificationsTitle,
+                      description: l10n.notificationsDescription,
+                      value: settings.showNotifications,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(showNotifications: v),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.only(left: 2, bottom: 8),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.settingsAboutHeading,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              _Card(
-                children: [
-                  _ToggleRow(
-                    title: l10n.autostartTitle,
-                    description: l10n.autostartDescription,
-                    value: settings.autostartInBackground,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(autostartInBackground: v),
+                _Card(
+                  children: [
+                    _SettingRow(
+                      title: l10n.productName,
+                      description: l10n.brandName,
+                      control: const SizedBox.shrink(),
                     ),
-                  ),
-                  _ToggleRow(
-                    title: l10n.keepRunningTitle,
-                    description: l10n.keepRunningDescription,
-                    value: settings.keepRunningInBackground,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(keepRunningInBackground: v),
+                    _SettingRow(
+                      title: l10n.publisher,
+                      control: Icon(
+                        FluentIcons.verified_brand,
+                        size: 18,
+                        color: DynamotivationTheme.coralPrimary,
+                      ),
                     ),
-                  ),
-                  _ToggleRow(
-                    title: l10n.autoCheckTitle,
-                    description: l10n.autoCheckDescription,
-                    value: settings.autoCheckUpdates,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(autoCheckUpdates: v),
-                    ),
-                  ),
-                  _ToggleRow(
-                    title: l10n.notificationsTitle,
-                    description: l10n.notificationsDescription,
-                    value: settings.showNotifications,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(showNotifications: v),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 8),
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    l10n.settingsAboutHeading,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.text,
-                    ),
-                  ),
+                  ],
                 ),
-              ),
-              _Card(
-                children: [
-                  _SettingRow(
-                    title: l10n.productName,
-                    description: l10n.brandName,
-                    control: const SizedBox.shrink(),
-                  ),
-                  _SettingRow(
-                    title: l10n.publisher,
-                    control: Icon(
-                      FluentIcons.verified_brand,
-                      size: 18,
-                      color: DynamotivationTheme.coralPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
+            delay: 0.125,
           ),
         ),
       ],

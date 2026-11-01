@@ -88,6 +88,7 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
   - Bitmap icons use `FilterQuality.high` (`package_image.dart`). The title-bar logo is `assets/dynamotivation-logo-dark-192.png`, a 192 px render of `dynamotivation-logo-dark.svg` that is downscaled for smoother edges. Regenerate it when the SVG changes.
   - Text is Impeller's grayscale anti-aliasing. Flutter has no ClearType path (flutter/flutter#63043) and release builds cannot select Skia. A per-channel fake was tried and rejected as ugly.
   - `WebsitePackageRepository.refresh()` keeps each known package's install status and installed version and takes everything the website publishes from the new catalog.
+- **Settings motion**: Windows uses a short upward fade for the heading and cards; macOS crossfades panes while resizing the sidebar; Ubuntu uses a whole-page crossfade (GNOME ViewStack style). Respect `MediaQuery.disableAnimationsOf(context)` in every frontend. Outgoing crossfade content must not accept pointer input, keyboard focus, or accessibility navigation.
 - **Settings View Architecture**:
   - Settings is a global standalone full-page view, never an embedded right pane beside a selected package sidebar. When Settings is open, the package sidebar is hidden, and the header provides a back button to return to the software catalog.
 

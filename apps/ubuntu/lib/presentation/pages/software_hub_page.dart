@@ -176,38 +176,59 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                       onFocusSearch: _focusSearch,
                     ),
                     Expanded(
-                      child: _isSettingsOpen
-                          ? SettingsView(
-                              settings: _controller.settings,
-                              onSettingsChanged: (s) =>
-                                  _controller.updateSettings(s),
-                              onClose: () =>
-                                  setState(() => _isSettingsOpen = false),
-                            )
-                          : Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                      child: AnimatedSwitcher(
+                        // GNOME ViewStack uses a whole-page 200 ms crossfade.
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 200),
+                        layoutBuilder: (currentChild, previousChildren) =>
+                            Stack(
+                              fit: StackFit.expand,
                               children: [
-                                PackageSidebar(
-                                  packages: _controller.packages,
-                                  selectedPackage: _controller.selected,
-                                  onSelectPackage: _controller.select,
-                                  searchQuery: _searchQuery,
-                                  onSearchChanged: (q) =>
-                                      setState(() => _searchQuery = q),
-                                  searchFocusNode: _searchFocusNode,
-                                ),
-                                Expanded(
-                                  child: PackageDetailView(
-                                    package: _controller.selected,
-                                    scrollController: _detailScrollController,
-                                    onUpdate: _handleUpdatePackage,
-                                    onLaunch: _handleLaunchPackage,
-                                    onInstall: _handleInstallPackage,
-                                    onUninstall: _handleUninstallPackage,
+                                for (final previous in previousChildren)
+                                  ExcludeFocus(
+                                    child: ExcludeSemantics(
+                                      child: IgnorePointer(child: previous),
+                                    ),
                                   ),
-                                ),
+                                ?currentChild,
                               ],
                             ),
+                        child: _isSettingsOpen
+                            ? SettingsView(
+                                key: const ValueKey('settings'),
+                                settings: _controller.settings,
+                                onSettingsChanged: (s) =>
+                                    _controller.updateSettings(s),
+                                onClose: () =>
+                                    setState(() => _isSettingsOpen = false),
+                              )
+                            : Row(
+                                key: const ValueKey('catalog'),
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  PackageSidebar(
+                                    packages: _controller.packages,
+                                    selectedPackage: _controller.selected,
+                                    onSelectPackage: _controller.select,
+                                    searchQuery: _searchQuery,
+                                    onSearchChanged: (q) =>
+                                        setState(() => _searchQuery = q),
+                                    searchFocusNode: _searchFocusNode,
+                                  ),
+                                  Expanded(
+                                    child: PackageDetailView(
+                                      package: _controller.selected,
+                                      scrollController: _detailScrollController,
+                                      onUpdate: _handleUpdatePackage,
+                                      onLaunch: _handleLaunchPackage,
+                                      onInstall: _handleInstallPackage,
+                                      onUninstall: _handleUninstallPackage,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
                   ],
                 ),

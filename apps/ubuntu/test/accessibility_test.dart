@@ -39,7 +39,7 @@ Future<void> _ctrl(WidgetTester tester, LogicalKeyboardKey key) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
   await tester.sendKeyEvent(key);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-  await tester.pump(const Duration(seconds: 1));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -49,7 +49,7 @@ void main() {
     await _ctrl(tester, LogicalKeyboardKey.comma);
     expect(find.text('Automatically check for updates'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
     expect(find.text('Automatically check for updates'), findsNothing);
   });
 
