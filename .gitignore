@@ -13,6 +13,7 @@ doc/api/
 app.*.symbols
 app.*.map.json
 .widget_preview/
+__pycache__/
 migrate_working_dir/
 
 # Per-platform ephemeral output (apps/<os>/<os>/...)
