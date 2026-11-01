@@ -32,7 +32,7 @@ class ReleaseTest(unittest.TestCase):
         self.git("commit", "-am", "second")
         self.git("remote", "add", "origin", str(self.folder / "remote.git"))
         (self.repo / "dist").mkdir()
-        self.setup = self.repo / "dist/DynamotivationSoftwareHub_Setup_1.2.3.exe"
+        self.setup = self.repo / "dist/dynamotivation-software-hub-setup-1.2.3.exe"
         self.setup.write_bytes(b"signed-build-fixture")
         self.setup.with_suffix(".exe.sha256").write_text(
             f"{hashlib.sha256(self.setup.read_bytes()).hexdigest()}  {self.setup.name}\n")

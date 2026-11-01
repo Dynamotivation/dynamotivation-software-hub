@@ -108,7 +108,7 @@ def main():
             finally:
                 server.shutdown()
                 thread.join()
-        setup = ROOT / f"dist/DynamotivationSoftwareHub_Setup_{version}.exe"
+        setup = ROOT / f"dist/dynamotivation-software-hub-setup-{version}.exe"
         run("osslsigncode", "verify", "-CAfile", trust, "-in", setup)
         digest = hashlib.sha256(setup.read_bytes()).hexdigest()
         setup.with_suffix(".exe.sha256").write_text(f"{digest}  {setup.name}\n")

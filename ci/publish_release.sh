@@ -9,7 +9,7 @@ set -euo pipefail
   exit 1
 }
 tag="v$RELEASE_VERSION"
-setup="dist/DynamotivationSoftwareHub_Setup_$RELEASE_VERSION.exe"
+setup="dist/dynamotivation-software-hub-setup-$RELEASE_VERSION.exe"
 test -s "$setup"
 test -s "$setup.sha256"
 (cd dist && sha256sum --check "$(basename "$setup.sha256")")
