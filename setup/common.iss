@@ -2,7 +2,9 @@
 ; An app script defines AppId (as "{{GUID}", the doubled brace is Inno's escape), AppName, AppVersion, AppExeName, SourceDir, OutputBase
 ; and MinVersion before including this file. Compile with ISCC 5.6.1 (Unicode).
 
-#define Publisher "Dynamotivation"
+#ifndef Publisher
+  #define Publisher "Dynamotivation"
+#endif
 #define PublisherUrl "https://dynamotivation.com/"
 
 [Setup]
