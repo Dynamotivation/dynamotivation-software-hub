@@ -1,6 +1,6 @@
 import 'package:dynamotivation_software_hub/platform/windows_accessibility.dart';
 import 'package:dynamotivation_software_hub/presentation/theme/dynamotivation_theme.dart';
-import 'package:flutter/widgets.dart' show Color, Colors;
+import 'package:flutter/widgets.dart' show Color;
 import 'package:flutter_test/flutter_test.dart';
 
 /// Composited contrast evidence for the Windows frontend.

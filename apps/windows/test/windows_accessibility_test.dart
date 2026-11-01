@@ -419,13 +419,43 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
       expect(find.byType(ContentDialog), findsNothing);
-      // Focus returns to the overflow menu that triggered the dialog.
-      expect(_focusWithin(find.byTooltip('More options')), isTrue);
       expect(c.selected!.isInstalled, isTrue);
       // Focus returns to the overflow menu that triggered the dialog.
       expect(_focusWithin(find.byTooltip('More options')), isTrue);
     },
   );
+
+  testWidgets('success toasts announce, repeat and dismiss', (tester) async {
+    await _pump(tester);
+    // The F5 refresh path raises the user-initiated success feedback.
+    await tester.sendKeyEvent(LogicalKeyboardKey.f5);
+    await tester.pumpAndSettle();
+    final liveRegions = find.byWidgetPredicate(
+      (w) => w is Semantics && w.properties.liveRegion == true,
+    );
+    final toastNode = find.byWidgetPredicate(
+      (w) =>
+          w is Semantics &&
+          (w.key as ValueKey?)?.value is String &&
+          ((w.key as ValueKey).value as String).startsWith('toast-'),
+    );
+    // The message lives in an announced live region and does not steal focus.
+    expect(liveRegions, findsWidgets);
+    expect(_focusWithin(find.byType(EditableText)), isTrue);
+    final firstKey = tester.widget<Semantics>(toastNode.first).key!;
+    // An identical message following the first is a fresh announcement: the
+    // live-region node is rebuilt with a new key.
+    await tester.sendKeyEvent(LogicalKeyboardKey.f5);
+    await tester.pumpAndSettle();
+    final secondKey = tester.widget<Semantics>(toastNode.first).key!;
+    expect(secondKey, isNot(firstKey));
+    // The close control actually dismisses it.
+    await tester.tap(
+      find.descendant(of: liveRegions.first, matching: find.byType(IconButton)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(InfoBar), findsNothing);
+  });
 
   testWidgets(
     'Tab exits the package list and Shift+Tab returns across groups',

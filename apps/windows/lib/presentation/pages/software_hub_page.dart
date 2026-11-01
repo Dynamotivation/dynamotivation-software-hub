@@ -40,6 +40,9 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
   String? _lastWindowTitle;
   ({String title, String content, InfoBarSeverity severity})? _toast;
   Timer? _toastTimer;
+  // Bump per message so the live-region node is rebuilt (and re-announced)
+  // even when an identical status message follows the previous one.
+  int _toastSequence = 0;
 
   HubController get _controller => widget.controller;
 
@@ -118,6 +121,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     // One toast slot: a new message replaces the current one in place
     // instead of stacking, and fades/slides in and out (see build).
     _toastTimer?.cancel();
+    _toastSequence++;
     setState(
       () => _toast = (title: title, content: content, severity: severity),
     );
@@ -393,7 +397,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                           ? const SizedBox.shrink(key: ValueKey('none'))
                           : Semantics(
                               liveRegion: true,
-                              key: ValueKey(_toast),
+                              key: ValueKey('toast-$_toastSequence'),
                               child: PhysicalModel(
                                 color: Colors.transparent,
                                 elevation: 8,
