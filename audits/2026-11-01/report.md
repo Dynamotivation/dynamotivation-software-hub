@@ -524,6 +524,51 @@ did not produce speech in a sampled Narrator session. Substituting checkbox
 for switch semantics also produced no automatic state-change speech. Both
 experiments were removed; neither establishes the underlying engine cause.
 
+### Source and upstream research — 2026-11-02
+
+Inspected the installed Flutter 3.47.8 engine (`cf636b1dfb`) and Fluent UI
+4.17.0 sources, and checked Flutter's Windows accessibility documentation and
+upstream issues. The working app still uses `Semantics(toggled: value)`;
+the temporary `checked:` experiment was removed. Fluent UI's own
+`ToggleSwitch` also uses `Semantics(toggled: widget.checked)`. Flutter documents
+[`toggled`](https://api.flutter.dev/flutter/semantics/SemanticsProperties/toggled.html)
+as switch semantics, mutually exclusive with `checked`.
+
+Confirmed source mechanisms:
+
+- `AccessibilityBridge::SetRoleFromFlutterUpdate` maps `toggled` to `kSwitch`.
+  `AXPlatformNodeWin::MSAARole` maps `kSwitch` to
+  `ROLE_SYSTEM_CHECKBUTTON`; its UIA mapping uses Button plus the Toggle
+  pattern. Thus Narrator's “check box” wording on the default MSAA path does
+  not demonstrate that the app was converted into checkbox controls.
+- `FlutterWindow::OnGetObject` says direct UIA is disabled by default.
+  `DartProject::set_accessibility_mode(AccessibilityMode::IAccessibleEx)` is
+  the documented runtime opt-in for an extended MSAA provider. Its
+  [upstream implementation and review](https://github.com/flutter/flutter/pull/175406)
+  explicitly call it experimental and request comparison with Narrator,
+  NVDA and JAWS. This is a candidate to evaluate, not a verified fix.
+- The missing desktop menu/combobox roles match
+  [Flutter #195739](https://github.com/flutter/flutter/issues/195739).
+  The installed shared bridge derives roles only from flags; adding another
+  app-level `SemanticsRole.menuItem` cannot repair the missing transport.
+- Switch descriptions currently placed in `Semantics.hint` encounter
+  [Flutter #192782](https://github.com/flutter/flutter/issues/192782).
+  In the installed shared bridge, `hint` is copied but never assigned to an
+  AX description attribute. Widget assertions about the hint therefore do
+  not prove native description exposure.
+
+A Debug build with the one-line IAccessibleEx opt-in succeeded. Its native
+helper tree changed the four switches from MSAA-derived checkboxes to
+`button (settable, string)` entries, consistent with the source mapping.
+Speech comparison was **not performed**: both an input attempt and a fresh
+window activation retry failed with `failed to activate captured window`.
+The experimental source change was reverted. Narrator remained running;
+`Stop-Process` was denied. The user was asked to close Narrator and restore
+an interactive desktop. No product conclusion is drawn from that tool
+limitation. The next comparison must test the same focused switch activation
+under both backends, with a stock Fluent ToggleSwitch as a control, before
+changing switch behavior again.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
