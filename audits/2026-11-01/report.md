@@ -740,6 +740,93 @@ succeeded. `flutter analyze --no-pub` and `flutter test --no-pub` passed in
 hub_core, hub_l10n, hub_keys, hub_scroll, Windows (48 tests), macOS and Ubuntu.
 The two new Dart diagnostic entry points also pass `dart analyze`.
 
+### Acceptance addendum — switch feedback resolved with one MSAA alert, 2026-11-02
+
+**Resolved on the tested Narrator path:** all four settings switches now
+announce each accepted change exactly once while keeping keyboard focus on
+the switch. Default MSAA remains enabled, so search also remains usable.
+This supersedes the open automatic switch-feedback status in the preceding
+addendum. Environment: Windows 11 Home 25H2 **26200.9711**, text size 100%,
+normal window, system/brand dark theme, Narrator Speech recap, production
+Debug build. Inspect.exe and NVDA were not used.
+
+The native investigation ruled out two narrower event repairs before adding
+the workaround. Flutter's Windows bridge maps `CHECKED_STATE_CHANGED` to
+`kValueChanged`, which becomes MSAA `EVENT_OBJECT_VALUECHANGE`. A temporary
+in-process listener resolved that event's exact window/object/child identity
+through `AccessibleObjectFromEvent`: role 44 (`ROLE_SYSTEM_CHECKBUTTON`),
+state `0x30001C` when on and `0x300004` when off. Adding
+`EVENT_OBJECT_STATECHANGE` for that same identity still produced no changed
+state speech. The same test with checkbox semantics also failed, as did a
+focus event for the already-focused node. All event hooks, logging and
+checkbox substitutions were removed. These observations establish that the
+state was readable and the supplementary event targeted the correct node;
+they do not establish why Narrator ignored it. See the
+[state-event trial](evidence/windows-msaa-state-event-trial.png),
+[checkbox trial](evidence/windows-msaa-checkbox-state-event-trial.png) and
+[focus-event trial](evidence/windows-msaa-focus-event-trial.png).
+Microsoft's [event definitions](https://learn.microsoft.com/en-us/windows/win32/winauto/event-constants)
+distinguish state, value, focus and alert events.
+
+Flutter's `AnnounceAlert` calls `AXPlatformNodeWin::NotifyAccessibilityEvent`,
+which raises both an MSAA alert and a UIA alert. Previous explicit Flutter
+announcements were spoken twice. The app now supplies a small read-only
+`IAccessible` alert provider at `OBJID_ALERT`, responds to `WM_GETOBJECT` using
+`LresultFromObject`, and emits **only one `EVENT_SYSTEM_ALERT`**. This follows
+the [MSAA server event mechanism](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-notifywinevent).
+The native regression resolves each actual alert event back to the provider,
+asserts its alert role and exact text, asserts one event per activation, and
+checks that native keyboard focus does not move. No engine fork or SDK edit
+is required.
+
+The control still has one semantic node with its original localized name,
+`toggled` state and activation action. The state is **not** appended to its
+name, and the visual/control semantics are **not** changed to checkboxes.
+After user activation, `didUpdateWidget` waits for the requested value to be
+applied before sending a localized name + on/off announcement. Unaccepted
+requests and unrelated controller changes do not announce success. Channel
+errors are reported through `FlutterError.reportError`.
+
+Final native sequence: Tab from Back through Appearance to each switch;
+Space twice per switch. Initial focus speech remains the usual MSAA
+`<name> check box checked/unchecked`. The recap records these exact
+activation announcements, each once:
+
+- `Alert Autostart in background, on,` then `Alert Autostart in background, off,`
+- `Alert Keep running in background, off,` then `Alert Keep running in background, on,`
+- `Alert Automatically check for updates, off,` then `Alert Automatically check for updates, on,`
+- `Alert Show notifications, off,` then `Alert Show notifications, on,`
+
+See the [complete final speech recap](evidence/windows-msaa-switches-final.png)
+and [retained switch focus](evidence/windows-msaa-switch-focus-final.png).
+The helper identified the same focused switch after each Space; traversal
+continued normally to the next switch. All values were restored to
+off/on/on/on. The [initial alert trial](evidence/windows-msaa-single-alert-trial.png)
+also records the first successful on/off pair.
+
+A separate fresh session with the same final build verified empty Search as
+`Search software..., edit,` and, after typing `a`, Tab and Shift+Tab,
+`Search software..., edit, a,`:
+[post-fix search recap](evidence/windows-msaa-search-after-switch-fix.png).
+Narrator was closed with Insert+Escape at the end. This closes the observed
+switch changed-state feedback defect under WCAG 4.1.2 on MSAA/Narrator.
+It is a compatibility workaround using an explicit alert, not a repair of
+Flutter's automatic native state event. Description exposure, NVDA, exact
+native menu roles and the broader visual/preference acceptance matrix remain
+as recorded above; this is not a full conformance claim.
+
+Validation: production Debug build succeeds. All seven required workspace
+members pass analysis and tests (50 Windows tests). Windows tests cover one announcement for
+each applied semantic/keyboard activation, no announcement for an unaccepted
+value or unrelated update, and German localization. The standalone native
+provider regression passes. Reproduce it from the worktree root:
+
+```powershell
+cmake -S apps/windows/test/native -B apps/windows/build/native-accessibility-tests -G "Visual Studio 17 2022" -A x64
+cmake --build apps/windows/build/native-accessibility-tests --config Debug
+ctest --test-dir apps/windows/build/native-accessibility-tests -C Debug --output-on-failure
+```
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.

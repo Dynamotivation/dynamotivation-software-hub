@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_core/testing.dart';
+import 'package:hub_l10n/hub_l10n.dart';
 
 import 'window_manager_mock.dart';
 
@@ -368,6 +369,21 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
+    final announcements = <String>[];
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        WindowsAccessibility.channel,
+        null,
+      ),
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      WindowsAccessibility.channel,
+      (call) async {
+        expect(call.method, 'announceSwitch');
+        announcements.add(call.arguments as String);
+        return null;
+      },
+    );
     final c = await _pump(tester, settings: true);
     // The third of the four switches in the System Integration card.
     final toggle = find.byType(AccessibleSwitch).at(2);
@@ -398,7 +414,75 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pumpAndSettle();
     expect(c.settings.autoCheckUpdates, before);
+    expect(announcements, [
+      'Automatically check for updates, off',
+      'Automatically check for updates, on',
+    ]);
+    // A controller update without activation must not speak an unrelated alert.
+    await c.updateSettings(c.settings.copyWith(autoCheckUpdates: false));
+    await tester.pumpAndSettle();
+    expect(announcements, hasLength(2));
     handle.dispose();
+  });
+
+  testWidgets('switches do not announce an unaccepted value', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final announcements = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      WindowsAccessibility.channel,
+      (call) async {
+        announcements.add(call.arguments as String);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        WindowsAccessibility.channel,
+        null,
+      ),
+    );
+    await tester.pumpWidget(
+      FluentApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AccessibleSwitch(
+          value: false,
+          label: 'Unaccepted switch',
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    _semanticTap(tester, find.byType(AccessibleSwitch));
+    await tester.pumpAndSettle();
+    expect(announcements, isEmpty);
+    semantics.dispose();
+  });
+
+  testWidgets('switch activation announcement follows the app locale', (
+    tester,
+  ) async {
+    tester.platformDispatcher.localesTestValue = const [Locale('de')];
+    final semantics = tester.ensureSemantics();
+    final announcements = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      WindowsAccessibility.channel,
+      (call) async {
+        announcements.add(call.arguments as String);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        WindowsAccessibility.channel,
+        null,
+      ),
+    );
+    await _pump(tester, settings: true);
+    _semanticTap(tester, find.byType(AccessibleSwitch).first);
+    await tester.pumpAndSettle();
+    expect(announcements, ['Automatisch im Hintergrund starten, ein']);
+    semantics.dispose();
   });
 
   testWidgets('Appearance announces the field name with its value', (

@@ -2,12 +2,15 @@
 // From apps/windows:
 // flutter run -d windows -t ../../audits/2026-11-01/windows_switch_comparison.dart
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:hub_l10n/hub_l10n.dart';
 
 import '../../apps/windows/lib/presentation/widgets/accessible_switch.dart';
 
 void main() => runApp(
   FluentApp(
     title: 'Switch reader comparison',
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: FluentThemeData(brightness: Brightness.light),
     home: const _Comparison(),
   ),

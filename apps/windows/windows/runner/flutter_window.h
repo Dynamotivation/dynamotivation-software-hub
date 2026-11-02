@@ -9,6 +9,8 @@
 #include <memory>
 
 #include "win32_window.h"
+#include "accessibility_alert.h"
+#include <wrl/client.h>
 
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
@@ -25,6 +27,7 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  Microsoft::WRL::ComPtr<AccessibilityAlert> accessibility_alert_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> contrast_channel_;
 
   // The project to run.

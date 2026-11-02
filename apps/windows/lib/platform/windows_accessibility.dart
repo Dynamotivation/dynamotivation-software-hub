@@ -45,6 +45,23 @@ class WindowsAccessibility extends ValueNotifier<WindowsContrastPalette?> {
 
   WindowsAccessibility() : super(null);
 
+  /// Single MSAA alert: Flutter's dual MSAA/UIA announce path repeats speech
+  /// in Narrator, while its legacy switch state-change event is silent.
+  static Future<void> announceSwitch(String message) async {
+    try {
+      await channel.invokeMethod<void>('announceSwitch', message);
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'Windows accessibility',
+          context: ErrorDescription('while announcing a switch state change'),
+        ),
+      );
+    }
+  }
+
   Future<void> initialize() async {
     channel.setMethodCallHandler((call) async {
       if (call.method != 'changed') return;

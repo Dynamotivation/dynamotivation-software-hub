@@ -638,6 +638,18 @@ abstract class AppLocalizations {
   /// **'Selected'**
   String get selectedPackage;
 
+  /// Spoken enabled state following a switch label after activation
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get switchStateOn;
+
+  /// Spoken disabled state following a switch label after activation
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get switchStateOff;
+
   /// Accessible label and tooltip for clearing the software search field
   ///
   /// In en, this message translates to:

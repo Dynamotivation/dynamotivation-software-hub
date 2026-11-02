@@ -328,5 +328,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selectedPackage => 'Ausgewählt';
 
   @override
+  String get switchStateOn => 'ein';
+
+  @override
+  String get switchStateOff => 'aus';
+
+  @override
   String get clearSearch => 'Suche löschen';
 }

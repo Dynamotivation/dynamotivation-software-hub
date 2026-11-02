@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:hub_l10n/hub_l10n.dart';
 
+import '../../platform/windows_accessibility.dart';
 import '../theme/dynamotivation_theme.dart';
 
 /// A switch that is a single semantics node: name, description, state
@@ -32,6 +36,7 @@ class AccessibleSwitch extends StatefulWidget {
 class _AccessibleSwitchState extends State<AccessibleSwitch> {
   late FocusNode _focus;
   bool _visibleFocus = false;
+  bool? _pendingAnnouncement;
   void _focusChanged() {
     setState(() {});
     if (_focus.hasFocus) {
@@ -46,7 +51,11 @@ class _AccessibleSwitchState extends State<AccessibleSwitch> {
   bool get _enabled => widget.onChanged != null;
 
   void _toggle() {
-    if (_enabled) widget.onChanged?.call(!widget.value);
+    if (_enabled) {
+      final value = !widget.value;
+      _pendingAnnouncement = value;
+      widget.onChanged?.call(value);
+    }
   }
 
   @override
@@ -59,6 +68,14 @@ class _AccessibleSwitchState extends State<AccessibleSwitch> {
   @override
   void didUpdateWidget(AccessibleSwitch oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value &&
+        _pendingAnnouncement == widget.value) {
+      _pendingAnnouncement = null;
+      final state = widget.value
+          ? context.l10n.switchStateOn
+          : context.l10n.switchStateOff;
+      unawaited(WindowsAccessibility.announceSwitch('${widget.label}, $state'));
+    }
     if (oldWidget.focusNode != widget.focusNode) {
       _focus.removeListener(_focusChanged);
       if (oldWidget.focusNode == null) _focus.dispose();

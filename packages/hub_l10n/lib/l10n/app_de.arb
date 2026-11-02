@@ -164,6 +164,10 @@
   "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar.",
   "selectedPackage": "Ausgewählt",
   "@selectedPackage": {"description": "Screen-reader indication for the selected software row"},
+  "switchStateOn": "ein",
+  "@switchStateOn": {"description": "Spoken enabled state following a switch label after activation"},
+  "switchStateOff": "aus",
+  "@switchStateOff": {"description": "Spoken disabled state following a switch label after activation"},
   "clearSearch": "Suche löschen",
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"

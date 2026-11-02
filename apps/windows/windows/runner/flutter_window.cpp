@@ -26,11 +26,31 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  accessibility_alert_ = Microsoft::WRL::Make<AccessibilityAlert>(GetHandle());
   contrast_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       flutter_controller_->engine()->messenger(), "dynamotivation/windows_accessibility",
       &flutter::StandardMethodCodec::GetInstance());
   contrast_channel_->SetMethodCallHandler(
-      [](const auto& call, auto result) {
+      [this](const auto& call, auto result) {
+        if (call.method_name() == "announceSwitch") {
+          const auto* text = std::get_if<std::string>(call.arguments());
+          if (!text) {
+            result->Error("windows_accessibility", "Expected announcement text");
+            return;
+          }
+          const int length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text->data(),
+                                                static_cast<int>(text->size()), nullptr, 0);
+          if (length == 0) {
+            result->Error("windows_accessibility", "Invalid announcement text");
+            return;
+          }
+          std::wstring wide(length, L'\0');
+          MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text->data(), static_cast<int>(text->size()),
+                              wide.data(), length);
+          accessibility_alert_->Announce(std::move(wide));
+          result->Success();
+          return;
+        }
         if (call.method_name() != "readContrast") {
           result->NotImplemented();
           return;
@@ -75,6 +95,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  accessibility_alert_ = nullptr;
   contrast_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
@@ -87,6 +108,10 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == WM_GETOBJECT && static_cast<LONG>(lparam) == OBJID_ALERT &&
+      accessibility_alert_) {
+    return LresultFromObject(IID_IAccessible, wparam, accessibility_alert_.Get());
+  }
   // Broadcast settings changes must reach Dart even if a plugin handles them.
   if (contrast_channel_ && (message == WM_SETTINGCHANGE ||
       message == WM_SYSCOLORCHANGE || message == WM_THEMECHANGED)) {
