@@ -32,7 +32,16 @@ class AccessibleSwitch extends StatefulWidget {
 class _AccessibleSwitchState extends State<AccessibleSwitch> {
   late FocusNode _focus;
   bool _visibleFocus = false;
-  void _focusChanged() => setState(() {});
+  void _focusChanged() {
+    setState(() {});
+    if (_focus.hasFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _focus.hasFocus) {
+          Scrollable.ensureVisible(context, alignment: 0.5);
+        }
+      });
+    }
+  }
 
   bool get _enabled => widget.onChanged != null;
 

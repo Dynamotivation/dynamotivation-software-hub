@@ -331,6 +331,22 @@ void main() {
     });
   }
 
+  testWidgets('keyboard focus keeps the last switch clear of viewport edges', (
+    tester,
+  ) async {
+    await _pump(tester, size: const Size(560, 580), scale: 2, settings: true);
+    final target = find.byType(AccessibleSwitch).last;
+    for (var i = 0; i < 20 && !_focusWithin(target); i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+    }
+    expect(_focusWithin(target), isTrue);
+    final switchRect = tester.getRect(target);
+    final viewportRect = tester.getRect(find.byType(ListView).last);
+    expect(switchRect.top, greaterThan(viewportRect.top + 4));
+    expect(switchRect.bottom, lessThan(viewportRect.bottom - 4));
+  });
+
   testWidgets('reduced motion skips settings and toast animations', (
     tester,
   ) async {

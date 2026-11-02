@@ -506,6 +506,24 @@ recap. Narrator's read-current-item command (Insert+Tab) then announced
 queryable, but automatic state-change feedback remains open. Narrator was
 closed after the check.
 
+### Minimum-size keyboard focus retest — 2026-11-02
+
+With Windows text size set to 200% and the app resized to its 560×580
+minimum, Tab reached Appearance and each of the four switches. Before the
+fix, the Show notifications switch's focus outline was clipped at the bottom
+of the scrolling viewport (WCAG 2.2 SC 2.4.11, Focus Not Obscured). The
+switch now asks the enclosing scrollable to center it when focused. On a
+fresh Debug rebuild, the same keyboard sequence showed the full focus outline
+and the switch's complete description within the viewport. A regression test
+checks clearance from the viewport edges at 200% and minimum size. This closes
+the observed switch-focus clipping path, not the whole text-scaling matrix.
+Windows text size was restored to 100% afterward.
+
+A UI Automation notification raised using the Flutter view's host provider
+did not produce speech in a sampled Narrator session. Substituting checkbox
+for switch semantics also produced no automatic state-change speech. Both
+experiments were removed; neither establishes the underlying engine cause.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
