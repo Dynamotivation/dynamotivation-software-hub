@@ -498,6 +498,14 @@ focus path recorded above; the state-change feedback and intermittent native
 focus mismatch remain open. Narrator and the temporary test setting were
 restored after testing.
 
+In a further fresh Debug session, the helper confirmed focus on `check box
+Autostart in background`. Narrator announced `Autostart in background check
+box unchecked`; Space changed the value but produced only `Space` in the
+recap. Narrator's read-current-item command (Insert+Tab) then announced
+`Autostart in background check box checked`. The new state is therefore
+queryable, but automatic state-change feedback remains open. Narrator was
+closed after the check.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
