@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:hub_keys/hub_keys.dart';
@@ -110,51 +111,129 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Brand logo + title. Drag area covers everything not interactive.
-              Expanded(
-                child: DragToMoveArea(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          // Pre-rendered at 192 px and downscaled with
-                          // mipmapped filtering: much smoother edges than
-                          // rasterising the vector straight to 40 px.
-                          child: Image.asset(
-                            'assets/dynamotivation-logo-dark-192.png',
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
-                            excludeFromSemantics: true,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.l10n.brandName,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: tokens.headerForeground,
-                                  letterSpacing: 0.2,
-                                ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 80),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Brand logo + title. Drag area covers everything not interactive.
+                  Expanded(
+                    child: DragToMoveArea(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 20),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 40,
+                              height: 40,
+                              // Pre-rendered at 192 px and downscaled with
+                              // mipmapped filtering: much smoother edges than
+                              // rasterising the vector straight to 40 px.
+                              child: Image.asset(
+                                'assets/dynamotivation-logo-dark-192.png',
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.high,
+                                excludeFromSemantics: true,
                               ),
-                              Text(
-                                context.l10n.productName,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    context.l10n.brandName,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: tokens.headerForeground,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                  Text(
+                                    context.l10n.productName,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: tokens.headerForeground,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Native window commands with keyboard-operable caption buttons.
+                  Padding(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _CaptionButton(
+                              label: context.l10n.minimize,
+                              icon: FluentIcons.chrome_minimize,
+                              onPressed: () =>
+                                  _runWindowAction(windowManager.minimize),
+                            ),
+                            _CaptionButton(
+                              label: _isMaximized
+                                  ? context.l10n.restore
+                                  : context.l10n.maximize,
+                              icon: _isMaximized
+                                  ? FluentIcons.chrome_restore
+                                  : FluentIcons.square_shape,
+                              onPressed: () => _runWindowAction(
+                                _isMaximized
+                                    ? windowManager.unmaximize
+                                    : windowManager.maximize,
+                              ),
+                            ),
+                            _CaptionButton(
+                              label: context.l10n.close,
+                              icon: FluentIcons.chrome_close,
+                              close: true,
+                              onPressed: () =>
+                                  _runWindowAction(windowManager.close),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _UpdateHubPill(
+                                iconOnly:
+                                    MediaQuery.sizeOf(context).width < 800,
+                                tokens: tokens,
+                                hubUpdateVersion: widget.hubUpdateVersion,
+                                onUpdateHub: widget.onUpdateHub,
+                              ),
+                              const SizedBox(width: 6),
+                              AccessibleIconButton(
+                                label: context.l10n.settings,
+                                tooltip: withShortcut(
+                                  context.l10n.settings,
+                                  AppShortcuts.settings,
+                                ),
+                                icon: Icon(
+                                  FluentIcons.settings,
+                                  size: 15,
                                   color: tokens.headerForeground,
                                 ),
+                                focusNode: widget.settingsFocusNode,
+                                onPressed: widget.onToggleSettings,
                               ),
                             ],
                           ),
@@ -162,81 +241,9 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
-
-              // Native window commands with keyboard-operable caption buttons.
-              Padding(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _CaptionButton(
-                          label: context.l10n.minimize,
-                          icon: FluentIcons.chrome_minimize,
-                          onPressed: () =>
-                              _runWindowAction(windowManager.minimize),
-                        ),
-                        _CaptionButton(
-                          label: _isMaximized
-                              ? context.l10n.restore
-                              : context.l10n.maximize,
-                          icon: _isMaximized
-                              ? FluentIcons.chrome_restore
-                              : FluentIcons.square_shape,
-                          onPressed: () => _runWindowAction(
-                            _isMaximized
-                                ? windowManager.unmaximize
-                                : windowManager.maximize,
-                          ),
-                        ),
-                        _CaptionButton(
-                          label: context.l10n.close,
-                          icon: FluentIcons.chrome_close,
-                          close: true,
-                          onPressed: () =>
-                              _runWindowAction(windowManager.close),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _UpdateHubPill(
-                            iconOnly: MediaQuery.sizeOf(context).width < 800,
-                            tokens: tokens,
-                            hubUpdateVersion: widget.hubUpdateVersion,
-                            onUpdateHub: widget.onUpdateHub,
-                          ),
-                          const SizedBox(width: 6),
-                          AccessibleIconButton(
-                            label: context.l10n.settings,
-                            tooltip: withShortcut(
-                              context.l10n.settings,
-                              AppShortcuts.settings,
-                            ),
-                            icon: Icon(
-                              FluentIcons.settings,
-                              size: 15,
-                              color: tokens.headerForeground,
-                            ),
-                            focusNode: widget.settingsFocusNode,
-                            onPressed: widget.onToggleSettings,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
 
           // Signature Dynamotivation mint-to-cyan accent line.
@@ -412,35 +419,73 @@ class _CaptionButtonState extends State<_CaptionButton> {
       onFocus: _focus.requestFocus,
       child: Tooltip(
         message: widget.label,
-        child: HoverButton(
-          focusNode: _focus,
-          onPressed: widget.onPressed,
-          semanticLabel: widget.label,
-          builder: (context, states) => FocusBorder(
-            focused: states.isFocused,
-            child: Container(
-              width: 46,
-              height: 32,
-              decoration: BoxDecoration(
-                color: states.isHovered || states.isPressed
-                    ? (widget.close && !contrast
-                          ? DynamotivationTheme.captionCloseHover
-                          : tokens.headerHover)
-                    : Colors.transparent,
-                border: contrast && states.isHovered
-                    ? Border.all(color: tokens.text)
-                    : null,
-              ),
-              child: Center(
-                child: Icon(
-                  widget.icon,
-                  size: 12,
-                  color: tokens.headerForeground,
+        child: contrast
+            ? HoverButton(
+                focusNode: _focus,
+                onPressed: widget.onPressed,
+                semanticLabel: widget.label,
+                builder: (context, states) => FocusBorder(
+                  focused: states.isFocused,
+                  child: Container(
+                    width: 46,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: states.isHovered || states.isPressed
+                          ? (widget.close && !contrast
+                                ? DynamotivationTheme.captionCloseHover
+                                : tokens.headerHover)
+                          : Colors.transparent,
+                      border: contrast && states.isHovered
+                          ? Border.all(color: tokens.text)
+                          : null,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        widget.icon,
+                        size: 12,
+                        color: tokens.headerForeground,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : CallbackShortcuts(
+                bindings: {
+                  const SingleActivator(LogicalKeyboardKey.enter):
+                      widget.onPressed,
+                  const SingleActivator(LogicalKeyboardKey.space):
+                      widget.onPressed,
+                },
+                child: Focus(
+                  focusNode: _focus,
+                  child: FocusBorder(
+                    focused: _focus.hasFocus,
+                    child: SizedBox(
+                      width: 46,
+                      height: 32,
+                      child: widget.close
+                          ? WindowCaptionButton.close(
+                              brightness: Brightness.dark,
+                              onPressed: widget.onPressed,
+                            )
+                          : widget.icon == FluentIcons.chrome_minimize
+                          ? WindowCaptionButton.minimize(
+                              brightness: Brightness.dark,
+                              onPressed: widget.onPressed,
+                            )
+                          : widget.icon == FluentIcons.chrome_restore
+                          ? WindowCaptionButton.unmaximize(
+                              brightness: Brightness.dark,
+                              onPressed: widget.onPressed,
+                            )
+                          : WindowCaptionButton.maximize(
+                              brightness: Brightness.dark,
+                              onPressed: widget.onPressed,
+                            ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

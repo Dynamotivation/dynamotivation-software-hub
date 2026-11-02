@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_core/testing.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'window_manager_mock.dart';
 
@@ -799,6 +800,57 @@ void main() {
     );
     semantics.dispose();
   });
+
+  testWidgets(
+    'original caption visuals retain keyboard actions and centered logo',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await _pump(tester);
+      final captions = find.byType(WindowCaptionButton);
+      expect(captions, findsNWidgets(3));
+      final logo = find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName ==
+                'assets/dynamotivation-logo-dark-192.png',
+      );
+      expect(tester.getCenter(logo).dy, 40);
+      final calls = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('window_manager'),
+        (call) async {
+          calls.add(call.method);
+          return null;
+        },
+      );
+      for (var index = 0; index < 3; index++) {
+        final target = captions.at(index);
+        for (
+          var step = 0;
+          step < 40 &&
+              tester
+                      .getSemantics(target)
+                      .getSemanticsData()
+                      .flagsCollection
+                      .isFocused !=
+                  Tristate.isTrue;
+          step++
+        ) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+        }
+        // Focus belongs to the accessible wrapper above the painted control.
+        final node = tester.getSemantics(target).getSemanticsData();
+        expect(node.flagsCollection.isFocused, Tristate.isTrue);
+        expect(node.label, ['Minimize', 'Maximize', 'Close'][index]);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(calls, contains(['minimize', 'maximize', 'close'][index]));
+      }
+      semantics.dispose();
+    },
+  );
 
   testWidgets('search field keeps its name once text is entered', (
     tester,

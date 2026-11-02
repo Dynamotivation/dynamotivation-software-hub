@@ -873,3 +873,19 @@ off/on/on/on and NVDA was closed. See
 [evidence transcript](evidence/nvda-speech-acceptance.txt).
 This sample does not cover caption controls, menus, caret navigation in full,
 or the broader theme/text-size matrix. No application changes were made.
+
+### Caption visual regression corrected — 2026-11-02
+
+Restored the original window_manager WindowCaptionButton painter for normal
+brand themes instead of Fluent font glyph imitations. The wrapper supplies
+Tab focus, Enter/Space activation, localized names, semantic activation and
+a visible focus ring. The existing system-palette rendering remains in high
+contrast. The header content again has an 80px minimum height, with the logo
+centered at y=40 at 100%; intrinsic layout permits larger/localized text to
+increase that height without clamping. Logo asset, size and left padding are
+unchanged. A rebuilt Windows Debug window visually confirms the restored
+caption shapes and brand alignment:
+[evidence](evidence/windows-caption-restored.jpg).
+A regression asserts the original three painter widgets, logo center, and
+actual minimize/maximize/close platform calls from keyboard activation, plus
+focused semantic names. Existing minimum-window tests at 100/150/200% pass.
