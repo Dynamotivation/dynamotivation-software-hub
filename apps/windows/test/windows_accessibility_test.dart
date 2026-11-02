@@ -6,6 +6,7 @@ import 'package:dynamotivation_software_hub/presentation/controllers/hub_control
 import 'package:dynamotivation_software_hub/presentation/pages/software_hub_page.dart';
 import 'package:dynamotivation_software_hub/presentation/theme/dynamotivation_theme.dart';
 import 'package:dynamotivation_software_hub/presentation/widgets/accessible_switch.dart';
+import 'package:dynamotivation_software_hub/presentation/widgets/accessible_icon_button.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -673,6 +674,7 @@ void main() {
   });
 
   testWidgets('settings return focus goes to the entry point', (tester) async {
+    final semantics = tester.ensureSemantics();
     await _pump(tester);
     // Reach the title-bar settings button via keyboard and open with it.
     for (
@@ -685,6 +687,17 @@ void main() {
       await tester.pumpAndSettle();
     }
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings button');
+    final settingsButton = find.byWidgetPredicate(
+      (widget) => widget is AccessibleIconButton && widget.label == 'Settings',
+    );
+    expect(
+      tester
+          .getSemantics(settingsButton)
+          .getSemanticsData()
+          .flagsCollection
+          .isFocused,
+      Tristate.isTrue,
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings back');
@@ -692,5 +705,34 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'Settings button');
+    expect(
+      tester
+          .getSemantics(settingsButton)
+          .getSemanticsData()
+          .flagsCollection
+          .isFocused,
+      Tristate.isTrue,
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('search field keeps its name once text is entered', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await _pump(tester);
+    final empty = tester
+        .getSemantics(find.byType(EditableText).first)
+        .getSemanticsData();
+    expect(empty.label, 'Search software...');
+    await tester.enterText(find.byType(EditableText).first, 'zzz');
+    await tester.pump();
+    final data = tester
+        .getSemantics(find.byType(EditableText).first)
+        .getSemanticsData();
+    expect(data.flagsCollection.isTextField, isTrue);
+    expect(data.value, 'zzz');
+    expect(data.label, 'Search software...');
+    semantics.dispose();
   });
 }

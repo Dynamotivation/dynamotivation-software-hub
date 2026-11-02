@@ -18,9 +18,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
-  // Expose the UI Automation Toggle pattern and state-change events to Narrator.
-  // The legacy MSAA path reads initial switch states but misses their updates.
-  project.set_accessibility_mode(flutter::AccessibilityMode::IAccessibleEx);
+  // Default MSAA backend. IAccessibleEx announces switch changes but makes
+  // Narrator say "No item in view" on every text field (Flutter #127125), so
+  // automatic switch state-change feedback remains tracked in the audit.
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();

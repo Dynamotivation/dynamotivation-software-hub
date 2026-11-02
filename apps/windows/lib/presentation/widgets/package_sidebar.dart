@@ -155,15 +155,24 @@ class _PackageSidebarState extends State<PackageSidebar>
             child: Row(
               children: [
                 Expanded(
-                  child: TextBox(
-                    controller: _searchController,
-                    focusNode: widget.searchFocusNode,
-                    placeholder: context.l10n.searchSoftware,
-                    prefix: const Padding(
-                      padding: EdgeInsets.only(left: 10, right: 6),
-                      child: Icon(FluentIcons.search, size: 14),
+                  // Fluent's placeholder names the empty field only. Supply
+                  // the same name when populated without duplicating it empty.
+                  child: MergeSemantics(
+                    child: Semantics(
+                      label: _searchController.text.isEmpty
+                          ? null
+                          : context.l10n.searchSoftware,
+                      child: TextBox(
+                        controller: _searchController,
+                        focusNode: widget.searchFocusNode,
+                        placeholder: context.l10n.searchSoftware,
+                        prefix: const Padding(
+                          padding: EdgeInsets.only(left: 10, right: 6),
+                          child: Icon(FluentIcons.search, size: 14),
+                        ),
+                        onChanged: widget.onSearchChanged,
+                      ),
                     ),
-                    onChanged: widget.onSearchChanged,
                   ),
                 ),
                 if (_searchController.text.isNotEmpty)

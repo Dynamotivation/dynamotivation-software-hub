@@ -634,6 +634,112 @@ Validation for this backend change: production Debug build succeeded;
 all 47 tests. The other six required workspace suites passed in the preceding
 remediation run; their production Dart sources were unchanged in this change.
 
+### Acceptance addendum — text fields and MSAA workaround retest, 2026-11-02
+
+**Current decision and status:** retain default MSAA so Narrator can use text
+fields. The earlier IAccessibleEx switch pass above is historical evidence,
+not the current production backend. Automatic switch state-change speech is
+**open again**. The proposed state-in-name workaround did not fix it and was
+removed, together with its unused localization keys. Controls still expose
+`toggled:` semantics; they have not been converted to checkbox widgets.
+
+Environment: Windows 11 Home 25H2, build **26200.9711**, Windows text size
+100%, normal 1020×780 window (1006×774 captured client), system/brand dark
+appearance. Display scaling was not independently measured. Narrator was
+started before each fresh production Debug process; speech was read from its
+Speech recap window. Inspect.exe was not used. No NVDA executable was found
+in either standard Program Files location or an installed-app registry entry;
+portable NVDA was not exhaustively searched, and no NVDA pass is claimed.
+
+**Backend diagnosis:** `windows_focus_comparison.dart` compares a Material
+TextField, Fluent TextBox, stock buttons and the custom icon button. With
+IAccessibleEx, both empty and populated text fields announced `No item in
+view`; stock and custom buttons still announced on Tab. With default MSAA,
+Narrator announced `Material search, edit,` / `Fluent search, edit,` and
+the entered values. The populated stock Fluent field lost its placeholder
+name and announced `edit, b,`. See the
+[IAccessibleEx recap](evidence/windows-text-fields-iaccessibleex.png),
+[MSAA recap](evidence/windows-text-fields-msaa.png) and
+[button comparison](evidence/windows-stock-focus-comparison.png).
+
+This controlled comparison matches
+[Flutter #127125](https://github.com/flutter/flutter/issues/127125): its
+reported Narrator failure occurs when Text and Value patterns are both
+offered. The installed engine's `AXPlatformNodeWin::GetPatternProvider`
+returns Text/TextEdit patterns for text fields and Value for editable fields.
+This is a source match and a reproduced backend-dependent symptom, not a
+successful pattern capture: `uia_text_probe.ps1` returned only the outer
+FLUTTERVIEW pane and supplied **no child-pattern evidence**. The helper also
+reported the wrong focused element under IAccessibleEx while Narrator read
+buttons correctly; that helper mismatch alone cannot establish lost reader
+focus. `windows_focus_trace.dart` preserves the framework-side diagnostic.
+
+**Four-switch native retest of the proposed MSAA state-in-name workaround:**
+Tab from Back through Appearance to every switch, then two Space presses
+per switch. The helper exposed the correct individual checkbox name and
+updated its `on`/`off` suffix after each activation. The complete speech
+recap nevertheless contained only the following initial focus lines and
+`Space` after each activation:
+
+- `Autostart in background, off check box unchecked,` → `Space` → `Space`
+- `Keep running in background, on check box checked,` → `Space` → `Space`
+- `Automatically check for updates, on check box checked,` → `Space` → `Space`
+- `Show notifications, on check box checked,` → `Space` → `Space`
+
+There was no aggregate multi-switch announcement, but descriptions were not
+spoken. The name suffix redundantly repeated the initial state without
+providing changed-state feedback. See
+[full four-switch recap](evidence/windows-msaa-named-switches.png).
+A subsequent fresh Debug trial adding `liveRegion: true` to that same
+switch semantics node likewise produced only `Space` for Autostart's two
+activations ([trial recap](evidence/windows-msaa-live-switch-trial.png)); it
+was removed. All four settings were restored to off/on/on/on. These failures
+keep changed-state notification open under **WCAG 4.1.2 (Name, Role, Value)**;
+passing Dart semantics assertions does not close it.
+
+**Search name fixed and natively verified:** Fluent's visible placeholder
+names the empty field but disappears from semantics when populated. The app
+now supplies the same localized name when populated, merging it with the
+editable semantics. An initial unconditional wrapper duplicated the empty
+name ([intermediate recap](evidence/windows-msaa-named-search.png)); the final
+implementation supplies the extra label only when text is nonempty.
+On the fresh final production Debug build, Narrator announced
+`Search software..., edit,` when empty and, after typing `a`, Tab to Clear
+search and Shift+Tab back, `Search software..., edit, a,`.
+The helper agreed on the edit name and value. The
+[final recap](evidence/windows-msaa-search-final.png) closes the observed
+empty/populated search-name defect (WCAG 4.1.2) on this MSAA/Narrator path.
+It does not establish all editing/caret behavior or NVDA compatibility.
+The regression asserts the exact name, edit role and populated value;
+the existing settings-return test additionally asserts semantic focus before
+opening settings and after Escape.
+
+**Selected package row on the final backend:** in a fresh Narrator/production
+session, Tab from Search reached Check for updates, Available, then the row.
+Narrator said `Selected All-Out Attack Generator, button,`; the helper
+identified the same named button and the screenshot showed its full focus
+outline. Enter retained selection, and the next Tab reached Install,
+announced as `All-Out Attack Generator v1.2.7 Available group, Install v1.2.7,
+button,`. No installation was activated. See the
+[catalog recap](evidence/windows-msaa-package-row.png). This verifies the
+selected-row name/role/selection cue and keyboard exit for the single current
+catalog item; unselected/off-screen rows remain outside this native sample.
+
+**Remaining acceptance:** automatic switch state-change speech; native
+description exposure; NVDA; unselected/off-screen package rows and menu-entry
+reader verification on the final backend; the menu-item pattern investigation; complete light
+mode and minimum-window 100/150/200% matrix; live reduced-motion timing and
+additional contrast themes. Prior passing keyboard/menu observations remain
+scoped to their recorded sessions. The current catalog starts with its one
+package uninstalled, so this session did not exercise an uninstall path or
+install software to manufacture that state. No full accessibility readiness
+claim is made. Narrator was closed with Insert+Escape after the final recap.
+
+Validation: final production `flutter build windows --debug --no-pub`
+succeeded. `flutter analyze --no-pub` and `flutter test --no-pub` passed in
+hub_core, hub_l10n, hub_keys, hub_scroll, Windows (48 tests), macOS and Ubuntu.
+The two new Dart diagnostic entry points also pass `dart analyze`.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
