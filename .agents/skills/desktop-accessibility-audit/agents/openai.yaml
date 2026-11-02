@@ -1,0 +1,4 @@
+interface:
+  display_name: "Desktop Accessibility Audit"
+  short_description: "Evidence-based desktop accessibility testing"
+  default_prompt: "Use $desktop-accessibility-audit to audit the requested desktop frontends and record reproducible findings and testing limits."

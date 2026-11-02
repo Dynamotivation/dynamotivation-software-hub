@@ -18,6 +18,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
+  // Default MSAA backend. IAccessibleEx announces switch changes but makes
+  // Narrator say "No item in view" on every text field (Flutter #127125), so
+  // switch feedback uses the single MSAA alert adapter instead.
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();

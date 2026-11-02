@@ -163,5 +163,15 @@
   "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
   "errorCatalogUnavailable": "Der Software-Katalog konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
   "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
-  "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar."
+  "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar.",
+  "selectedPackage": "Ausgewählt",
+  "@selectedPackage": {"description": "Screen-reader indication for the selected software row"},
+  "switchStateOn": "ein",
+  "@switchStateOn": {"description": "Spoken enabled state following a switch label after activation"},
+  "switchStateOff": "aus",
+  "@switchStateOff": {"description": "Spoken disabled state following a switch label after activation"},
+  "clearSearch": "Suche löschen",
+  "@clearSearch": {
+    "description": "Accessible label and tooltip for clearing the software search field"
+  }
 }

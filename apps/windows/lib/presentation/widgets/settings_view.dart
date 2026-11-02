@@ -5,23 +5,79 @@ import 'package:hub_core/hub_core.dart';
 import 'package:hub_scroll/hub_scroll.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'accessible_icon_button.dart';
+import 'accessible_switch.dart';
 
 /// Settings in the style of the Windows 11 Settings app: a page title, then
 /// cards whose rows pair a title and description with a control on the right.
-class SettingsView extends StatelessWidget {
+class SettingsView extends StatefulWidget {
   final AppSettings settings;
   final ValueChanged<AppSettings> onSettingsChanged;
   final VoidCallback onBack;
+  final FocusNode? backFocusNode;
 
   const SettingsView({
     super.key,
     required this.settings,
     required this.onSettingsChanged,
     required this.onBack,
+    this.backFocusNode,
   });
 
   @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView>
+    with SingleTickerProviderStateMixin {
+  late final FocusNode _appearanceFocus = FocusNode(debugLabel: 'Appearance')
+    ..addListener(_appearanceFocusChanged);
+  void _appearanceFocusChanged() => setState(() {});
+  late final _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 240),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _entrance.value = 1;
+    } else if (_entrance.isDismissed) {
+      _entrance.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _appearanceFocus.removeListener(_appearanceFocusChanged);
+    _appearanceFocus.dispose();
+    _entrance.dispose();
+    super.dispose();
+  }
+
+  // A fixed logical-pixel offset keeps the entrance subtle at every window size.
+  Widget _enter(Widget child, {double delay = 0}) {
+    final progress = _entrance.drive(
+      CurveTween(curve: Interval(delay, 1, curve: Curves.easeOutCubic)),
+    );
+    return FadeTransition(
+      opacity: progress,
+      child: AnimatedBuilder(
+        animation: progress,
+        child: child,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(0, 16 * (1 - progress.value)),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final settings = widget.settings;
+    final onSettingsChanged = widget.onSettingsChanged;
     final l10n = context.l10n;
     final tokens = DynTokens.of(context);
 
@@ -34,148 +90,173 @@ class SettingsView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 16, 12),
-          child: Row(
-            children: [
-              Tooltip(
-                message: l10n.backToSoftware,
-                child: IconButton(
+        _enter(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 16, 12),
+            child: Row(
+              children: [
+                AccessibleIconButton(
+                  label: l10n.backToSoftware,
                   icon: const Icon(FluentIcons.chevron_left, size: 16),
-                  onPressed: onBack,
+                  focusNode: widget.backFocusNode,
+                  onPressed: widget.onBack,
                 ),
-              ),
-              const SizedBox(width: 8),
-              Semantics(
-                header: true,
-                child: Text(
-                  l10n.settings,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.text,
+                const SizedBox(width: 8),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.settings,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         Expanded(
-          child: _SmoothSettingsList(
-            children: [
-              _Card(
-                children: [
-                  _SettingRow(
-                    title: l10n.appearance,
-                    control: SizedBox(
-                      width: 180,
-                      child: ComboBox<AppThemeMode>(
-                        isExpanded: true,
-                        value: settings.themeMode,
-                        items: [
-                          for (final mode in AppThemeMode.values)
-                            ComboBoxItem(
-                              value: mode,
-                              child: Text(themeName(mode)),
+          child: _enter(
+            _SmoothSettingsList(
+              children: [
+                _Card(
+                  children: [
+                    // The combobox node itself only carries the current value
+                    // ("Light"), so the row is merged: the reader gets
+                    // "Appearance" together with the value, not the value
+                    // alone ("Light, button").
+                    MergeSemantics(
+                      child: Semantics(
+                        container: true,
+                        focusable: true,
+                        focused: _appearanceFocus.hasFocus,
+                        child: _SettingRow(
+                          title: l10n.appearance,
+                          control: SizedBox(
+                            width: 180,
+                            child: ComboBox<AppThemeMode>(
+                              focusNode: _appearanceFocus,
+                              isExpanded: true,
+                              value: settings.themeMode,
+                              // ComboBox already supplies the selected value as
+                              // its semantic label. Keep the painted copy from
+                              // repeating it in the merged row announcement.
+                              selectedItemBuilder: (context) => [
+                                for (final mode in AppThemeMode.values)
+                                  ExcludeSemantics(
+                                    child: Text(themeName(mode)),
+                                  ),
+                              ],
+                              items: [
+                                for (final mode in AppThemeMode.values)
+                                  ComboBoxItem(
+                                    value: mode,
+                                    child: Text(themeName(mode)),
+                                  ),
+                              ],
+                              onChanged: (mode) {
+                                if (mode != null) {
+                                  onSettingsChanged(
+                                    settings.copyWith(themeMode: mode),
+                                  );
+                                }
+                              },
                             ),
-                        ],
-                        onChanged: (mode) {
-                          if (mode != null) {
-                            onSettingsChanged(
-                              settings.copyWith(themeMode: mode),
-                            );
-                          }
-                        },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.only(left: 2, bottom: 8),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.systemIntegration,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text,
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 8),
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    l10n.systemIntegration,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.text,
+                ),
+                _Card(
+                  children: [
+                    _ToggleRow(
+                      title: l10n.autostartTitle,
+                      description: l10n.autostartDescription,
+                      value: settings.autostartInBackground,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(autostartInBackground: v),
+                      ),
+                    ),
+                    _ToggleRow(
+                      title: l10n.keepRunningTitle,
+                      description: l10n.keepRunningDescription,
+                      value: settings.keepRunningInBackground,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(keepRunningInBackground: v),
+                      ),
+                    ),
+                    _ToggleRow(
+                      title: l10n.autoCheckTitle,
+                      description: l10n.autoCheckDescription,
+                      value: settings.autoCheckUpdates,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(autoCheckUpdates: v),
+                      ),
+                    ),
+                    _ToggleRow(
+                      title: l10n.notificationsTitle,
+                      description: l10n.notificationsDescription,
+                      value: settings.showNotifications,
+                      onChanged: (v) => onSettingsChanged(
+                        settings.copyWith(showNotifications: v),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.only(left: 2, bottom: 8),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.settingsAboutHeading,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              _Card(
-                children: [
-                  _ToggleRow(
-                    title: l10n.autostartTitle,
-                    description: l10n.autostartDescription,
-                    value: settings.autostartInBackground,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(autostartInBackground: v),
+                _Card(
+                  children: [
+                    _SettingRow(
+                      title: l10n.productName,
+                      description: l10n.brandName,
+                      control: const SizedBox.shrink(),
                     ),
-                  ),
-                  _ToggleRow(
-                    title: l10n.keepRunningTitle,
-                    description: l10n.keepRunningDescription,
-                    value: settings.keepRunningInBackground,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(keepRunningInBackground: v),
+                    _SettingRow(
+                      title: l10n.publisher,
+                      control: Icon(
+                        FluentIcons.verified_brand,
+                        size: 18,
+                        color: DynTokens.of(context).brandAccent,
+                      ),
                     ),
-                  ),
-                  _ToggleRow(
-                    title: l10n.autoCheckTitle,
-                    description: l10n.autoCheckDescription,
-                    value: settings.autoCheckUpdates,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(autoCheckUpdates: v),
-                    ),
-                  ),
-                  _ToggleRow(
-                    title: l10n.notificationsTitle,
-                    description: l10n.notificationsDescription,
-                    value: settings.showNotifications,
-                    onChanged: (v) => onSettingsChanged(
-                      settings.copyWith(showNotifications: v),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 8),
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    l10n.settingsAboutHeading,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.text,
-                    ),
-                  ),
+                  ],
                 ),
-              ),
-              _Card(
-                children: [
-                  _SettingRow(
-                    title: l10n.productName,
-                    description: l10n.brandName,
-                    control: const SizedBox.shrink(),
-                  ),
-                  _SettingRow(
-                    title: l10n.publisher,
-                    control: Icon(
-                      FluentIcons.verified_brand,
-                      size: 18,
-                      color: DynamotivationTheme.coralPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
+            delay: 0.125,
           ),
         ),
       ],
@@ -195,7 +276,7 @@ class _SmoothSettingsList extends StatefulWidget {
 }
 
 class _SmoothSettingsListState extends State<_SmoothSettingsList> {
-  final _scroll = ScrollController();
+  final _scroll = SmoothScrollController();
 
   @override
   void dispose() {
@@ -248,11 +329,13 @@ class _SettingRow extends StatelessWidget {
   final String title;
   final String? description;
   final Widget control;
+  final bool controlLabelsRow;
 
   const _SettingRow({
     required this.title,
     required this.control,
     this.description,
+    this.controlLabelsRow = false,
   });
 
   @override
@@ -263,25 +346,28 @@ class _SettingRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: tokens.text,
-                  ),
-                ),
-                if (description != null) ...[
-                  const SizedBox(height: 2),
+            child: ExcludeSemantics(
+              excluding: controlLabelsRow,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    description!,
-                    style: TextStyle(fontSize: 12, color: tokens.textMuted),
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: tokens.text,
+                    ),
                   ),
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description!,
+                      style: TextStyle(fontSize: 12, color: tokens.textMuted),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -310,18 +396,12 @@ class _ToggleRow extends StatelessWidget {
     return _SettingRow(
       title: title,
       description: description,
-      control: ToggleSwitch(
-        checked: value,
+      controlLabelsRow: true,
+      control: AccessibleSwitch(
+        value: value,
         onChanged: onChanged,
-        semanticLabel: title,
-        style: ToggleSwitchThemeData(
-          checkedDecoration: WidgetStateProperty.all(
-            BoxDecoration(
-              color: DynamotivationTheme.coralPrimary,
-              borderRadius: BorderRadius.circular(100),
-            ),
-          ),
-        ),
+        label: title,
+        description: description,
       ),
     );
   }

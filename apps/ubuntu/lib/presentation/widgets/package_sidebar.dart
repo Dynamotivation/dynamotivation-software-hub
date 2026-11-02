@@ -34,7 +34,7 @@ class PackageSidebar extends StatefulWidget {
 
 class _PackageSidebarState extends State<PackageSidebar> {
   late final TextEditingController _searchController;
-  final _scroll = ScrollController();
+  final _scroll = SmoothScrollController();
 
   @override
   void initState() {

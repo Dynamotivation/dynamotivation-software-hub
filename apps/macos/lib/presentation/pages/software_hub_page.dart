@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hub_l10n/hub_l10n.dart';
+import 'package:hub_scroll/hub_scroll.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -40,12 +41,11 @@ class SoftwareHubPage extends StatefulWidget {
   State<SoftwareHubPage> createState() => _SoftwareHubPageState();
 }
 
-class _SoftwareHubPageState extends State<SoftwareHubPage>
-    with WindowListener {
+class _SoftwareHubPageState extends State<SoftwareHubPage> with WindowListener {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
-  final _sidebarScroll = ScrollController();
-  final _contentScroll = ScrollController();
+  final _sidebarScroll = SmoothScrollController();
+  final _contentScroll = SmoothScrollController();
   String? _status;
   Timer? _statusTimer;
   bool _showSettings = false;
@@ -170,7 +170,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage>
           height: 64,
         ),
         title: Text(l10n.productName),
-        message: Text('${l10n.brandName} · ${l10n.publisher}'),
+        message: Text('${l10n.brandName} Ã‚Â· ${l10n.publisher}'),
         primaryButton: PushButton(
           controlSize: ControlSize.large,
           onPressed: () => Navigator.of(context).pop(),
@@ -307,13 +307,26 @@ class _SoftwareHubPageState extends State<SoftwareHubPage>
     );
   }
 
-  static const _transition = Duration(milliseconds: 280);
+  // AppKit-style pane replacement: dissolve content while the sidebar resizes.
+  Duration get _transition => MediaQuery.disableAnimationsOf(context)
+      ? Duration.zero
+      : const Duration(milliseconds: 200);
 
   /// Cross-fades between the main and settings states.
   Widget _fade(Widget child) => AnimatedSwitcher(
     duration: _transition,
-    switchInCurve: Curves.easeOutCubic,
-    switchOutCurve: Curves.easeInCubic,
+    switchInCurve: Curves.easeInOut,
+    switchOutCurve: Curves.easeInOut,
+    layoutBuilder: (currentChild, previousChildren) => Stack(
+      alignment: Alignment.center,
+      children: [
+        for (final previous in previousChildren)
+          ExcludeFocus(
+            child: ExcludeSemantics(child: IgnorePointer(child: previous)),
+          ),
+        ?currentChild,
+      ],
+    ),
     child: child,
   );
 
@@ -578,7 +591,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage>
         return PlatformMenuBar(
           menus: [
             // HIG app menu: About first (own group = separator), then
-            // Settings…, then the system-provided Quit.
+            // SettingsÃ¢â‚¬Â¦, then the system-provided Quit.
             PlatformMenu(
               label: l10n.appTitle,
               menus: [
@@ -593,7 +606,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage>
                 PlatformMenuItemGroup(
                   members: [
                     PlatformMenuItem(
-                      label: '${l10n.settings}…',
+                      label: '${l10n.settings}Ã¢â‚¬Â¦',
                       shortcut: const SingleActivator(
                         LogicalKeyboardKey.comma,
                         meta: true,
@@ -669,10 +682,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage>
                       ),
                       onSelected: _minimizeWindow,
                     ),
-                    PlatformMenuItem(
-                      label: l10n.zoom,
-                      onSelected: _zoomWindow,
-                    ),
+                    PlatformMenuItem(label: l10n.zoom, onSelected: _zoomWindow),
                   ],
                 ),
               ],

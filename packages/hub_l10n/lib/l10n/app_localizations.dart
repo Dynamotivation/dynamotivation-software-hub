@@ -643,6 +643,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This action is not available for the package right now.'**
   String get errorActionRejected;
+
+  /// Screen-reader indication for the selected software row
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get selectedPackage;
+
+  /// Spoken enabled state following a switch label after activation
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get switchStateOn;
+
+  /// Spoken disabled state following a switch label after activation
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get switchStateOff;
+
+  /// Accessible label and tooltip for clearing the software search field
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
 }
 
 class _AppLocalizationsDelegate
