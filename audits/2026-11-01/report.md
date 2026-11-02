@@ -856,3 +856,20 @@ The probes use 22 Tab steps in the main view and 10 in Settings; they sample, ra
 5. For each OS record light/dark, high contrast/increased contrast, reduced motion, reduced transparency where available, 100/150/200% text, normal/minimum windows, grayscale and color-vision simulations. Check platform menu conventions, target sizes and no keyboard traps.
 
 Until that matrix is completed, describe this as an audited implementation with known gaps, not an accessibility-compliant application.
+
+### NVDA acceptance follow-up — 2026-11-02
+
+On revision 93505be, NVDA 2026.2 (non-UIAccess launcher) was tested on the
+real Windows desktop using its debug speech log. Each of the four settings
+switches was focused and activated twice with Space. NVDA announced the
+individual name and checkbox state on focus, then `checked` / `not checked`
+exactly once per change, without duplicate alert speech. Focus remained on
+the switch and Tab continued to the next control. Descriptions were not
+spoken; the initial `not selected` wording remains an engine semantics gap.
+Search announced `Search software...`, edit role and entered value `a` on
+refocus; Clear search was named, and Backspace restored the empty field.
+Settings Escape returned to Settings. All switch values were restored to
+off/on/on/on and NVDA was closed. See
+[evidence transcript](evidence/nvda-speech-acceptance.txt).
+This sample does not cover caption controls, menus, caret navigation in full,
+or the broader theme/text-size matrix. No application changes were made.
