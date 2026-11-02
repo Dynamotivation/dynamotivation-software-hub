@@ -21,3 +21,11 @@ abstract interface class CachedPackageSource {
   /// repository's current catalog; [PackageRepository.refresh] replaces it.
   Future<List<SoftwarePackage>?> cachedPackages();
 }
+
+/// Optional port: a source that serves each package's full release history
+/// separately from the catalog, so the catalog stays small.
+abstract interface class ReleaseHistorySource {
+  /// The package with [SoftwarePackage.olderReleases] filled in. Throws
+  /// [CatalogUnavailable] if the history cannot be fetched or understood.
+  Future<SoftwarePackage> loadReleaseHistory(String id);
+}

@@ -39,14 +39,9 @@ CatalogReconciliation reconcileCatalog(
     final next = freshById[current.id];
     if (next == null) continue;
     textUpdated.add(
-      current.copyWith(
-        name: next.name,
-        description: next.description,
-        latestVersion: next.latestVersion,
-        latestRelease: next.latestRelease,
-        olderReleases: next.olderReleases,
-        availableVersions: next.availableVersions,
-      ),
+      current
+          .copyWith(name: next.name, description: next.description)
+          .withReleasesOf(next),
     );
     final url = next.iconUrl;
     if (url != null && url != current.iconUrl) iconChanged.add(next);

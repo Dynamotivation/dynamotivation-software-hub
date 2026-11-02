@@ -18,6 +18,11 @@ class PackageDetailPane extends StatefulWidget {
   final FocusNode? primaryActionFocus;
   final FocusNode? overflowFocus;
 
+  /// The older releases are fetched when the details view opens.
+  final bool historyLoading;
+  final Object? historyError;
+  final VoidCallback onRetryHistory;
+
   const PackageDetailPane({
     super.key,
     required this.package,
@@ -27,6 +32,9 @@ class PackageDetailPane extends StatefulWidget {
     required this.onUninstall,
     this.primaryActionFocus,
     this.overflowFocus,
+    this.historyLoading = false,
+    this.historyError,
+    required this.onRetryHistory,
   });
 
   @override
@@ -456,7 +464,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
               const SizedBox(height: 12),
 
               // Older releases expander / accordion
-              if (pkg.olderReleases.isNotEmpty) ...[
+              if (pkg.olderReleaseCount > 0) ...[
                 HoverButton(
                   onPressed: () {
                     setState(() {
@@ -494,7 +502,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                               Flexible(
                                 child: Text(
                                   context.l10n.olderReleases(
-                                    pkg.olderReleases.length,
+                                    pkg.olderReleaseCount,
                                   ),
                                   style: TextStyle(
                                     fontSize: 13,
@@ -511,7 +519,35 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                   },
                 ),
 
-                if (_olderExpanded)
+                if (_olderExpanded && pkg.hasUnloadedHistory)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 14, top: 12),
+                    child: widget.historyError != null
+                        ? Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  context.l10n.olderReleasesLoadFailed,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: tokens.textMuted,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Button(
+                                onPressed: widget.onRetryHistory,
+                                child: Text(context.l10n.retry),
+                              ),
+                            ],
+                          )
+                        : const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: ProgressRing(strokeWidth: 2),
+                          ),
+                  )
+                else if (_olderExpanded)
                   Padding(
                     padding: const EdgeInsets.only(left: 14, top: 12),
                     child: Column(

@@ -334,6 +334,15 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       onUninstall: _handleUninstallPackage,
                                       primaryActionFocus: _detailActionFocus,
                                       overflowFocus: _detailOverflowFocus,
+                                      historyLoading: _controller
+                                          .isLoadingHistory(
+                                            _controller.selected?.id ?? '',
+                                          ),
+                                      historyError: _controller.historyError(
+                                        _controller.selected?.id ?? '',
+                                      ),
+                                      onRetryHistory:
+                                          _controller.loadSelectedHistory,
                                     ),
                                   );
                                   if (compact) {
