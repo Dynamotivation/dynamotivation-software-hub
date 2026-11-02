@@ -18,6 +18,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
+  // Expose the UI Automation Toggle pattern and state-change events to Narrator.
+  // The legacy MSAA path reads initial switch states but misses their updates.
+  project.set_accessibility_mode(flutter::AccessibilityMode::IAccessibleEx);
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();

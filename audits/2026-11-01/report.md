@@ -569,6 +569,71 @@ limitation. The next comparison must test the same focused switch activation
 under both backends, with a stock Fluent ToggleSwitch as a control, before
 changing switch behavior again.
 
+### Controlled backend comparison after unlock — 2026-11-02
+
+**Switch state-change announcements resolved on the tested Narrator path.**
+The adjacent `windows_switch_comparison.dart` runs the existing custom switch
+and a stock Fluent UI 4.17.0 `ToggleSwitch` together, with independent visible
+state values and no Hub controller, catalog, page transition or announcement
+workaround. Both started false and were focused and activated with Space.
+
+- Default backend: the helper exposed both as checkboxes. Narrator announced
+  `Custom switch check box unchecked` and `Stock Fluent switch check box
+  unchecked` on focus. Each Space changed its visible value to true, but
+  the recap recorded only `Space`, with no new state for either control.
+- IAccessibleEx backend: the helper exposed both as buttons with additional
+  capabilities. Narrator announced `Custom switch, button, off`, followed
+  after Space by `Custom switch, button, on`; the stock switch likewise
+  announced `Stock Fluent switch, button, off` and then
+  `Stock Fluent switch, button, on`. No explicit announcement calls or
+  checkbox semantics were added.
+
+The runner now opts into Flutter's documented IAccessibleEx mode. A fresh
+Debug build of the full production app then verified these exact recap lines
+for focus and two successive Space activations per switch:
+
+| Switch | Initial focus | First Space | Second Space (restored) |
+| --- | --- | --- | --- |
+| Autostart in background | `Autostart in background, button, off` | `Autostart in background, button, on` | `Autostart in background, button, off` |
+| Keep running in background | `Keep running in background, button, on` | `Keep running in background, button, off` | `Keep running in background, button, on` |
+| Automatically check for updates | `Automatically check for updates, button, on` | `Automatically check for updates, button, off` | `Automatically check for updates, button, on` |
+| Show notifications | `Show notifications, button, on` | `Show notifications, button, off` | `Show notifications, button, on` |
+
+Appearance was announced as `Appearance System, button, collapsed`. The
+[saved speech recap](evidence/windows-iaccessibleex-switches.png) contains
+these announcements. The controls retain `toggled:` switch semantics. This
+resolves automatic state feedback for this Windows/Narrator/backend path;
+it does not establish NVDA or JAWS compatibility with the experimental mode.
+
+The broader native focus mismatch remains **open**. After settings return
+and restarting Narrator against the already-running app, painted keyboard
+focus moved through the catalog and menu, but the helper reported the pane
+or Update Hub's text instead. The [later speech recap](evidence/windows-menu-focus-gap.png)
+contained no control announcements. This occurred in a different session
+from the successful switch traversal and must not be treated as fixed by
+the backend change. Settings Escape visibly restored the Settings button's
+outline. The keyboard sequence Search → Tab to More options → Enter → Down
+to Uninstall → Enter → Enter on Cancel still closed the dialog and flyout
+and restored the visible More options outline; native accessibility focus
+restoration was not verified in that mismatched session. Narrator was
+closed at the end, and all four settings were restored.
+
+Reproduce the comparison from `apps/windows`:
+
+```powershell
+flutter run -d windows -t ../../audits/2026-11-01/windows_switch_comparison.dart
+```
+
+For a default-backend comparison, temporarily omit the runner's
+`set_accessibility_mode` call, rebuild, and restore the line afterward. This
+is an interactive diagnostic, not a passing automated acceptance test.
+
+Validation for this backend change: production Debug build succeeded;
+`dart analyze` on the comparison entry point and Windows `flutter analyze
+--no-pub` found no issues; the Windows `flutter test --no-pub` suite passed
+all 47 tests. The other six required workspace suites passed in the preceding
+remediation run; their production Dart sources were unchanged in this change.
+
 ## Reproducing the diagnostic evidence
 
 The adjacent `*_probe.dart` files are deliberately diagnostic collectors, not passing accessibility regression tests. They print captured layout exceptions and semantics/focus observations; an “All tests passed” runner line only means the collector completed. Read the printed findings.
