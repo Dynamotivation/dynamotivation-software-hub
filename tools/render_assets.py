@@ -9,6 +9,10 @@ dynamotivation.com:
 
 Every app supplies its own masters so the renderer stays app-agnostic:
   assets/setup-icon.svg   the installer mark (the .ico's inner drawing)
+  assets/app-icon.svg     optional: the same mark without the download badge. When
+                          present it replaces setup-icon.svg in the wizard artwork
+                          (side panel, corner glyph) and also renders assets/app.ico,
+                          the badge-free icon for the app exe; setup.ico keeps the badge.
   assets/full-logo.svg    the product roundel for the side panel ('double' layout)
   assets/logo.<png|jpg|webp>  optional raster logo; builds a full-logo.svg
                               substitute automatically ('single' layout)
@@ -58,6 +62,12 @@ def installer_mark(assets: Path) -> str:
     return inline_outer_svg(assets / "setup-icon.svg")
 
 
+def wizard_mark(assets: Path) -> str:
+    """The mark shown in the wizard: app-icon.svg (no badge) when supplied, else the installer mark."""
+    app_icon = assets / "app-icon.svg"
+    return inline_outer_svg(app_icon) if app_icon.exists() else installer_mark(assets)
+
+
 def raster_logo_svg(image_path: Path, tmp: Path) -> str:
     """Wrap a raster logo (PNG/WebP/JPEG) into a square SVG the renderer can inline."""
     im = Image.open(image_path).convert("RGBA")
@@ -104,14 +114,14 @@ def large_svg(assets: Path, args: argparse.Namespace, tmp: Path) -> str:
     inner = roundel_inner(assets, args, tmp)
     mark = 78  # upper and lower marks render at the same size
     if inner is None:
-        top = f'<g transform="translate(26,36) scale(1.16)">{installer_mark(assets)}</g>'
+        top = f'<g transform="translate(26,36) scale(1.16)">{wizard_mark(assets)}</g>'
         underline = ('<rect x="47" y="238" width="70" height="5" rx="2.5" fill="url(#badge)"/>')
         name_y = 269
         sub_y = 289
     else:
         top = (
             f'<g transform="translate(43,32) scale({78 / 315.23:.6f})">{inner}</g>'
-            f'<g transform="translate(43,134) scale({mark / 96:.6f})">{installer_mark(assets)}</g>'
+            f'<g transform="translate(43,134) scale({mark / 96:.6f})">{wizard_mark(assets)}</g>'
         )
         underline = '<rect x="47" y="226" width="70" height="5" rx="2.5" fill="url(#badge)"/>'
         name_y = 257
@@ -135,7 +145,7 @@ def small_svg(assets: Path, args: argparse.Namespace) -> str:
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="147" height="147" viewBox="0 0 147 147">
   <defs>{GRADIENT_DEFS}</defs>
   <rect width="147" height="147" fill="#ffffff"/>
-  <g transform="translate(11,11) scale(1.30)">{installer_mark(assets)}</g>
+  <g transform="translate(11,11) scale(1.30)">{wizard_mark(assets)}</g>
 </svg>"""
 
 
@@ -197,6 +207,13 @@ def main() -> None:
     subprocess.run([args.resvg, "--width", "256", "--height", "256", "--use-fonts-dir", font_dir, str(master), str(icon_png)], check=True)
     icon = Image.open(icon_png)
     icon.save(assets / "setup.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    # The app's own icon (no download badge) for the exe, from the optional app-icon.svg.
+    app_master = assets / "app-icon.svg"
+    if app_master.exists():
+        app_png = tmp / "app-icon.png"
+        subprocess.run([args.resvg, "--width", "256", "--height", "256", "--use-fonts-dir", font_dir, str(app_master), str(app_png)], check=True)
+        Image.open(app_png).save(assets / "app.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+        print("app.ico")
     if args.app_icon:
         args.app_icon.parent.mkdir(parents=True, exist_ok=True)
         args.app_icon.write_bytes((assets / "setup.ico").read_bytes())

@@ -1,6 +1,17 @@
 ; Shared Inno Setup 5.6.1 settings for every Dynamotivation Windows app.
 ; An app script defines AppId (as "{{GUID}", the doubled brace is Inno's escape), AppName, AppVersion, AppExeName, SourceDir, OutputBase
 ; and MinVersion before including this file. Compile with ISCC 5.6.1 (Unicode).
+;
+; MinVersion is the app's own Windows floor, e.g. "10.0.10240" for a Flutter app or
+; "6.1.7601" (Windows 7 SP1) for a GameMaker game. A single number applies to
+; Windows NT, which is what every supported Windows is; don't write "0,6.1.7601".
+;
+; Optional, for apps that are not 64-bit only (the default):
+;   #define AllowedArchitectures "x86 x64"   let 32-bit Windows install it too
+;   #define Is32BitApp                        install in 32-bit mode (no 64-bit
+;                                             mode); {sys} then resolves to SysWOW64
+;                                             on 64-bit Windows, where a 32-bit app
+;                                             looks for its DLLs
 
 #ifndef Publisher
   #define Publisher "Dynamotivation"
@@ -33,8 +44,13 @@ WizardImageFile={#AssetDir}\wizard-large-100.bmp,{#AssetDir}\wizard-large-125.bm
 WizardSmallImageFile={#AssetDir}\wizard-small-100.bmp,{#AssetDir}\wizard-small-125.bmp,{#AssetDir}\wizard-small-150.bmp,{#AssetDir}\wizard-small-175.bmp,{#AssetDir}\wizard-small-200.bmp,{#AssetDir}\wizard-small-225.bmp,{#AssetDir}\wizard-small-250.bmp
 PrivilegesRequired=lowest
 MinVersion={#MinVersion}
+#ifndef AllowedArchitectures
+  #define AllowedArchitectures "x64"
+#endif
+ArchitecturesAllowed={#AllowedArchitectures}
+#ifndef Is32BitApp
 ArchitecturesInstallIn64BitMode=x64
-ArchitecturesAllowed=x64
+#endif
 Compression=lzma2
 SolidCompression=yes
 CloseApplications=yes
