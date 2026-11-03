@@ -7,6 +7,7 @@ import 'catalog_snapshot.dart';
 import 'errors.dart';
 import 'icon_store.dart';
 import 'package_repository.dart';
+import 'self_update.dart';
 import 'settings_repository.dart';
 
 /// The operations a frontend can perform. Frontends depend on this class,
@@ -15,11 +16,14 @@ class HubUseCases {
   final PackageRepository _packages;
   final SettingsRepository _settings;
   final IconStore? _icons;
+  final SetupInstaller? _installer;
 
   // ignore: prefer_initializing_formals
-  HubUseCases(this._packages, this._settings, {IconStore? icons})
+  HubUseCases(this._packages, this._settings, {IconStore? icons, SetupInstaller? installer})
     // ignore: prefer_initializing_formals
-    : _icons = icons;
+    : _icons = icons,
+      // ignore: prefer_initializing_formals
+      _installer = installer;
 
   Future<List<SoftwarePackage>> listPackages() => _packages.all();
 
@@ -149,6 +153,55 @@ class HubUseCases {
 
   Future<SoftwarePackage> uninstallPackage(String id) =>
       _apply(id, (p) => p.uninstall());
+
+  /// The hub's own pending update from [packages], or null when the catalog
+  /// lists no newer release for itself or offers no download for this
+  /// device. [installedVersion] is the running app's release version.
+  SelfUpdateOffer? selfUpdateOffer({
+    required List<SoftwarePackage> packages,
+    required String installedVersion,
+  }) =>
+      evaluateSelfUpdate(
+        packages: packages,
+        installedVersion: installedVersion,
+      );
+
+  /// Stages the setup of [offer] in the app's own cache and returns the
+  /// staged file's path. Requires the composition root to have wired a
+  /// [SetupInstaller]; without one this is a [PackageActionRejected] that
+  /// says no installer is available.
+  Future<String> stageSelfUpdate(SelfUpdateOffer offer, {void Function(double progress)? onProgress}) async {
+    final installer = _installer;
+    if (installer == null) {
+      throw PackageActionRejected(
+        hubPackageId,
+        'No self-update installer is wired up.',
+      );
+    }
+    return installer.stage(offer, onProgress: onProgress);
+  }
+
+  /// Runs a staged setup silently. The frontend quits afterwards; the setup
+  /// closes a still-running hub itself.
+  Future<void> installSelfUpdate(String stagedFile) async {
+    final installer = _installer;
+    if (installer == null) {
+      throw PackageActionRejected(
+        hubPackageId,
+        'No self-update installer is wired up.',
+      );
+    }
+    await installer.install(stagedFile);
+  }
+
+  /// Deletes staged setups other than [keep], e.g. leftovers from failed
+  /// or superseded updates. The app may call it once at startup; failures
+  /// reach the caller.
+  Future<void> clearStagedSelfUpdates({String? keep}) async {
+    final installer = _installer;
+    if (installer == null) return;
+    await installer.clearStaged(keep: keep);
+  }
 
   /// Runs a lifecycle command on the stored package. Domain refusals are
   /// rethrown as [PackageActionRejected] so frontends only handle [HubException].

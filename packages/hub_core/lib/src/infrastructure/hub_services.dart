@@ -5,6 +5,7 @@ import 'catalog_cache.dart';
 import 'catalog_source.dart';
 import 'icon_cache.dart';
 import 'in_memory_settings_repository.dart';
+import 'setup_installer.dart';
 import 'website_package_repository.dart';
 
 /// Folder name under the OS per-user cache directory (see [cacheDirectory]).
@@ -19,7 +20,8 @@ class HubServices {
 
   HubServices({required this.useCases, required this.icons});
 
-  /// The website catalog, cached on disk, with icons cached beside it.
+  /// The website catalog, cached on disk, with icons cached beside it and
+  /// the hub's own updates staged in an `updates` folder inside the cache.
   /// [args] may carry `--catalog-url=<uri>`.
   factory HubServices.production(List<String> args) {
     final cache = cacheDirectory(hubCacheName);
@@ -36,6 +38,7 @@ class HubServices {
         ),
         InMemorySettingsRepository(),
         icons: icons,
+        installer: StagedSetupInstaller(cache),
       ),
       icons: icons,
     );
