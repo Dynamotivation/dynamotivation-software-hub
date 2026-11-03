@@ -14,3 +14,8 @@ workspace:
   - apps/macos
   - apps/windows
   - apps/ubuntu
+
+# local_notifier with an optional toast image on Windows (see the package's pubspec).
+dependency_overrides:
+  local_notifier:
+    path: packages/local_notifier

@@ -51,6 +51,42 @@ AppSettings _settings(bool autoCheck, [bool show = true]) =>
     AppSettings(autoCheckUpdates: autoCheck, showNotifications: show);
 
 void main() {
+  test('every successful fetch refreshes the window catalog before announcing',
+      () async {
+    final order = <String>[];
+    final watcher = _ScriptedWatcher(
+      results: [
+        CatalogUpdates(newPackages: [_named('New Tool', '1.0')]),
+      ],
+      errors: [null],
+    );
+    final service = UpdateWatchService(
+      watcher: watcher,
+      settings: () => _settings(true),
+      notify: ({required title, required body, String? iconUrl}) async {
+        order.add('notify');
+      },
+      onRefreshed: () async => order.add('refreshed'),
+      texts: _FixedTexts(),
+    );
+    await service.check();
+    expect(order, ['refreshed', 'notify']);
+  });
+
+  test('a failed fetch leaves the window catalog alone', () async {
+    var refreshed = 0;
+    final service = UpdateWatchService(
+      watcher: _ScriptedWatcher(results: [null], errors: [StateError('offline')]),
+      settings: () => _settings(true),
+      notify: ({required title, required body, String? iconUrl}) async {},
+      onRefreshed: () async => refreshed++,
+      onError: (_, _) {},
+      texts: _FixedTexts(),
+    );
+    await service.check();
+    expect(refreshed, 0);
+  });
+
   test(
     'a poll with changes notifies each new entry and each newer release',
     () async {
@@ -68,7 +104,7 @@ void main() {
       final service = UpdateWatchService(
         watcher: watcher,
         settings: () => _settings(true),
-        notify: ({required title, required body}) async {
+        notify: ({required title, required body, String? iconUrl}) async {
           shown.add('$title | $body');
         },
         texts: _FixedTexts(),
@@ -91,7 +127,7 @@ void main() {
     final service = UpdateWatchService(
       watcher: watcher,
       settings: () => _settings(false),
-      notify: ({required title, required body}) async {},
+      notify: ({required title, required body, String? iconUrl}) async {},
       texts: _FixedTexts(),
     );
 
@@ -111,7 +147,7 @@ void main() {
     final service = UpdateWatchService(
       watcher: watcher,
       settings: () => _settings(true, false),
-      notify: ({required title, required body}) async {
+      notify: ({required title, required body, String? iconUrl}) async {
         shown.add(title);
       },
       texts: _FixedTexts(),
@@ -133,7 +169,7 @@ void main() {
     final service = UpdateWatchService(
       watcher: watcher,
       settings: () => _settings(true),
-      notify: ({required title, required body}) async {
+      notify: ({required title, required body, String? iconUrl}) async {
         shown.add(title);
       },
       texts: _FixedTexts(),
@@ -151,7 +187,7 @@ void main() {
     final service = UpdateWatchService(
       watcher: watcher,
       settings: () => _settings(true),
-      notify: ({required title, required body}) async {},
+      notify: ({required title, required body, String? iconUrl}) async {},
       texts: _FixedTexts(),
       interval: const Duration(milliseconds: 20),
     );

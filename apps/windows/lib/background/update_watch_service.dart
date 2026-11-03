@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:hub_core/hub_core.dart';
 
 /// Signature the composition root wires to the OS notification surface.
+/// [iconUrl] is the catalog icon of the software the toast is about.
 typedef ShowNotification = Future<void> Function({
   required String title,
   required String body,
+  String? iconUrl,
 });
 
 /// The localized words the watch service needs. [BackgroundStrings]
@@ -29,6 +31,7 @@ class UpdateWatchService {
     required this.settings,
     required this.notify,
     required this.texts,
+    this.onRefreshed,
     this.interval = const Duration(hours: 1),
     this.onError = _reportError,
   });
@@ -40,6 +43,11 @@ class UpdateWatchService {
   final AppSettings Function() settings;
   final ShowNotification notify;
   final WatchTexts texts;
+
+  /// Called after every successful fetch, before anything is announced, so
+  /// the window's own catalog follows what the background just learned and
+  /// is up to date when it is reopened from the tray.
+  final Future<void> Function()? onRefreshed;
 
   final Duration interval;
 
@@ -77,25 +85,36 @@ class UpdateWatchService {
       onError(error, stack);
       return;
     }
+    try {
+      await onRefreshed?.call();
+    } catch (error, stack) {
+      onError(error, stack);
+    }
     if (updates == null || !settings.showNotifications) return;
 
     for (final package in updates.newPackages) {
       await _announce(
         title: texts.newSoftwareTitle,
         body: texts.newSoftwareBody(package.name),
+        iconUrl: package.iconUrl,
       );
     }
     for (final package in updates.versionUpdates) {
       await _announce(
         title: texts.updateNotificationTitle,
         body: texts.updateNotificationBody(package.name, package.latestVersion),
+        iconUrl: package.iconUrl,
       );
     }
   }
 
-  Future<void> _announce({required String title, required String body}) async {
+  Future<void> _announce({
+    required String title,
+    required String body,
+    String? iconUrl,
+  }) async {
     try {
-      await notify(title: title, body: body);
+      await notify(title: title, body: body, iconUrl: iconUrl);
     } catch (error, stack) {
       onError(error, stack);
     }

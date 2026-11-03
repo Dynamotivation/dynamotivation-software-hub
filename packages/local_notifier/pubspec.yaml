@@ -1,0 +1,37 @@
+name: local_notifier
+description: "local_notifier 0.1.6 (MIT, leanflutter) with an optional toast image on Windows. Vendored for the Dynamotivation Software Hub."
+version: 0.1.6
+publish_to: none
+
+platforms:
+  linux:
+  macos:
+  windows:
+
+topics:
+  - notifications
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.3.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  uuid: ">=3.0.7 <5.0.0"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mostly_reasonable_lints: ^0.1.1
+
+flutter:
+  plugin:
+    platforms:
+      linux:
+        pluginClass: LocalNotifierPlugin
+      macos:
+        pluginClass: LocalNotifierPlugin
+      windows:
+        pluginClass: LocalNotifierPlugin

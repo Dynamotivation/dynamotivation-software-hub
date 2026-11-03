@@ -363,12 +363,23 @@ class HubController extends ChangeNotifier {
     _recomputeHubUpdate(); // turning automatic updates on starts a pending download
   }
 
+  /// Adopts what the catalog source holds now, without fetching. The hourly
+  /// background check refreshes the source while the window is hidden; this
+  /// brings the controller (and so the reopened window) along.
+  Future<void> syncFromSource() async {
+    if (_disposed) return;
+    final fresh = await _useCases.listPackages();
+    if (_disposed) return;
+    _show(CatalogSnapshot(fresh, isFinal: true), null, first: false);
+  }
+
   Future<void> refresh() async {
     _isRefreshing = true;
     notifyListeners();
     try {
       await _useCases.refreshCatalog();
       _packages = await _useCases.listPackages();
+      _recomputeHubUpdate();
       onCatalogSynced?.call();
     } finally {
       _isRefreshing = false;

@@ -212,11 +212,22 @@ class StagedSetupInstaller implements SetupInstaller {
 
 const _applyScriptName = 'apply.cmd';
 
+/// How the Hub runs the setup of any app: no wizard, no message boxes, no
+/// restart, and no desktop icon. `/MERGETASKS` only switches the named task
+/// off; every other task keeps its default, so an app's required tasks (a
+/// runtime prerequisite) still run.
+const silentSetupArguments = [
+  '/VERYSILENT',
+  '/SUPPRESSMSGBOXES',
+  '/NORESTART',
+  '/MERGETASKS=!desktopicon',
+];
+
 /// The batch file that runs [setup] silently, deletes it, and, given [app],
 /// starts the hub again. Quoted paths survive spaces; `start ""` detaches.
 String applyScript({required String setup, String? app}) => [
   '@echo off',
-  '"$setup" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART',
+  '"$setup" ${silentSetupArguments.join(' ')}',
   'del /f /q "$setup"',
   if (app != null) 'start "" "$app"',
   '',

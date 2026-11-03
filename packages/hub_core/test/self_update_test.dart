@@ -225,7 +225,10 @@ void main() {
       const setup = r'C:\Users\A B\Cache\updates\setup-0.2.0.exe';
       const app = r'C:\Users\A B\Programs\hub.exe';
       final restart = applyScript(setup: setup, app: app);
-      expect(restart, contains('"$setup" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART'));
+      expect(
+        restart,
+        contains('"$setup" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /MERGETASKS=!desktopicon'),
+      );
       expect(restart, contains('del /f /q "$setup"'));
       expect(restart, contains('start "" "$app"'));
       expect(restart.indexOf('start ""'), greaterThan(restart.indexOf('/VERYSILENT')));

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_core/hub_core.dart';
@@ -10,6 +12,7 @@ import 'platform/windows_accessibility.dart';
 import 'background/background_service.dart';
 import 'background/background_strings.dart';
 import 'background/hub_notifications.dart';
+import 'background/notification_icons.dart';
 import 'background/tray_surface.dart';
 import 'background/update_watch_service.dart';
 import 'presentation/controllers/hub_controller.dart';
@@ -79,6 +82,12 @@ void main(List<String> args) async {
     onOpenHub: () => background.showHub(),
     onEnd: () => background.end(),
   );
+  final notificationIcons = NotificationIcons(
+    icons: services.icons,
+    directory: Directory(
+      '${cacheDirectory(hubCacheName).path}${Platform.pathSeparator}notification-icons',
+    ),
+  );
   final notifications = HubNotifications(
     onNotificationClicked: () => background.showHub(),
   );
@@ -91,8 +100,13 @@ void main(List<String> args) async {
     watch: UpdateWatchService(
       watcher: watcher,
       settings: () => controller.settings,
-      notify: ({required title, required body}) =>
-          notifications.show(title: title, body: body),
+      notify: ({required title, required body, iconUrl}) async =>
+          notifications.show(
+            title: title,
+            body: body,
+            imagePath: await notificationIcons.pngPath(iconUrl),
+          ),
+      onRefreshed: controller.syncFromSource,
       texts: strings,
     ),
   );
