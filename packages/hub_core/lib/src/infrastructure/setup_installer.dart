@@ -146,7 +146,7 @@ class StagedSetupInstaller implements SetupInstaller {
     try {
       await Process.start(
         file.path,
-        const ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'],
+        const [],
         mode: ProcessStartMode.detached,
       );
     } on ProcessException catch (e) {
