@@ -15,11 +15,13 @@ branded, per-user, per-DPI-crisp setup.
   Setup language follows the Windows display language (en/de).
 - **No platform tags, no badges** in the wizard. United brand artwork.
 - **One icon everywhere:** the app exe embeds the same `.ico` as the setup.
-- **Self-update, one pattern for every app:** the app downloads the setup, checks
-  its SHA-256, starts it as a normal interactive wizard and quits itself. Setup's own
-  "close applications" page is the fallback and its launch checkbox reopens the app.
-  No silent switches and no Pascal code in app scripts. The app clears the setups it
-  staged at startup; the uninstaller removes the app's data folder (`[UninstallDelete]`).
+- **Self-update, no code in app scripts:** the app downloads the setup into its own
+  cache folder and checks its SHA-256. Apps that run the setup themselves start it
+  after they have quit (a Hub-style app first shows "update ready", installs on
+  "restart" or on close, `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`, and reopens
+  itself from the app side); apps that hand over to the wizard start it as it is
+  and quit (the generator). Setup's own "close applications" page stays the fallback.
+  The uninstaller removes the app's data folder with `[UninstallDelete]`.
 
 ## Layout
 
