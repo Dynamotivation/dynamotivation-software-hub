@@ -51,10 +51,6 @@ class SelfUpdateOffer {
 /// release newer than [installedVersion] and offers a download for
 /// [platform]/[arch]. Device defaults come from dart:io; a frontend may
 /// pass them for tests or preview runs.
-/// The hub's own update from a catalog, if the catalog lists the hub with a
-/// release newer than [installedVersion] and offers a download for
-/// [platform]/[arch]. Device defaults come from dart:io; a frontend may
-/// pass them for tests or preview runs.
 SelfUpdateOffer? evaluateSelfUpdate({
   required List<SoftwarePackage> packages,
   required String installedVersion,
@@ -130,9 +126,9 @@ int compareVersions(String a, String b) {
   final right = _segments(b);
   final length = left.length > right.length ? left.length : right.length;
   for (var i = 0; i < length; i++) {
-    final comma = i < left.length ? left[i] : 0;
+    final current = i < left.length ? left[i] : 0;
     final other = i < right.length ? right[i] : 0;
-    if (comma != other) return comma.compareTo(other);
+    if (current != other) return current.compareTo(other);
   }
   return 0;
 }

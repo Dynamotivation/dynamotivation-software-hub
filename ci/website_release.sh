@@ -39,7 +39,12 @@ size="$(stat -c%s "$setup")"
 url="https://github.com/$GITHUB_REPOSITORY/releases/download/v$RELEASE_VERSION/$(basename "$setup")"
 released_on="$(gh release view "v$RELEASE_VERSION" --json publishedAt --jq '.publishedAt[:10]')"
 
+# The website token both clones and pushes; the job's own token cannot write there.
+export GH_TOKEN_HUB="$GH_TOKEN"
+export GH_TOKEN="$WEBSITE_RELEASE_DATA_TOKEN"
+gh auth setup-git
 gh repo clone "$WEBSITE_REPO" website -- --depth 1
+export GH_TOKEN="$GH_TOKEN_HUB"
 (
   cd website
   git config user.name 'hub-release-bot'
@@ -54,14 +59,14 @@ gh repo clone "$WEBSITE_REPO" website -- --depth 1
     echo "Website already lists $RELEASE_VERSION."
   else
     git commit -am "Release Dynamotivation Software Hub $RELEASE_VERSION"
-    git push origin "$branch"
+    git push --force origin "$branch"
     with_website_token() { GH_TOKEN="$WEBSITE_RELEASE_DATA_TOKEN" GH_REPO="$WEBSITE_REPO" "$@"; }
-    pr="$(with_website_token gh pr list --json number --jq '.[0].number // empty')"
+    pr="$(with_website_token gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
     if [[ -z "$pr" ]]; then
       with_website_token gh pr create --base main --head "$branch" \
         --title "Release Dynamotivation Software Hub $RELEASE_VERSION" \
         --body "Recorded by $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID."
-      pr="$(with_website_token gh pr list --json number --jq '.[0].number')"
+      pr="$(with_website_token gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
     fi
     with_website_token gh pr merge "$pr" --merge --delete-branch
   fi

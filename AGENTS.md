@@ -61,10 +61,17 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 - The wizard has no install-folder page and no language picker: the install path is fixed and the language follows the Windows UI language (`ShowLanguageDialog=no`). `installer/assets/setup-icon.svg` and `full-logo.svg` feed `render_assets.py`, which generates the per-DPI wizard BMPs and identical setup/app ICOs.
 - Known gaps: the new Linux cross-build pipeline is undergoing end-to-end verification. Wine 9 crashes while starting the Windows snapshot compiler; the pipeline pins Wine 11.21. Inno 5.6.1 high-DPI rendering and XP execution remain untested.
 
+## Self-update (Windows)
+- The Hub is a package on the website like any other (slug `dynamotivation-software-hub`, `hubPackageId`, page `content/portfolio/software/dynamotivation-software-hub.md`). It reads its own pending update from the catalog it already loads: `evaluateSelfUpdate` (hub_core) compares the catalog's newest release with the running version (`package_info_plus`, build suffix stripped) and picks the download for this platform and architecture.
+- The title-bar update pill calls `HubController.updateHub`: `HubUseCases.stageSelfUpdate` downloads the setup into the cache folder and verifies the catalog's SHA-256 (`SetupInstaller`, implemented in `infrastructure/setup_installer.dart`), `installSelfUpdate` starts it silently (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`) and the app quits through `quitForUpdate`. A bottom InfoBar shows progress while staging. Failures are `SetupUnavailable` / `SetupLaunchFailed` and are shown as toasts.
+- Staged setups are removed at every start (`clearStagedSelfUpdates`) and by the uninstaller (`[UninstallDelete]` in `installer-toolkit/setup/software-hub.iss`, which also removes the app data and cache folders and closes a running or tray-resident Hub).
+- Release path: after `ci/publish_release.sh`, `ci/website_release.sh` records the version, download, SHA-256 and `release-notes/<version>.md` highlights in the website's `data/releases.json` through `scripts/add_release.py` (PR merged automatically), then waits until the live catalog serves it. Secret `website_release_data_token` (Contents and Pull requests rw on dynamotivation.com) must exist in this repo. `ci/check_version.py` requires `release-notes/<version>.md`.
+- The setup download lives in this repository's GitHub Release, so the repository must stay public for devices to download it.
+- Known gap: the Hub also shows up in its own software list, because the website page is `exposed`.
+
 ## Errors
 - Never swallow errors. Use cases throw typed `HubException`s; the frontend maps them to localized text in its own `lib/presentation/errors.dart` (`describeError(l10n, error)`). Each frontend has its own copy because frontends never import each other.
 - User-initiated failures are shown in the UI (InfoBar, toast, or banner). Background probes that fail are reported via `FlutterError.reportError`, not hidden.
-- Known gap: the `hubUpdateVersion: '0.2.0'` literal in `apps/windows/lib/presentation/pages/software_hub_page.dart` is hardcoded, not from a source of truth.
 
 ## UI rules
 - Shortcuts are shown only via `hub_keys` (`withShortcut`), never as hardcoded "Ctrl+X" strings. The key bindings are defined in each app's `lib/presentation/shortcuts.dart`.
