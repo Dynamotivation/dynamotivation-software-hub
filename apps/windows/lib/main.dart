@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_images/hub_images.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
@@ -36,11 +37,25 @@ void main(List<String> args) async {
   final services = HubServices.production(args);
   final useCases = services.useCases;
 
+  // Leftover setups from failed or superseded self-updates are no good to
+  // anyone; the installer cleans too, but fresh-per-process is tidier.
+  try {
+    await useCases.clearStagedSelfUpdates();
+  } catch (error, stack) {
+    reportBackgroundError(error, stack);
+  }
+
+  // The version the catalog compares against is the release version without
+  // the pubspec build suffix (`0.1.11+1` -> `0.1.11`).
+  final packageInfo = await PackageInfo.fromPlatform();
+  final selfVersion = packageInfo.version.split('+').first;
+
   // The watcher's baseline follows what the window actually showed, so a
   // manual refresh never re-announces anything through the hourly watch.
   final watcher = CatalogUpdateWatcher(useCases);
   final controller = HubController(
     useCases,
+    selfVersion: selfVersion,
     onCatalogSynced: () async {
       try {
         await watcher.rebaseline();
@@ -89,6 +104,9 @@ void main(List<String> args) async {
       texts: strings,
     ),
   );
+  // Now that `background` exists, the controller can leave the app after the
+  // staged setup launched.
+  controller.quitForUpdate = () => background.end();
   await background.start();
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {

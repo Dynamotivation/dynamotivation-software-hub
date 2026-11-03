@@ -10,9 +10,23 @@ class HubController extends ChangeNotifier {
     this._useCases, {
     this.onCatalogSynced,
     this.departDuration = const Duration(milliseconds: 300),
+    this.selfVersion = '0.0.0',
+    this.quitForUpdate,
   });
 
   final HubUseCases _useCases;
+
+  /// The release version the running app knows of itself, from
+  /// `package_info_plus` in the composition root. Drives the hub's own
+  /// update comparison (`selfUpdateOffer`).
+  final String selfVersion;
+
+  /// Called right after the staged self-update setup was launched, so the
+  /// process leaves and the installer replaces it. The composition root
+  /// wires this once its background surface exists; unwired (design
+  /// previews), the app keeps running and the setup closes it itself
+  /// ([CloseApplications=yes] in the shared installer settings).
+  Future<void> Function()? quitForUpdate;
 
   /// Called once a catalog load the user saw completes: the startup load and
   /// every successful manual refresh. The background update watch uses it to
@@ -39,6 +53,20 @@ class HubController extends ChangeNotifier {
   bool _disposed = false;
   final Set<String> _loadingHistory = {};
   final Map<String, Object> _historyErrors = {};
+
+  SelfUpdateOffer? _hubUpdate;
+  bool _isStagingHubUpdate = false;
+  double _hubStageProgress = 0.0;
+
+  /// The hub's own pending update, or null when the catalog offers none for
+  /// this machine. Recomputed with every catalog view the controller shows.
+  SelfUpdateOffer? get hubUpdate => _hubUpdate;
+
+  /// True between pressing "Update Hub" and the setup launching.
+  bool get isStagingHubUpdate => _isStagingHubUpdate;
+
+  /// Download progress of the staged setup, 0 to 1, while staging.
+  double get hubStageProgress => _hubStageProgress;
 
   List<SoftwarePackage> get packages => _packages;
 
@@ -151,6 +179,7 @@ class HubController extends ChangeNotifier {
     }
     notifyListeners();
     loadSelectedHistory();
+    _recomputeHubUpdate();
   }
 
   /// Fetches the older releases of the selected package if the catalog listed
@@ -191,6 +220,50 @@ class HubController extends ChangeNotifier {
     }
   }
 
+  /// Downloads and verifies the hub's own setup, launches it silently and
+  /// then leaves the app through [quitForUpdate]; the setup closes a hub
+  /// that is still running itself ([CloseApplications=yes]). Progress is
+  /// available while staging through [hubStageProgress]; a failure is
+  /// rethrown for the page to present, like the other commands.
+  Future<void> updateHub() async {
+    final offer = _hubUpdate;
+    if (offer == null || _isStagingHubUpdate) return;
+    _isStagingHubUpdate = true;
+    _hubStageProgress = 0.0;
+    notifyListeners();
+    try {
+      final staged = await _useCases.stageSelfUpdate(
+        offer,
+        onProgress: (progress) {
+          _hubStageProgress = progress;
+          notifyListeners();
+        },
+      );
+      await _useCases.installSelfUpdate(staged);
+      await quitForUpdate?.call();
+    } finally {
+      _isStagingHubUpdate = false;
+      notifyListeners();
+    }
+  }
+
+  /// Asks the use cases whether the catalog offers the hub itself an update
+  /// for this device. A failure to compare (malformed entry) is not worth a
+  /// user error: the offer just stays absent.
+  void _recomputeHubUpdate() {
+    try {
+      _hubUpdate = _useCases.selfUpdateOffer(
+        packages: _packages,
+        installedVersion: selfVersion,
+      );
+    } catch (error) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, library: 'hub self-update offer'),
+      );
+      _hubUpdate = null;
+    }
+  }
+
   @override
   void dispose() {
     _disposed = true;
@@ -202,6 +275,7 @@ class HubController extends ChangeNotifier {
     _selectedId = package.id;
     notifyListeners();
     loadSelectedHistory();
+    _recomputeHubUpdate();
   }
 
   Future<void> updateSettings(AppSettings settings) async {

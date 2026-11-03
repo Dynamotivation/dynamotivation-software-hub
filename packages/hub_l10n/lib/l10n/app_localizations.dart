@@ -194,6 +194,36 @@ abstract class AppLocalizations {
   /// **'Update Hub'**
   String get updateHub;
 
+  /// No description provided for @hubUpdateStagingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating the Software Hub'**
+  String get hubUpdateStagingTitle;
+
+  /// No description provided for @hubUpdateStagingContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading Hub {version}, then it installs itself, closes the Hub and brings it back.'**
+  String hubUpdateStagingContent(String version);
+
+  /// No description provided for @hubUpdateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {percent}%'**
+  String hubUpdateDownloading(int percent);
+
+  /// No description provided for @errorSetupUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The update could not be downloaded. Check your connection and try again.'**
+  String get errorSetupUnavailable;
+
+  /// No description provided for @errorSetupLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The update setup could not be started.'**
+  String get errorSetupLaunchFailed;
+
   /// No description provided for @catalogSynchronized.
   ///
   /// In en, this message translates to:

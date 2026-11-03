@@ -222,6 +222,16 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     }
   }
 
+  /// Runs the hub's own update: stage, install, quit. Progress shows in the
+  /// persistent staging InfoBar (see build); a failure shows as a toast.
+  Future<void> _handleUpdateHub() async {
+    try {
+      await _controller.updateHub();
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
+  }
+
   void _handleLaunchPackage() {
     final package = _controller.selected;
     if (package == null) return;
@@ -273,12 +283,10 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                       isSettingsOpen: _isSettingsOpen,
                       onToggleSettings: _toggleSettings,
                       settingsFocusNode: _settingsButtonFocus,
-                      hubUpdateVersion: '0.2.0',
-                      onUpdateHub: () => _showInfo(
-                        title: context.l10n.hubUpdateTitle,
-                        content: context.l10n.hubUpdateReady('0.2.0'),
-                        severity: InfoBarSeverity.info,
-                      ),
+                      hubUpdateVersion: _controller.hubUpdate?.version,
+                      onUpdateHub: _controller.hubUpdate == null
+                          ? null
+                          : _handleUpdateHub,
                     ),
                     Expanded(
                       child: Padding(
@@ -402,7 +410,16 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                           child: child,
                         ),
                       ),
-                      child: _toast == null
+                      child: _controller.isStagingHubUpdate
+                          ? Semantics(
+                              liveRegion: true,
+                              key: const ValueKey('hub-staging'),
+                              child: _HubStagingInfoBar(
+                                version: _controller.hubUpdate?.version ?? '',
+                                progress: _controller.hubStageProgress,
+                              ),
+                            )
+                          : _toast == null
                           ? const SizedBox.shrink(key: ValueKey('none'))
                           : Semantics(
                               liveRegion: true,
@@ -434,6 +451,50 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                             ),
                     ),
                   ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The bottom-center InfoBar shown while the hub's own update is being
+/// downloaded and verified. Takes over the toast slot for the whole staging
+/// and install; the InfoBar itself stays until the app quits.
+class _HubStagingInfoBar extends StatelessWidget {
+  final String version;
+  final double progress;
+
+  const _HubStagingInfoBar({required this.version, required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return PhysicalModel(
+      color: Colors.transparent,
+      elevation: 8,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        // InfoBar is translucent; give it an opaque base so nothing shows
+        // through.
+        child: ColoredBox(
+          color: DynTokens.of(context).card,
+          child: InfoBar(
+            isLong: true,
+            severity: InfoBarSeverity.info,
+            title: Text(l10n.hubUpdateStagingTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.hubUpdateStagingContent(version)),
+                const SizedBox(height: 8),
+                Semantics(
+                  label: l10n.hubUpdateDownloading((progress * 100).round()),
+                  child: ProgressBar(value: progress * 100),
                 ),
               ],
             ),

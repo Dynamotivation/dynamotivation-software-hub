@@ -43,6 +43,25 @@
   "@updateHub": {
     "description": "Header pill label"
   },
+  "hubUpdateStagingTitle": "Updating the Software Hub",
+  "hubUpdateStagingContent": "Downloading Hub {version}, then it installs itself, closes the Hub and brings it back.",
+  "@hubUpdateStagingContent": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "hubUpdateDownloading": "Downloading… {percent}%",
+  "@hubUpdateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "errorSetupUnavailable": "The update could not be downloaded. Check your connection and try again.",
+  "errorSetupLaunchFailed": "The update setup could not be started.",
   "catalogSynchronized": "Catalog Synchronized",
   "catalogUpToDate": "All software package listings are up to date.",
   "packageUpdatedTitle": "{name} Updated",

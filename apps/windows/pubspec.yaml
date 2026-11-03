@@ -20,6 +20,7 @@ dependencies:
 
   fluent_ui: ^4.17.0
   window_manager: ^0.5.2
+  package_info_plus: ^8.3.0
   flutter_svg: ^2.3.0
   local_notifier: ^0.1.6
   system_tray: ^2.0.3

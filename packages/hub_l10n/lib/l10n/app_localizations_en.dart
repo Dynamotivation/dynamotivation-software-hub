@@ -62,6 +62,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateHub => 'Update Hub';
 
   @override
+  String get hubUpdateStagingTitle => 'Updating the Software Hub';
+
+  @override
+  String hubUpdateStagingContent(String version) {
+    return 'Downloading Hub $version, then it installs itself, closes the Hub and brings it back.';
+  }
+
+  @override
+  String hubUpdateDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get errorSetupUnavailable =>
+      'The update could not be downloaded. Check your connection and try again.';
+
+  @override
+  String get errorSetupLaunchFailed => 'The update setup could not be started.';
+
+  @override
   String get catalogSynchronized => 'Catalog Synchronized';
 
   @override
