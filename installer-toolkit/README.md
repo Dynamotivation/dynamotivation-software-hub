@@ -15,14 +15,11 @@ branded, per-user, per-DPI-crisp setup.
   Setup language follows the Windows display language (en/de).
 - **No platform tags, no badges** in the wizard. United brand artwork.
 - **One icon everywhere:** the app exe embeds the same `.ico` as the setup.
-- **Self-updates stage in the app's own data folder**, never the OS temp dir:
-  `<AppData>\Cache\updates\setup-<version>.exe`. The app script defines
-  `AppDataName` (folder under `%LOCALAPPDATA%`) in its app script, in sync
-  with the app's cache code. Before installing, the setup
-  deletes older staged copies; after running, a staged one deletes itself
-  (running exes cannot delete themselves, so a hidden cmd retries it). At
-  uninstall, `filesandordirs` clears the whole folder. See
-  `setup/software-hub.iss` for the pattern.
+- **Self-update, one pattern for every app:** the app downloads the setup, checks
+  its SHA-256, starts it as a normal interactive wizard and quits itself. Setup's own
+  "close applications" page is the fallback and its launch checkbox reopens the app.
+  No silent switches and no Pascal code in app scripts. The app clears the setups it
+  staged at startup; the uninstaller removes the app's data folder (`[UninstallDelete]`).
 
 ## Layout
 
