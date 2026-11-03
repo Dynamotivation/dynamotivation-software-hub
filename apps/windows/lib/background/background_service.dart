@@ -72,6 +72,7 @@ class BackgroundService with WindowListener {
   /// quit the process. When it is not running, nothing reacts to anything.
   Future<void> end() async {
     await tray.remove();
+    await controller.installStagedOnExit();
     await windowManager.destroy();
   }
 
@@ -84,7 +85,7 @@ class BackgroundService with WindowListener {
     if (controller.settings.keepRunningInBackground) {
       windowManager.hide();
     } else {
-      windowManager.destroy();
+      controller.installStagedOnExit().whenComplete(windowManager.destroy);
     }
   }
 }

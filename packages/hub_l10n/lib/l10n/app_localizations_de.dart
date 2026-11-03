@@ -62,14 +62,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get updateHub => 'Hub aktualisieren';
 
   @override
-  String get hubUpdateStagingTitle => 'Software-Hub wird aktualisiert';
-
-  @override
-  String hubUpdateStagingContent(String version) {
-    return 'Hub $version wird heruntergeladen; danach installiert es sich selbst, schließt den Hub und bringt ihn zurück.';
-  }
-
-  @override
   String hubUpdateDownloading(int percent) {
     return 'Wird geladen … $percent %';
   }
@@ -363,4 +355,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clearSearch => 'Suche löschen';
+
+  @override
+  String get hubUpdateRestart => 'Neu starten und aktualisieren';
+
+  @override
+  String hubUpdateReadyTooltip(String version) {
+    return 'Version $version ist heruntergeladen. Neu starten, um zu aktualisieren; sonst wird sie beim Schließen des Hubs installiert.';
+  }
 }

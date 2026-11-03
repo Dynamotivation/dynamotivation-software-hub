@@ -58,14 +58,26 @@ class HubController extends ChangeNotifier {
   bool _isStagingHubUpdate = false;
   double _hubStageProgress = 0.0;
 
+  /// Path of the verified setup of [_hubUpdate], once it is downloaded.
+  String? _stagedSetup;
+
+  /// The version a failed background download was for; not retried until a
+  /// newer version appears or the user asks.
+  String? _failedStageVersion;
+  bool _updateLaunched = false;
+
   /// The hub's own pending update, or null when the catalog offers none for
   /// this machine. Recomputed with every catalog view the controller shows.
   SelfUpdateOffer? get hubUpdate => _hubUpdate;
 
-  /// True between pressing "Update Hub" and the setup launching.
+  /// True while the setup of the pending update downloads.
   bool get isStagingHubUpdate => _isStagingHubUpdate;
 
-  /// Download progress of the staged setup, 0 to 1, while staging.
+  /// True once the pending update is downloaded and verified: it installs
+  /// with "restart to update" or, failing that, when the app closes.
+  bool get isHubUpdateReady => _stagedSetup != null && _hubUpdate != null;
+
+  /// Download progress of the setup, 0 to 1, while staging.
   double get hubStageProgress => _hubStageProgress;
 
   List<SoftwarePackage> get packages => _packages;
@@ -220,30 +232,76 @@ class HubController extends ChangeNotifier {
     }
   }
 
-  /// Downloads and verifies the hub's own setup, starts it as a wizard and
-  /// then leaves the app through [quitForUpdate]; the setup closes a hub
-  /// that is still running itself ([CloseApplications=yes]). Progress is
-  /// available while staging through [hubStageProgress]; a failure is
-  /// rethrown for the page to present, like the other commands.
+  /// "Restart to update": installs the downloaded update (downloading it
+  /// first if that has not happened yet), and leaves the app through
+  /// [quitForUpdate]; the setup runs once the process is gone and opens the
+  /// hub again. A failed download is rethrown for the page to present.
   Future<void> updateHub() async {
-    final offer = _hubUpdate;
-    if (offer == null || _isStagingHubUpdate) return;
+    if (_hubUpdate == null || _isStagingHubUpdate || _updateLaunched) return;
+    if (_stagedSetup == null) await _stageHubUpdate(_hubUpdate!);
+    final staged = _stagedSetup;
+    if (staged == null) return;
+    await _useCases.installSelfUpdate(staged, restart: true);
+    _updateLaunched = true;
+    await quitForUpdate?.call();
+  }
+
+  /// Called as the process ends (window closed without a tray, or the tray's
+  /// End): a downloaded update installs now, silently, without reopening.
+  /// Failures are reported, never block quitting.
+  Future<void> installStagedOnExit() async {
+    final staged = _stagedSetup;
+    if (staged == null || _hubUpdate == null || _updateLaunched) return;
+    _updateLaunched = true;
+    try {
+      await _useCases.installSelfUpdate(staged, restart: false);
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'hub self-update',
+        ),
+      );
+    }
+  }
+
+  Future<void> _stageHubUpdate(SelfUpdateOffer offer) async {
     _isStagingHubUpdate = true;
     _hubStageProgress = 0.0;
     notifyListeners();
     try {
-      final staged = await _useCases.stageSelfUpdate(
+      _stagedSetup = await _useCases.stageSelfUpdate(
         offer,
         onProgress: (progress) {
           _hubStageProgress = progress;
           notifyListeners();
         },
       );
-      await _useCases.installSelfUpdate(staged);
-      await quitForUpdate?.call();
+      _failedStageVersion = null;
+    } catch (_) {
+      _failedStageVersion = offer.version;
+      rethrow;
     } finally {
       _isStagingHubUpdate = false;
       notifyListeners();
+    }
+  }
+
+  /// With automatic updates on, a pending update downloads in the background
+  /// as soon as the catalog offers it. Nobody is waiting, so a failure is
+  /// reported, not shown.
+  Future<void> _stageInBackground(SelfUpdateOffer offer) async {
+    try {
+      await _stageHubUpdate(offer);
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'hub self-update download',
+        ),
+      );
     }
   }
 
@@ -251,8 +309,9 @@ class HubController extends ChangeNotifier {
   /// for this device. A failure to compare (malformed entry) is not worth a
   /// user error: the offer just stays absent.
   void _recomputeHubUpdate() {
+    final SelfUpdateOffer? offer;
     try {
-      _hubUpdate = _useCases.selfUpdateOffer(
+      offer = _useCases.selfUpdateOffer(
         packages: _packages,
         installedVersion: selfVersion,
       );
@@ -261,6 +320,25 @@ class HubController extends ChangeNotifier {
         FlutterErrorDetails(exception: error, library: 'hub self-update offer'),
       );
       _hubUpdate = null;
+      return;
+    }
+    if (offer?.version != _hubUpdate?.version) _stagedSetup = null;
+    _hubUpdate = offer;
+    if (offer == null) {
+      // Nothing pending: whatever is staged is stale (an update that went
+      // through, or one the website withdrew).
+      if (!_updateLaunched) {
+        _useCases.clearStagedSelfUpdates().catchError((Object error, StackTrace stack) {
+          FlutterError.reportError(
+            FlutterErrorDetails(exception: error, stack: stack, library: 'hub self-update cleanup'),
+          );
+        });
+      }
+    } else if (_settings.autoCheckUpdates &&
+        _stagedSetup == null &&
+        !_isStagingHubUpdate &&
+        _failedStageVersion != offer.version) {
+      _stageInBackground(offer);
     }
   }
 
@@ -282,6 +360,7 @@ class HubController extends ChangeNotifier {
     _settings = settings;
     notifyListeners();
     await _useCases.saveSettings(settings);
+    _recomputeHubUpdate(); // turning automatic updates on starts a pending download
   }
 
   Future<void> refresh() async {

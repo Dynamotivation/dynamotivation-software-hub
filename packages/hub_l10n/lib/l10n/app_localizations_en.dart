@@ -62,14 +62,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateHub => 'Update Hub';
 
   @override
-  String get hubUpdateStagingTitle => 'Updating the Software Hub';
-
-  @override
-  String hubUpdateStagingContent(String version) {
-    return 'Downloading Hub $version, then it installs itself, closes the Hub and brings it back.';
-  }
-
-  @override
   String hubUpdateDownloading(int percent) {
     return 'Downloading… $percent%';
   }
@@ -360,4 +352,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearSearch => 'Clear search';
+
+  @override
+  String get hubUpdateRestart => 'Restart to update';
+
+  @override
+  String hubUpdateReadyTooltip(String version) {
+    return 'Version $version is downloaded. Restart to update; otherwise it installs when you close the Hub.';
+  }
 }

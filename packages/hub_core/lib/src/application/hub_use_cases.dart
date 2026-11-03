@@ -181,9 +181,9 @@ class HubUseCases {
     return installer.stage(offer, onProgress: onProgress);
   }
 
-  /// Starts a staged setup as a normal wizard. The frontend quits afterwards; the setup
-  /// closes a still-running hub itself.
-  Future<void> installSelfUpdate(String stagedFile) async {
+  /// Runs a staged setup silently once the frontend has quit (the setup then
+  /// finds no running Hub), and with [restart] opens the Hub again afterwards.
+  Future<void> installSelfUpdate(String stagedFile, {required bool restart}) async {
     final installer = _installer;
     if (installer == null) {
       throw PackageActionRejected(
@@ -191,7 +191,7 @@ class HubUseCases {
         'No self-update installer is wired up.',
       );
     }
-    await installer.install(stagedFile);
+    await installer.install(stagedFile, restart: restart);
   }
 
   /// Deletes staged setups other than [keep], e.g. leftovers from failed

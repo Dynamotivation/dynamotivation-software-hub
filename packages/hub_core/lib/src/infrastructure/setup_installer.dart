@@ -16,9 +16,7 @@ typedef SetupDownload =
       void Function(int bytes, int? total)? onProgress,
     });
 
-/// The staging name of a setup. The installer's cleanup patterns
-/// (`setup-*.exe` inside the double update folder) match on this prefix, so
-/// it must not change without the installer moving too.
+/// The staging name of a setup.
 String stagedSetupName(String version) {
   final safe = version.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '-');
   return 'setup-$safe.exe';
@@ -36,9 +34,8 @@ String fileNameOf(String p) {
 }
 
 /// The staging folder name, below the hub's own cache directory (not the
-/// OS temp directory that Windows sweeps). The installer scripts clean both
-/// here and in the cache (`installer-toolkit/setup/software-hub.iss`), so
-/// the path must stay `Cache\updates`.
+/// OS temp directory that Windows sweeps). The uninstaller removes the whole
+/// cache folder.
 const _updatesFolderName = 'updates';
 
 /// Runs the hub's own updates with the real installer. Staged setups live
@@ -76,9 +73,17 @@ class StagedSetupInstaller implements SetupInstaller {
       throw SetupUnavailable(uri, 'The catalog carries no 64-hex sha256.');
     }
     await _updatesDir.create(recursive: true);
-    await _removeStaleExcept(keepName: stagedSetupName(offer.version));
-
     final name = stagedSetupName(offer.version);
+    await _removeStaleExcept(keepName: name);
+
+    // A setup staged earlier (downloaded in the background, not installed
+    // yet) is reused while it is still the file the catalog promises.
+    final existing = _staged(name);
+    if (await existing.exists() &&
+        await _digestOf(existing) == link.sha256.toLowerCase()) {
+      onProgress?.call(1.0);
+      return existing.path;
+    }
     final tmp = _staged('$name.part');
     int written;
     try {
@@ -131,8 +136,12 @@ class StagedSetupInstaller implements SetupInstaller {
     return target.path;
   }
 
+  /// The apply script is the only moving part: it runs the setup silently
+  /// (the app has quit by then, so no file is locked), removes the setup,
+  /// and with [restart] opens the hub again. Installer scripts stay free of
+  /// code this way, the same for every app.
   @override
-  Future<void> install(String stagedFile) async {
+  Future<void> install(String stagedFile, {required bool restart}) async {
     if (!Platform.isWindows) {
       throw SetupLaunchFailed(
         stagedFile,
@@ -143,12 +152,21 @@ class StagedSetupInstaller implements SetupInstaller {
     if (!await file.exists()) {
       throw SetupLaunchFailed(stagedFile, 'The staged setup is gone.');
     }
+    final script = _staged(_applyScriptName);
     try {
+      await script.writeAsString(
+        applyScript(
+          setup: file.path,
+          app: restart ? Platform.resolvedExecutable : null,
+        ),
+      );
       await Process.start(
-        file.path,
-        const [],
+        'cmd.exe',
+        ['/d', '/c', script.path],
         mode: ProcessStartMode.detached,
       );
+    } on FileSystemException catch (e) {
+      throw SetupLaunchFailed(stagedFile, e.message);
     } on ProcessException catch (e) {
       throw SetupLaunchFailed(stagedFile, e.message);
     }
@@ -169,7 +187,8 @@ class StagedSetupInstaller implements SetupInstaller {
       final name = fileNameOf(entry.path);
       final stale =
           (name.startsWith('setup-') && name.endsWith('.exe') && name != keepName) ||
-          name.endsWith('.part');
+          name.endsWith('.part') ||
+          name == _applyScriptName;
       if (stale) {
         await _deleteIgnoringFailure(entry);
       }
@@ -190,6 +209,18 @@ class StagedSetupInstaller implements SetupInstaller {
     }
   }
 }
+
+const _applyScriptName = 'apply.cmd';
+
+/// The batch file that runs [setup] silently, deletes it, and, given [app],
+/// starts the hub again. Quoted paths survive spaces; `start ""` detaches.
+String applyScript({required String setup, String? app}) => [
+  '@echo off',
+  '"$setup" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART',
+  'del /f /q "$setup"',
+  if (app != null) 'start "" "$app"',
+  '',
+].join('\r\n');
 
 /// Length of a hexadecimal SHA-256 digest.
 const sha256HashLength = 64;

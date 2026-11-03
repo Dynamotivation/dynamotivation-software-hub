@@ -194,18 +194,6 @@ abstract class AppLocalizations {
   /// **'Update Hub'**
   String get updateHub;
 
-  /// No description provided for @hubUpdateStagingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Updating the Software Hub'**
-  String get hubUpdateStagingTitle;
-
-  /// No description provided for @hubUpdateStagingContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading Hub {version}, then it installs itself, closes the Hub and brings it back.'**
-  String hubUpdateStagingContent(String version);
-
   /// No description provided for @hubUpdateDownloading.
   ///
   /// In en, this message translates to:
@@ -697,6 +685,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear search'**
   String get clearSearch;
+
+  /// Header pill label once the update is downloaded
+  ///
+  /// In en, this message translates to:
+  /// **'Restart to update'**
+  String get hubUpdateRestart;
+
+  /// Tooltip of the header pill once the update is downloaded
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is downloaded. Restart to update; otherwise it installs when you close the Hub.'**
+  String hubUpdateReadyTooltip(String version);
 }
 
 class _AppLocalizationsDelegate

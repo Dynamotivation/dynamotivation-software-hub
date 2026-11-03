@@ -37,14 +37,6 @@ void main(List<String> args) async {
   final services = HubServices.production(args);
   final useCases = services.useCases;
 
-  // Leftover setups from failed or superseded self-updates are no good to
-  // anyone; the installer cleans too, but fresh-per-process is tidier.
-  try {
-    await useCases.clearStagedSelfUpdates();
-  } catch (error, stack) {
-    reportBackgroundError(error, stack);
-  }
-
   // The version the catalog compares against is the release version without
   // the pubspec build suffix (`0.1.11+1` -> `0.1.11`).
   final packageInfo = await PackageInfo.fromPlatform();

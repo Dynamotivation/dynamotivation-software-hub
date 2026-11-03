@@ -220,7 +220,51 @@ void main() {
     });
   });
 
+  group('apply script', () {
+    test('runs the setup silently, removes it, and reopens only on restart', () {
+      const setup = r'C:\Users\A B\Cache\updates\setup-0.2.0.exe';
+      const app = r'C:\Users\A B\Programs\hub.exe';
+      final restart = applyScript(setup: setup, app: app);
+      expect(restart, contains('"$setup" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART'));
+      expect(restart, contains('del /f /q "$setup"'));
+      expect(restart, contains('start "" "$app"'));
+      expect(restart.indexOf('start ""'), greaterThan(restart.indexOf('/VERYSILENT')));
+
+      final onClose = applyScript(setup: setup);
+      expect(onClose, isNot(contains('start ""')));
+    });
+  });
+
   group('staging', () {
+    test('a verified setup staged earlier is reused, not downloaded again', () async {
+      final body = [5, 6, 7];
+      final link = DownloadLink(
+        platform: 'windows',
+        arch: 'x64',
+        url: 'https://example.com/s.exe',
+        sha256: sha256.convert(body).toString(),
+        size: body.length,
+      );
+      var downloads = 0;
+      final installer = StagedSetupInstaller(
+        cache,
+        download: (uri, sink, {onProgress}) {
+          downloads++;
+          return serve(body)(uri, sink, onProgress: onProgress);
+        },
+      );
+      final first = await installer.stage(offerOf(link));
+      final second = await installer.stage(offerOf(link));
+      expect(second, first);
+      expect(downloads, 1);
+
+      // A staged file that no longer matches is downloaded again.
+      File(first).writeAsBytesSync([0]);
+      await installer.stage(offerOf(link));
+      expect(downloads, 2);
+      expect(File(first).readAsBytesSync(), body);
+    });
+
     test('downloading into Cache\\updates, digest and size verified', () async {
       final body = [1, 2, 3, 4];
       final expected = sha256.convert(body).toString();
