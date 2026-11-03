@@ -181,7 +181,7 @@ class HubUseCases {
     return installer.stage(offer, onProgress: onProgress);
   }
 
-  /// Runs a staged setup silently. The frontend quits afterwards; the setup
+  /// Starts a staged setup as a normal wizard. The frontend quits afterwards; the setup
   /// closes a still-running hub itself.
   Future<void> installSelfUpdate(String stagedFile) async {
     final installer = _installer;

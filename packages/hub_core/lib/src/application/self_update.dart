@@ -9,7 +9,7 @@ const hubPackageId = 'dynamotivation-software-hub';
 
 /// How the hub's next version gets in: [stage] downloads and verifies the
 /// newest setup into the app's own staging folder, [install] runs it
-/// silently (callers quit the app right after), [clearStaged] removes
+/// as a wizard (callers quit the app right after), [clearStaged] removes
 /// staged leftovers. Implemented against the real installer with dart:io;
 /// tests supply a fake.
 abstract interface class SetupInstaller {
@@ -22,7 +22,7 @@ abstract interface class SetupInstaller {
     void Function(double progress)? onProgress,
   });
 
-  /// Runs a staged setup silently. Never blocks for the setup process.
+  /// Starts a staged setup (a normal wizard). Never blocks for the setup process.
   Future<void> install(String stagedFile);
 
   /// Deletes every staged, unfinished or superseded setup except [keep].

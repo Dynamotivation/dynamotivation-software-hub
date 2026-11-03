@@ -220,7 +220,7 @@ class HubController extends ChangeNotifier {
     }
   }
 
-  /// Downloads and verifies the hub's own setup, launches it silently and
+  /// Downloads and verifies the hub's own setup, starts it as a wizard and
   /// then leaves the app through [quitForUpdate]; the setup closes a hub
   /// that is still running itself ([CloseApplications=yes]). Progress is
   /// available while staging through [hubStageProgress]; a failure is

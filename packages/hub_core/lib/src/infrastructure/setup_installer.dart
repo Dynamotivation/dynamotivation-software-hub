@@ -136,7 +136,7 @@ class StagedSetupInstaller implements SetupInstaller {
     if (!Platform.isWindows) {
       throw SetupLaunchFailed(
         stagedFile,
-        'The silent installer flow only exists on Windows.',
+        'Running a staged setup only exists on Windows.',
       );
     }
     final file = File(stagedFile);
