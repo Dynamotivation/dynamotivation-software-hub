@@ -7,6 +7,7 @@ import subprocess
 
 
 MANIFEST = "apps/windows/pubspec.yaml"
+NOTES = "release-notes"
 
 
 def release_version(manifest):
@@ -17,6 +18,18 @@ def release_version(manifest):
     if any(str(int(part)) != part for part in version.split(".")):
         raise ValueError("Version components must not contain leading zeroes.")
     return version
+
+
+def require_release_notes(version):
+    """The version's highlights, as they reach the website catalog."""
+    notes = Path(NOTES) / f"{version}.md"
+    try:
+        content = notes.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ValueError(f"{notes} is missing; every release records its highlights there.") from error
+    if not content.strip():
+        raise ValueError(f"{notes} is empty.")
+    return notes
 
 
 def require_increment(current, previous):
@@ -37,7 +50,8 @@ def main():
         require_increment(version, release_version(manifest))
     elif os.environ.get("GITHUB_EVENT_NAME") != "workflow_dispatch":
         raise ValueError("The version comparison base is missing.")
-    print(f"Release version: {version}")
+    require_release_notes(version)
+    print(f"Release version: {version} ({NOTES}/{version}.md)")
     if output := os.environ.get("GITHUB_OUTPUT"):
         with open(output, "a", encoding="utf-8") as stream:
             stream.write(f"version={version}\ntag=v{version}\n")

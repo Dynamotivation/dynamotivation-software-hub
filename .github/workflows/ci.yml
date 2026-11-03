@@ -151,3 +151,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ needs.version.outputs.version }}
         run: bash ci/publish_release.sh
+
+      - name: Record the release on the website
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WEBSITE_RELEASE_DATA_TOKEN: ${{ secrets.website_release_data_token }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: bash ci/website_release.sh
