@@ -108,6 +108,15 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // An installer (through the Restart Manager) or a logoff/shutdown asks the
+  // app to end with WM_ENDSESSION. The app answers an ordinary close by
+  // hiding to the tray (window_manager's preventClose), so without this a
+  // Hub sleeping in the tray could never be closed by Setup. Leave the
+  // message loop; the runner then ends the process.
+  if (message == WM_ENDSESSION && wparam != 0) {
+    PostQuitMessage(0);
+    return 0;
+  }
   if (message == WM_GETOBJECT && static_cast<LONG>(lparam) == OBJID_ALERT &&
       accessibility_alert_) {
     return LresultFromObject(IID_IAccessible, wparam, accessibility_alert_.Get());
