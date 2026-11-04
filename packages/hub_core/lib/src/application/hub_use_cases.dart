@@ -157,13 +157,18 @@ class HubUseCases {
   /// The hub's own pending update from [packages], or null when the catalog
   /// lists no newer release for itself or offers no download for this
   /// device. [installedVersion] is the running app's release version.
+  /// [platform] and [arch] default to this device; callers may pin them.
   SelfUpdateOffer? selfUpdateOffer({
     required List<SoftwarePackage> packages,
     required String installedVersion,
+    String? platform,
+    String? arch,
   }) =>
       evaluateSelfUpdate(
         packages: packages,
         installedVersion: installedVersion,
+        platform: platform,
+        arch: arch,
       );
 
   /// Stages the setup of [offer] in the app's own cache and returns the

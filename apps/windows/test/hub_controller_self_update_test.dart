@@ -70,6 +70,8 @@ Future<HubController> _controller(
       installer: installer,
     ),
     selfVersion: selfVersion,
+    selfPlatform: 'windows',
+    selfArch: 'x64',
   );
 }
 

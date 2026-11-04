@@ -11,6 +11,8 @@ class HubController extends ChangeNotifier {
     this.onCatalogSynced,
     this.departDuration = const Duration(milliseconds: 300),
     this.selfVersion = '0.0.0',
+    this.selfPlatform,
+    this.selfArch,
     this.quitForUpdate,
   });
 
@@ -20,6 +22,11 @@ class HubController extends ChangeNotifier {
   /// `package_info_plus` in the composition root. Drives the hub's own
   /// update comparison (`selfUpdateOffer`).
   final String selfVersion;
+
+  /// Platform and architecture the pending update is looked up for; null
+  /// means this device. Tests pin them so they do not depend on the host.
+  final String? selfPlatform;
+  final String? selfArch;
 
   /// Called right after the staged self-update setup was launched, so the
   /// process leaves and the installer replaces it. The composition root
@@ -314,6 +321,8 @@ class HubController extends ChangeNotifier {
       offer = _useCases.selfUpdateOffer(
         packages: _packages,
         installedVersion: selfVersion,
+        platform: selfPlatform,
+        arch: selfArch,
       );
     } catch (error) {
       FlutterError.reportError(
