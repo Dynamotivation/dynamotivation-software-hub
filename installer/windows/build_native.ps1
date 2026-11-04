@@ -36,7 +36,7 @@ $crt = Get-ChildItem "$vs\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -Directory |
 if (-not $crt) { throw 'The VC++ runtime was not found.' }
 Copy-Item "$($crt.FullName)\*.dll" "$Out\bundle"
 
-$build = "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" && cl /nologo /EHsc /O2 /MT /Fo`"$Out\obj\`" " +
+$build = "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" && cl /nologo /EHsc /O2 /MT /Fo`"$Out\obj\sign_bridge.obj`" " +
   "/Fe`"$Out\native\hub_sign_bridge.exe`" `"$root\installer\windows\sign_bridge.cpp`" ws2_32.lib"
 cmd /c $build
 if ($LASTEXITCODE) { throw 'Compiling the signing bridge failed.' }
