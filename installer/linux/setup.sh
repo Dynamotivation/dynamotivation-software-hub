@@ -3,6 +3,9 @@ set -euo pipefail
 
 # Ubuntu 24.04, x86-64. Installs only what signing and packaging need: Wine runs Inno
 # Setup and the signing bridge. The app itself is built on the Windows runner.
+root=$(cd "$(dirname "$0")/../.." && pwd)
+# Wine creates its prefix folder but not the folders above it.
+mkdir -p "$root/build"
 sudo dpkg --add-architecture i386
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://dl.winehq.org/wine-builds/winehq.key |
