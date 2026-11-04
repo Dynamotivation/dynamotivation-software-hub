@@ -1,16 +1,16 @@
 import '../domain/software_package.dart';
+import 'announcement_store.dart';
 import 'hub_use_cases.dart';
 
-/// What changed between two consecutive catalog loads, from the hub
-/// user's point of view.
+/// What the catalog offers that the user has not been told about yet.
 class CatalogUpdates {
-  /// Entries that appeared in the catalog. Empty when nothing was added.
+  /// Entries the user has never been told about. Empty when none.
   final List<SoftwarePackage> newPackages;
 
-  /// Entries that stayed but publish a different newest release version
-  /// than before. The website lists releases newest first and versions are
-  /// unique, so any difference counts, even a correction that moved the
-  /// published version downwards.
+  /// Entries the user knows, whose newest release version is one they have
+  /// not been told about. Versions are unique per release, so any new
+  /// version counts, even a correction that moved the published version
+  /// downwards.
   final List<SoftwarePackage> versionUpdates;
 
   const CatalogUpdates({
@@ -19,66 +19,119 @@ class CatalogUpdates {
   });
 
   bool get isEmpty => newPackages.isEmpty && versionUpdates.isEmpty;
+
+  /// How many different software entries are affected.
+  int get count => newPackages.length + versionUpdates.length;
+
+  /// Every affected entry, new ones first.
+  List<SoftwarePackage> get packages => [...newPackages, ...versionUpdates];
 }
 
-/// Compares two catalog loads as the catalog user experiences them:
-/// completely new packages, and packages that gained a different newest
-/// release. Entries that disappeared are not reported; they vanish from the
-/// website without a user-facing trail worth announcing.
-CatalogUpdates diffCatalog(
-  List<SoftwarePackage> before,
-  List<SoftwarePackage> after,
-) {
-  final beforeById = {for (final p in before) p.id: p};
-  return CatalogUpdates(
-    newPackages: [
-      for (final p in after)
-        if (!beforeById.containsKey(p.id)) p,
-    ],
-    versionUpdates: [
-      for (final p in after)
-        if (beforeById[p.id] case final previous? when previous.latestVersion != p.latestVersion)
-          p,
-    ],
-  );
-}
+/// What of [catalog] is not in [announced] yet: ids never announced are new,
+/// known ids with an unannounced newest version are updates. Entries that
+/// disappeared are not reported; they vanish from the website without a
+/// user-facing trail worth announcing.
+CatalogUpdates unannouncedUpdates(
+  List<SoftwarePackage> catalog,
+  Announced announced,
+) => CatalogUpdates(
+  newPackages: [
+    for (final p in catalog)
+      if (!announced.containsKey(p.id)) p,
+  ],
+  versionUpdates: [
+    for (final p in catalog)
+      if (announced[p.id] case final versions?
+          when !versions.contains(p.latestVersion))
+        p,
+  ],
+);
 
-/// Tracks the catalog across scheduled polls and reports what changed.
+/// Finds what is new in the catalog since the user was last told, and
+/// remembers what was told.
 ///
-/// The watcher is stateless across processes: notifications describe what
-/// changed while the hub was running today. A session that starts while the
-/// catalog is unavailable keeps no baseline, so the first successful poll
-/// settles one instead of announcing every entry as new.
+/// The memory is an [AnnouncementStore], so it survives restarts: relaunching
+/// the app (including the restart after a self-update) announces only what
+/// the user has not been told about. The very first run, with nothing stored,
+/// settles the current catalog as the baseline and announces nothing; so does
+/// a stored state that cannot be read. Watching only reports; callers decide
+/// how to tell the user and then call [markAnnounced].
+///
+/// The hub's own entry is not part of the catalog the watcher sees
+/// ([HubUseCases.listPackages]), so the app updating itself is never an
+/// announcement.
 class CatalogUpdateWatcher {
-  CatalogUpdateWatcher(this._useCases);
+  CatalogUpdateWatcher(this._useCases, {AnnouncementStore? store})
+    : _store = store ?? InMemoryAnnouncementStore();
 
   final HubUseCases _useCases;
+  final AnnouncementStore _store;
 
-  List<SoftwarePackage>? _baseline;
+  Announced? _announced;
+  Future<void> _tail = Future.value();
 
-  /// True once a baseline exists (after [poll] or [rebaseline] succeeded).
-  bool get hasBaseline => _baseline != null;
-
-  /// Runs one scheduled check: fetches the catalog from its source and
-  /// reports the changes against the previous successful check. Returns
-  /// null on the first successful check, which only settles the baseline.
-  /// Throws [CatalogUnavailable] when the catalog cannot be fetched or
-  /// parsed; the caller decides how that failure is reported and the
-  /// baseline stays untouched.
-  Future<CatalogUpdates?> poll() async {
-    await _useCases.refreshCatalog();
-    final catalog = await _useCases.listPackages();
-    final previous = _baseline;
-    final result = previous == null ? null : diffCatalog(previous, catalog);
-    _baseline = catalog;
+  /// Runs [operation] after every earlier one, so concurrent callers
+  /// (startup check, hourly poll, manual refresh) cannot interleave their
+  /// reads and writes of the stored state.
+  Future<T> _serial<T>(Future<T> Function() operation) {
+    final result = _tail.then((_) => operation());
+    _tail = result.then<void>((_) {}, onError: (Object _) {});
     return result;
   }
 
-  /// Replaces the baseline with the currently loaded catalog without
-  /// reporting anything. The frontend calls this after the user saw a
-  /// refresh in the main window, so the next poll does not re-announce
-  /// what was already visible on screen.
-  Future<void> rebaseline() async {
-    _baseline = await _useCases.listPackages();
+  Future<Announced?> _state() async => _announced ??= await _store.load();
+
+  /// Reports what [catalog] holds beyond the stored state; settles a silent
+  /// baseline when nothing was stored yet.
+  Future<CatalogUpdates> _evaluate(List<SoftwarePackage> catalog) async {
+    final announced = await _state();
+    if (announced == null) {
+      // An empty catalog says nothing: wait for a real one to settle on.
+      if (catalog.isNotEmpty) await _remember(catalog);
+      return const CatalogUpdates();
+    }
+    return unannouncedUpdates(catalog, announced);
   }
+
+  Future<void> _remember(List<SoftwarePackage> packages) async {
+    final next = <String, Set<String>>{
+      for (final e in (_announced ?? const <String, Set<String>>{}).entries)
+        e.key: {...e.value},
+    };
+    for (final p in packages) {
+      (next[p.id] ??= {}).add(p.latestVersion);
+    }
+    await _store.save(next);
+    _announced = next;
+  }
+
+  /// One scheduled check: fetches the catalog from its source and reports
+  /// what the user has not been told about. Throws [CatalogUnavailable]
+  /// when the catalog cannot be fetched or parsed; nothing changes then.
+  Future<CatalogUpdates> poll() => _serial(() async {
+    await _useCases.refreshCatalog();
+    return _evaluate(await _useCases.listPackages());
+  });
+
+  /// Like [poll] for the catalog the app already holds, without fetching:
+  /// the startup check after the window loaded.
+  Future<CatalogUpdates> pending() =>
+      _serial(() async => _evaluate(await _useCases.listPackages()));
+
+  /// Records that the user was told about [updates].
+  Future<void> markAnnounced(CatalogUpdates updates) => _serial(() async {
+    if (updates.isEmpty) return;
+    await _state();
+    await _remember(updates.packages);
+  });
+
+  /// Records the whole current catalog as known without reporting anything.
+  /// The frontend calls this after the user saw a manual refresh in the
+  /// window, so the next check does not announce what was on screen.
+  Future<void> markSeen() => _serial(() async {
+    await _state();
+    final catalog = await _useCases.listPackages();
+    if (catalog.isEmpty && _announced == null) return;
+    await _remember(catalog);
+  });
 }

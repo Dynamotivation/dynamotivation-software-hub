@@ -612,6 +612,50 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets(
+    'in-app notices are live regions, keep focus, persist and dismiss',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final controller = await _pump(tester);
+      final focusBefore = FocusManager.instance.primaryFocus;
+
+      controller.postNotice(
+        title: 'New in the Software Hub',
+        message: '3 apps are new or have an update available.',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('New in the Software Hub'), findsOneWidget);
+      final notice = find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.liveRegion == true &&
+            (w.key as ValueKey?)?.value.toString().startsWith('notice-') ==
+                true,
+      );
+      expect(notice, findsOneWidget);
+      expect(
+        tester
+            .getSemantics(notice)
+            .getSemanticsData()
+            .flagsCollection
+            .isLiveRegion,
+        isTrue,
+      );
+      // It does not take the keyboard focus, and it is not a timed toast.
+      expect(FocusManager.instance.primaryFocus, focusBefore);
+      await tester.pump(const Duration(minutes: 5));
+      expect(find.text('New in the Software Hub'), findsOneWidget);
+
+      // The visible dismiss button is operable and removes it.
+      await tester.tap(find.widgetWithText(Button, 'Dismiss'));
+      await tester.pumpAndSettle();
+      expect(find.text('New in the Software Hub'), findsNothing);
+      expect(controller.notices, isEmpty);
+      semantics.dispose();
+    },
+  );
+
   testWidgets('success toasts announce, repeat and dismiss', (tester) async {
     await _pump(tester);
     // The F5 refresh path raises the user-initiated success feedback.

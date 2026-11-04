@@ -13,7 +13,10 @@ const _catalog = '''
      "downloads": [{"platform": "windows", "arch": "x64",
         "url": "https://example.com/dynamotivation-software-hub-setup-0.2.0.exe",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "size": 10}]}]}
+        "size": 10}]}]},
+  {"name": "Other Tool", "url": "https://dynamotivation.com/portfolio/software/other-tool/",
+   "release_count": 1,
+   "releases": [{"version": "1.0.0", "date": "2026-11-01", "highlights": [], "downloads": []}]}
 ]}
 ''';
 
@@ -89,6 +92,24 @@ void main() {
     expect(installer.stages, ['0.2.0']);
     expect(c.isHubUpdateReady, isTrue);
     expect(installer.installs, isEmpty); // nothing installs until asked or closed
+  });
+
+  test('the hub is not listed as software but its update is still found',
+      () async {
+    final c = await _controller(RecordingInstaller());
+    await c.load();
+    await _settle();
+
+    expect(c.packages.map((p) => p.name), ['Other Tool']);
+    expect(c.hubUpdate!.version, '0.2.0');
+
+    // The same after a manual refresh and after a background sync.
+    await c.refresh();
+    expect(c.packages.map((p) => p.name), ['Other Tool']);
+    expect(c.hubUpdate!.version, '0.2.0');
+    await c.syncFromSource();
+    expect(c.packages.map((p) => p.name), ['Other Tool']);
+    expect(c.hubUpdate!.version, '0.2.0');
   });
 
   test('with automatic updates off nothing downloads until the user asks',

@@ -185,5 +185,22 @@
     "description": "Accessible label and tooltip for clearing the software search field"
   },
   "hubUpdateRestart": "Neu starten und aktualisieren",
-  "hubUpdateReadyTooltip": "Version {version} ist heruntergeladen. Neu starten, um zu aktualisieren; sonst wird sie beim Schließen des Hubs installiert."
+  "hubUpdateReadyTooltip": "Version {version} ist heruntergeladen. Neu starten, um zu aktualisieren; sonst wird sie beim Schließen des Hubs installiert.",
+  "catalogChangesTitle": "Neu im Software Hub",
+  "@catalogChangesTitle": {
+    "description": "Title of the summary notification (toast or in-app) when several apps are new or have an update"
+  },
+  "catalogChangesBody": "{count, plural, one{1 App ist neu oder hat ein Update.} other{{count} Apps sind neu oder haben ein Update.}}",
+  "@catalogChangesBody": {
+    "description": "Body of the summary notification that collapses several catalog changes into one message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dismissNotification": "Ausblenden",
+  "@dismissNotification": {
+    "description": "Label of the button that dismisses an in-app notification"
+  }
 }

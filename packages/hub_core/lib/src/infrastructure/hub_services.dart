@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import '../application/announcement_store.dart';
 import '../application/hub_use_cases.dart';
 import 'catalog_cache.dart';
 import 'catalog_source.dart';
+import 'file_announcement_store.dart';
 import 'icon_cache.dart';
 import 'in_memory_settings_repository.dart';
 import 'setup_installer.dart';
@@ -18,7 +20,16 @@ class HubServices {
   final HubUseCases useCases;
   final IconCache icons;
 
-  HubServices({required this.useCases, required this.icons});
+  /// What the user was already told about, kept in the cache folder. A
+  /// frontend that announces catalog changes hands it to its
+  /// `CatalogUpdateWatcher`.
+  final AnnouncementStore announcements;
+
+  HubServices({
+    required this.useCases,
+    required this.icons,
+    AnnouncementStore? announcements,
+  }) : announcements = announcements ?? InMemoryAnnouncementStore();
 
   /// The website catalog, cached on disk, with icons cached beside it and
   /// the hub's own updates staged in an `updates` folder inside the cache.
@@ -41,6 +52,7 @@ class HubServices {
         installer: StagedSetupInstaller(cache),
       ),
       icons: icons,
+      announcements: FileAnnouncementStore(cache),
     );
   }
 }

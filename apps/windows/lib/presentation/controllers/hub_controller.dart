@@ -3,11 +3,27 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_core/hub_core.dart';
 
+/// A message the hub shows inside its own window, e.g. what the background
+/// watch found while the window is focused. It stays until dismissed.
+class HubNotice {
+  const HubNotice({
+    required this.id,
+    required this.title,
+    required this.message,
+  });
+
+  /// Unique per notice, to key the widget and to dismiss it.
+  final int id;
+  final String title;
+  final String message;
+}
+
 /// Presentation state of the Windows frontend. Holds no business rules; every
 /// change goes through [HubUseCases].
 class HubController extends ChangeNotifier {
   HubController(
     this._useCases, {
+    this.onStartupSynced,
     this.onCatalogSynced,
     this.departDuration = const Duration(milliseconds: 300),
     this.selfVersion = '0.0.0',
@@ -35,10 +51,14 @@ class HubController extends ChangeNotifier {
   /// ([CloseApplications=yes] in the shared installer settings).
   Future<void> Function()? quitForUpdate;
 
-  /// Called once a catalog load the user saw completes: the startup load and
-  /// every successful manual refresh. The background update watch uses it to
-  /// re-baseline itself so it never re-announces entries that were already
-  /// visible on screen.
+  /// Called once when the catalog opened at startup has settled (its final
+  /// snapshot). The background surface announces from here what the user was
+  /// not told about before the app was last closed.
+  final void Function()? onStartupSynced;
+
+  /// Called after every successful manual refresh. The background update
+  /// watch uses it to record what the user just saw on screen as known, so
+  /// it never announces it afterwards.
   final void Function()? onCatalogSynced;
 
   /// How long a package that left the catalog stays listed, marked in
@@ -60,6 +80,13 @@ class HubController extends ChangeNotifier {
   bool _disposed = false;
   final Set<String> _loadingHistory = {};
   final Map<String, Object> _historyErrors = {};
+
+  /// The hub's own catalog entry. Kept out of [packages] (the hub does not
+  /// list itself) but needed to find its pending update.
+  SoftwarePackage? _hub;
+
+  final List<HubNotice> _notices = [];
+  int _nextNoticeId = 1;
 
   SelfUpdateOffer? _hubUpdate;
   bool _isStagingHubUpdate = false;
@@ -88,6 +115,23 @@ class HubController extends ChangeNotifier {
   double get hubStageProgress => _hubStageProgress;
 
   List<SoftwarePackage> get packages => _packages;
+
+  /// In-app notifications, oldest first, until the user dismisses them.
+  List<HubNotice> get notices => List.unmodifiable(_notices);
+
+  /// Shows a notification inside the window. It neither moves focus nor
+  /// expires on its own.
+  void postNotice({required String title, required String message}) {
+    _notices.add(
+      HubNotice(id: _nextNoticeId++, title: title, message: message),
+    );
+    notifyListeners();
+  }
+
+  void dismissNotice(int id) {
+    _notices.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
 
   /// Packages the catalog no longer lists, still shown while they fade out.
   Set<String> get departingIds => _departing;
@@ -126,7 +170,7 @@ class HubController extends ChangeNotifier {
             _show(snapshot, preferredId, first: !shownAny);
             shownAny = true;
             if (!firstShown.isCompleted) firstShown.complete();
-            if (snapshot.isFinal) onCatalogSynced?.call();
+            if (snapshot.isFinal) onStartupSynced?.call();
           },
           onError: (Object error, StackTrace stack) {
             if (!shownAny && error is CatalogUnavailable) {
@@ -164,6 +208,7 @@ class HubController extends ChangeNotifier {
     required bool first,
   }) {
     final old = _packages;
+    _hub = snapshot.hub;
     // The catalog entry carries no older releases; keep the ones already fetched.
     _packages = [
       for (final p in snapshot.packages)
@@ -319,7 +364,7 @@ class HubController extends ChangeNotifier {
     final SelfUpdateOffer? offer;
     try {
       offer = _useCases.selfUpdateOffer(
-        packages: _packages,
+        packages: [?_hub],
         installedVersion: selfVersion,
         platform: selfPlatform,
         arch: selfArch,
@@ -337,9 +382,16 @@ class HubController extends ChangeNotifier {
       // Nothing pending: whatever is staged is stale (an update that went
       // through, or one the website withdrew).
       if (!_updateLaunched) {
-        _useCases.clearStagedSelfUpdates().catchError((Object error, StackTrace stack) {
+        _useCases.clearStagedSelfUpdates().catchError((
+          Object error,
+          StackTrace stack,
+        ) {
           FlutterError.reportError(
-            FlutterErrorDetails(exception: error, stack: stack, library: 'hub self-update cleanup'),
+            FlutterErrorDetails(
+              exception: error,
+              stack: stack,
+              library: 'hub self-update cleanup',
+            ),
           );
         });
       }
@@ -377,9 +429,9 @@ class HubController extends ChangeNotifier {
   /// brings the controller (and so the reopened window) along.
   Future<void> syncFromSource() async {
     if (_disposed) return;
-    final fresh = await _useCases.listPackages();
+    final fresh = await _useCases.currentCatalog();
     if (_disposed) return;
-    _show(CatalogSnapshot(fresh, isFinal: true), null, first: false);
+    _show(fresh, null, first: false);
   }
 
   Future<void> refresh() async {
@@ -387,7 +439,9 @@ class HubController extends ChangeNotifier {
     notifyListeners();
     try {
       await _useCases.refreshCatalog();
-      _packages = await _useCases.listPackages();
+      final catalog = await _useCases.currentCatalog();
+      _packages = catalog.packages;
+      _hub = catalog.hub;
       _recomputeHubUpdate();
       onCatalogSynced?.call();
     } finally {

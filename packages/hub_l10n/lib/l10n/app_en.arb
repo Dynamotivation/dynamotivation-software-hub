@@ -349,5 +349,22 @@
         "type": "String"
       }
     }
+  },
+  "catalogChangesTitle": "New in the Software Hub",
+  "@catalogChangesTitle": {
+    "description": "Title of the summary notification (toast or in-app) when several apps are new or have an update"
+  },
+  "catalogChangesBody": "{count, plural, one{1 app is new or has an update available.} other{{count} apps are new or have an update available.}}",
+  "@catalogChangesBody": {
+    "description": "Body of the summary notification that collapses several catalog changes into one message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dismissNotification": "Dismiss",
+  "@dismissNotification": {
+    "description": "Label of the button that dismisses an in-app notification"
   }
 }

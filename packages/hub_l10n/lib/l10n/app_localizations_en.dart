@@ -360,4 +360,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String hubUpdateReadyTooltip(String version) {
     return 'Version $version is downloaded. Restart to update; otherwise it installs when you close the Hub.';
   }
+
+  @override
+  String get catalogChangesTitle => 'New in the Software Hub';
+
+  @override
+  String catalogChangesBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count apps are new or have an update available.',
+      one: '1 app is new or has an update available.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dismissNotification => 'Dismiss';
 }

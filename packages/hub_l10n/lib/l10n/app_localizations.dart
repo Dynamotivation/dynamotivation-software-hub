@@ -697,6 +697,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Version {version} is downloaded. Restart to update; otherwise it installs when you close the Hub.'**
   String hubUpdateReadyTooltip(String version);
+
+  /// Title of the summary notification (toast or in-app) when several apps are new or have an update
+  ///
+  /// In en, this message translates to:
+  /// **'New in the Software Hub'**
+  String get catalogChangesTitle;
+
+  /// Body of the summary notification that collapses several catalog changes into one message
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 app is new or has an update available.} other{{count} apps are new or have an update available.}}'**
+  String catalogChangesBody(int count);
+
+  /// Label of the button that dismisses an in-app notification
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dismissNotification;
 }
 
 class _AppLocalizationsDelegate

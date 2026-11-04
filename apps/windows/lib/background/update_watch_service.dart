@@ -11,25 +11,49 @@ typedef ShowNotification = Future<void> Function({
   String? iconUrl,
 });
 
+/// Signature the composition root wires to the in-app notification surface
+/// (a banner in the hub window). It must not take focus.
+typedef ShowInAppNotice = void Function({
+  required String title,
+  required String message,
+});
+
 /// The localized words the watch service needs. [BackgroundStrings]
 /// provides the implementation.
 abstract class WatchTexts {
   String get newSoftwareTitle;
   String get updateNotificationTitle;
+  String get changesSummaryTitle;
   String newSoftwareBody(String name);
   String updateNotificationBody(String name, String version);
+  String changesSummaryBody(int count);
 }
 
-/// The scheduled half of background running: about once an hour the catalog
-/// is fetched again and every new software entry or newer release is
-/// announced. The window being visible makes no difference: the hub shows
-/// these notifications the same way whether it is open or only the tray
-/// surface is alive. When the app is not running, nothing here ticks.
+/// The announcing half of background running: about once an hour the catalog
+/// is fetched again, and right after startup what the user was not told
+/// about before the last close is announced once.
+///
+/// Notification policy:
+///  - Where: a focused hub window gets an in-app notice ([showInApp]); the OS
+///    toast ([notify]) is only for a window that is unfocused or hidden in the
+///    tray. A click on a toast brings the window up (wired in `main.dart`).
+///  - How much: one change is announced by name, several collapse into one
+///    summary. Never one notification per app.
+///  - How often: what was announced is persisted by the [watcher] (per
+///    package and version), so a restart, including the restart after a
+///    self-update, does not repeat it.
+///  - Settings: *Automatically check for updates* off means nothing is
+///    fetched or announced; *Show notifications* off means fetched, nothing
+///    shown. What is not shown because of a setting counts as known, so
+///    switching a setting on later does not dump old news.
+/// When the app is not running, nothing here ticks.
 class UpdateWatchService {
   UpdateWatchService({
     required this.watcher,
     required this.settings,
     required this.notify,
+    required this.showInApp,
+    required this.isWindowFocused,
     required this.texts,
     this.onRefreshed,
     this.interval = const Duration(hours: 1),
@@ -41,7 +65,16 @@ class UpdateWatchService {
   /// Read on every tick, so toggling a setting takes effect from the next
   /// tick without rescheduling.
   final AppSettings Function() settings;
+
+  /// The OS toast. Used only while the window is not focused.
   final ShowNotification notify;
+
+  /// The in-app notice. Used while the window is focused.
+  final ShowInAppNotice showInApp;
+
+  /// True while the hub window is visible and has the keyboard focus.
+  final Future<bool> Function() isWindowFocused;
+
   final WatchTexts texts;
 
   /// Called after every successful fetch, before anything is announced, so
@@ -75,10 +108,9 @@ class UpdateWatchService {
 
   /// One scheduled check; the timer and the tests call this directly.
   Future<void> check() async {
-    final settings = this.settings();
-    if (!settings.autoCheckUpdates) return;
+    if (!settings().autoCheckUpdates) return;
 
-    final CatalogUpdates? updates;
+    final CatalogUpdates updates;
     try {
       updates = await watcher.poll();
     } catch (error, stack) {
@@ -90,33 +122,73 @@ class UpdateWatchService {
     } catch (error, stack) {
       onError(error, stack);
     }
-    if (updates == null || !settings.showNotifications) return;
-
-    for (final package in updates.newPackages) {
-      await _announce(
-        title: texts.newSoftwareTitle,
-        body: texts.newSoftwareBody(package.name),
-        iconUrl: package.iconUrl,
-      );
-    }
-    for (final package in updates.versionUpdates) {
-      await _announce(
-        title: texts.updateNotificationTitle,
-        body: texts.updateNotificationBody(package.name, package.latestVersion),
-        iconUrl: package.iconUrl,
-      );
-    }
+    await _deliver(updates);
   }
 
-  Future<void> _announce({
-    required String title,
-    required String body,
-    String? iconUrl,
-  }) async {
+  /// The check after startup, once the window showed the catalog: announces
+  /// at most one summary of what was not announced before the app last
+  /// closed. Nothing is fetched here; the startup load just did.
+  Future<void> announceStartup() async {
     try {
-      await notify(title: title, body: body, iconUrl: iconUrl);
+      if (!settings().autoCheckUpdates) {
+        await watcher.markSeen();
+        return;
+      }
+      await _deliver(await watcher.pending());
     } catch (error, stack) {
       onError(error, stack);
     }
+  }
+
+  /// Tells the user about [updates] in the one fitting place, once.
+  Future<void> _deliver(CatalogUpdates updates) async {
+    if (updates.isEmpty) return;
+    if (settings().showNotifications) {
+      final (:title, :body, :iconUrl) = _compose(updates);
+      try {
+        if (await isWindowFocused()) {
+          showInApp(title: title, message: body);
+        } else {
+          await notify(title: title, body: body, iconUrl: iconUrl);
+        }
+      } catch (error, stack) {
+        // Not marked as announced: the next check tries again.
+        onError(error, stack);
+        return;
+      }
+    }
+    try {
+      await watcher.markAnnounced(updates);
+    } catch (error, stack) {
+      onError(error, stack);
+    }
+  }
+
+  /// One change is named; several collapse into a summary with a count.
+  ({String title, String body, String? iconUrl}) _compose(
+    CatalogUpdates updates,
+  ) {
+    if (updates.count == 1) {
+      final package = updates.packages.single;
+      return updates.newPackages.isNotEmpty
+          ? (
+              title: texts.newSoftwareTitle,
+              body: texts.newSoftwareBody(package.name),
+              iconUrl: package.iconUrl,
+            )
+          : (
+              title: texts.updateNotificationTitle,
+              body: texts.updateNotificationBody(
+                package.name,
+                package.latestVersion,
+              ),
+              iconUrl: package.iconUrl,
+            );
+    }
+    return (
+      title: texts.changesSummaryTitle,
+      body: texts.changesSummaryBody(updates.count),
+      iconUrl: null,
+    );
   }
 }
