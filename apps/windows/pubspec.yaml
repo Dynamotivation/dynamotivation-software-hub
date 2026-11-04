@@ -22,7 +22,9 @@ dependencies:
   window_manager: ^0.5.2
   package_info_plus: ^8.3.0
   flutter_svg: ^2.3.0
-  local_notifier: ^0.1.6
+  # Windows-only toasts (WinRT, with images). Deliberately not the cross-platform
+  # flutter_local_notifications package: no other frontend uses it yet.
+  flutter_local_notifications_windows: ^3.1.1
   system_tray: ^2.0.3
 
 dev_dependencies:

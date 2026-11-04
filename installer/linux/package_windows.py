@@ -1,4 +1,4 @@
-"""Sign a cross-built Windows bundle and compile signed Inno Setup on Linux."""
+"""Sign the Windows bundle built on the Windows runner and compile signed Inno Setup on Linux."""
 
 import base64
 import hashlib
@@ -16,7 +16,7 @@ from sign_file import sign
 
 
 ROOT = Path(__file__).resolve().parents[2]
-BUILD = ROOT / "apps/windows/build/linux-windows"
+BUILD = ROOT / "apps/windows/build/installer"
 
 
 def run(*args):
@@ -53,7 +53,7 @@ def main():
         binaries = sorted(path for path in bundle.rglob("*")
                           if path.suffix.lower() in {".exe", ".dll"})
         if not binaries or not (bundle / "dynamotivation_software_hub.exe").is_file():
-            raise SystemExit("The cross-built Windows bundle is missing.")
+            raise SystemExit("The Windows bundle (build/installer/bundle) is missing.")
         for binary in binaries:
             sign(binary)
 
