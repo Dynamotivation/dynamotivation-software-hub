@@ -174,10 +174,12 @@ void main() {
     tester,
   ) async {
     var enabled = false;
+    var taskbarIsLight = true;
     var reads = 0;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       WindowsAccessibility.channel,
       (call) async {
+        if (call.method == 'readTaskbarTheme') return taskbarIsLight;
         expect(call.method, 'readContrast');
         reads++;
         return {
@@ -202,7 +204,9 @@ void main() {
     addTearDown(source.dispose);
     await source.initialize();
     expect(source.value!.enabled, isFalse);
+    expect(source.taskbarLight.value, isTrue);
     enabled = true;
+    taskbarIsLight = false;
     tester.binding.channelBuffers.push(
       WindowsAccessibility.channel.name,
       const StandardMethodCodec().encodeMethodCall(const MethodCall('changed')),
@@ -212,6 +216,8 @@ void main() {
     expect(reads, 2);
     expect(source.value!.enabled, isTrue);
     expect(source.value!.text, _darkContrast.text);
+    // The taskbar's light/dark state follows the same broadcast.
+    expect(source.taskbarLight.value, isFalse);
   });
 
   testWidgets('Tab reaches a package, focus is visible, and Enter selects it', (

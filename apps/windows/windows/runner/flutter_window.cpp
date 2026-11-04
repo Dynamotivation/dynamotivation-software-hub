@@ -51,6 +51,17 @@ bool FlutterWindow::OnCreate() {
           result->Success();
           return;
         }
+        if (call.method_name() == "readTaskbarTheme") {
+          // The taskbar and tray follow "Windows mode" (SystemUsesLightTheme),
+          // which is separate from the apps' own theme. Missing value: light.
+          DWORD value = 1;
+          DWORD size = sizeof(value);
+          RegGetValueW(HKEY_CURRENT_USER,
+                       L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                       L"SystemUsesLightTheme", RRF_RT_REG_DWORD, nullptr, &value, &size);
+          result->Success(flutter::EncodableValue(value != 0));
+          return;
+        }
         if (call.method_name() != "readContrast") {
           result->NotImplemented();
           return;

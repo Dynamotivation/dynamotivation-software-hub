@@ -104,6 +104,7 @@ void main(List<String> args) async {
     controller: controller,
     tray: tray,
     strings: strings,
+    accessibility: accessibility,
     watch: UpdateWatchService(
       watcher: watcher,
       settings: () => controller.settings,
