@@ -119,3 +119,5 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+
+IDI_APP_ICON_DARK ICON "../../assets/tray_icon_dark.ico"

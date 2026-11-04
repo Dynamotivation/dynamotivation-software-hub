@@ -132,6 +132,14 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       accessibility_alert_) {
     return LresultFromObject(IID_IAccessible, wparam, accessibility_alert_.Get());
   }
+  if (message == WM_QUERYENDSESSION) {
+    return TRUE;
+  }
+  static const UINT taskbar_created = RegisterWindowMessageW(L"TaskbarCreated");
+  if (message == WM_SETTINGCHANGE || message == WM_THEMECHANGED ||
+      message == WM_SYSCOLORCHANGE || message == taskbar_created) {
+    UpdateTheme(hwnd);
+  }
   // Broadcast settings changes must reach Dart even if a plugin handles them.
   if (contrast_channel_ && (message == WM_SETTINGCHANGE ||
       message == WM_SYSCOLORCHANGE || message == WM_THEMECHANGED)) {

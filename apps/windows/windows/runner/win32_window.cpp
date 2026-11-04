@@ -1,6 +1,9 @@
 #include "win32_window.h"
 
 #include <dwmapi.h>
+#include <shobjidl.h>
+#include <propkey.h>
+#include <propvarutil.h>
 #include <flutter_windows.h>
 
 #include "resource.h"
@@ -144,19 +147,6 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
-  // Supply both window icon sizes explicitly for the title bar and taskbar.
-  const auto module = GetModuleHandle(nullptr);
-  SendMessage(window, WM_SETICON, ICON_BIG,
-              reinterpret_cast<LPARAM>(LoadImage(
-                  module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
-                  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
-                  LR_SHARED)));
-  SendMessage(window, WM_SETICON, ICON_SMALL,
-              reinterpret_cast<LPARAM>(LoadImage(
-                  module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
-                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-                  LR_SHARED)));
-
   UpdateTheme(window);
 
   return OnCreate();
@@ -286,6 +276,42 @@ void Win32Window::OnDestroy() {
 }
 
 void Win32Window::UpdateTheme(HWND const window) {
+  DWORD light = 1;
+  DWORD size = sizeof(light);
+  RegGetValueW(HKEY_CURRENT_USER, kGetPreferredBrightnessRegKey,
+               L"SystemUsesLightTheme", RRF_RT_REG_DWORD, nullptr, &light, &size);
+  const int id = light ? IDI_APP_ICON : IDI_APP_ICON_DARK;
+  SendMessageW(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(
+      LoadImageW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
+                 GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_SHARED)));
+  SendMessageW(window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(
+      LoadImageW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
+                 GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)));
+
+  // The grouped taskbar uses the shell relaunch icon, independently of WM_SETICON.
+  IPropertyStore* store = nullptr;
+  if (SUCCEEDED(SHGetPropertyStoreForWindow(window, IID_PPV_ARGS(&store)))) {
+    wchar_t executable[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, executable, MAX_PATH);
+    const std::wstring icon = std::wstring(executable) +
+        (light ? L",-101" : L",-102");
+    const std::wstring command = L"\"" + std::wstring(executable) + L"\"";
+    auto set = [store](REFPROPERTYKEY key, const wchar_t* text) {
+      PROPVARIANT value;
+      if (SUCCEEDED(InitPropVariantFromString(text, &value))) {
+        store->SetValue(key, value);
+        PropVariantClear(&value);
+      }
+    };
+    set(PKEY_AppUserModel_RelaunchCommand, command.c_str());
+    set(PKEY_AppUserModel_RelaunchDisplayNameResource, L"Dynamotivation Software Hub");
+    set(PKEY_AppUserModel_RelaunchIconResource, icon.c_str());
+    // Setting the ID last tells Explorer to refresh the group's properties.
+    set(PKEY_AppUserModel_ID, L"Dynamotivation.SoftwareHub");
+    store->Commit();
+    store->Release();
+  }
+
   DWORD light_mode;
   DWORD light_mode_size = sizeof(light_mode);
   LSTATUS result = RegGetValue(HKEY_CURRENT_USER, kGetPreferredBrightnessRegKey,

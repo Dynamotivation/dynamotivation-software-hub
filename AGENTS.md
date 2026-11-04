@@ -150,3 +150,7 @@ A new OS frontend is a new `apps/<os>` workspace member, added to the root `pubs
 - Licence.
 - How packages are installed and detected on the device. Packages from the website start as not installed and install state is in memory only; settings are not persisted yet.
 - Installer formats, code signing, and app icons for macOS (`.dmg`/`.pkg`) and Ubuntu (`.deb`/`snap`/`flatpak`) frontends.
+
+- The Windows runner updates both window icon sizes from SystemUsesLightTheme at startup and on theme broadcasts, using the dark tray artwork resource.
+
+- Native taskbar group icons also use the window shell property store (relaunch icon and explicit AppUserModelID). Theme broadcasts refresh native icons before plugin dispatch, including after Explorer recreates the taskbar. The runner accepts WM_QUERYENDSESSION before plugins and exits on WM_ENDSESSION.
