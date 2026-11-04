@@ -18,3 +18,5 @@ export 'src/infrastructure/hub_services.dart';
 export 'src/infrastructure/icon_cache.dart';
 export 'src/infrastructure/in_memory_settings_repository.dart';
 export 'src/infrastructure/website_package_repository.dart';
+export 'src/application/download_origin_cleaner.dart';
+export 'src/infrastructure/windows_download_origin_cleaner.dart';

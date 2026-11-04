@@ -139,3 +139,8 @@ A new OS frontend is a new `apps/<os>` workspace member, added to the root `pubs
 - Licence.
 - How packages are installed and detected on the device. Packages from the website start as not installed and install state is in memory only; settings are not persisted yet.
 - Installer formats, code signing, and app icons for macOS (`.dmg`/`.pkg`) and Ubuntu (`.deb`/`snap`/`flatpak`) frontends.
+
+## Verified setup origin metadata
+- `prepareVerifiedSetup` verifies SHA-256 through its required throwing verifier before invoking the `DownloadOriginCleaner` port. `WindowsDownloadOriginCleaner` deletes only `:Zone.Identifier`; missing streams are accepted, other errors propagate, and non-Windows hosts do nothing.
+- Main has no setup staging/launch implementation yet. Integration must call this boundary on the final setup path for fresh downloads and reused staged files, before launch, using the existing SHA-256 verifier. A cleanup failure must prevent launch and be reported. No installer code is changed.
+- This covers only Hub-managed downloads and relies on SHA-256 verification as its trust check. It cannot remove the mark on the first Hub setup downloaded by a browser, establish publisher trust, or guarantee that Windows security policy will permit execution.
