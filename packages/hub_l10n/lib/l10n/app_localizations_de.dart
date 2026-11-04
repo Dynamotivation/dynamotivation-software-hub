@@ -42,23 +42,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get hubUpToDate => 'Hub ist auf dem neuesten Stand';
-
-  @override
-  String get hubUpdateTitle => 'Software-Hub-Update';
-
-  @override
-  String hubUpdateReady(String version) {
-    return 'Version $version kann installiert werden.';
-  }
-
-  @override
-  String get hubRunningLatest => 'Sie verwenden die neueste Version.';
-
-  @override
-  String get updateNow => 'Jetzt aktualisieren';
-
-  @override
   String get updateHub => 'Hub aktualisieren';
 
   @override

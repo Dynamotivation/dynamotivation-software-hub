@@ -221,16 +221,20 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _UpdateHubPill(
-                                iconOnly:
-                                    MediaQuery.sizeOf(context).width < 800,
-                                tokens: tokens,
-                                hubUpdateVersion: widget.hubUpdateVersion,
-                                ready: widget.hubUpdateReady,
-                                progress: widget.hubUpdateProgress,
-                                onUpdateHub: widget.onUpdateHub,
-                              ),
-                              const SizedBox(width: 6),
+                              // Only while the Hub has an update to offer.
+                              if (widget.hubUpdateVersion != null &&
+                                  widget.onUpdateHub != null) ...[
+                                _UpdateHubPill(
+                                  iconOnly:
+                                      MediaQuery.sizeOf(context).width < 800,
+                                  tokens: tokens,
+                                  hubUpdateVersion: widget.hubUpdateVersion!,
+                                  ready: widget.hubUpdateReady,
+                                  progress: widget.hubUpdateProgress,
+                                  onUpdateHub: widget.onUpdateHub!,
+                                ),
+                                const SizedBox(width: 6),
+                              ],
                               AccessibleIconButton(
                                 label: context.l10n.settings,
                                 tooltip: withShortcut(
@@ -277,10 +281,10 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
 class _UpdateHubPill extends StatelessWidget {
   final DynTokens tokens;
   final bool iconOnly;
-  final String? hubUpdateVersion;
+  final String hubUpdateVersion;
   final bool ready;
   final double? progress;
-  final VoidCallback? onUpdateHub;
+  final VoidCallback onUpdateHub;
 
   const _UpdateHubPill({
     required this.tokens,
@@ -295,13 +299,11 @@ class _UpdateHubPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final label = ready ? l10n.hubUpdateRestart : l10n.updateHub;
-    final tooltip = hubUpdateVersion == null
-        ? l10n.hubUpToDate
-        : ready
-        ? l10n.hubUpdateReadyTooltip(hubUpdateVersion!)
+    final tooltip = ready
+        ? l10n.hubUpdateReadyTooltip(hubUpdateVersion)
         : progress != null
         ? l10n.hubUpdateDownloading((progress! * 100).round())
-        : l10n.hubUpdateAvailableTooltip(hubUpdateVersion!);
+        : l10n.hubUpdateAvailableTooltip(hubUpdateVersion);
     return Tooltip(
       message: tooltip,
       child: Semantics(
@@ -310,28 +312,7 @@ class _UpdateHubPill extends StatelessWidget {
         label: label,
         child: HoverButton(
           semanticLabel: label,
-          onPressed:
-              onUpdateHub ??
-              () {
-                displayInfoBar(
-                  context,
-                  builder: (context, close) => InfoBar(
-                    title: Text(context.l10n.hubUpdateTitle),
-                    content: Text(
-                      hubUpdateVersion != null
-                          ? context.l10n.hubUpdateReady(hubUpdateVersion!)
-                          : context.l10n.hubRunningLatest,
-                    ),
-                    severity: InfoBarSeverity.info,
-                    action: hubUpdateVersion != null
-                        ? Button(
-                            child: Text(context.l10n.updateNow),
-                            onPressed: () {},
-                          )
-                        : null,
-                  ),
-                );
-              },
+          onPressed: onUpdateHub,
           builder: (context, states) {
             final isHover = states.isHovered;
             return FocusBorder(

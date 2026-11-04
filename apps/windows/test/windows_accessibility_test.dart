@@ -656,6 +656,14 @@ void main() {
     },
   );
 
+  testWidgets('the Update Hub pill is absent while the Hub has no update', (
+    tester,
+  ) async {
+    await _pump(tester);
+    expect(find.text('Update Hub'), findsNothing);
+    expect(find.bySemanticsLabel('Update Hub'), findsNothing);
+  });
+
   testWidgets('success toasts announce, repeat and dismiss', (tester) async {
     await _pump(tester);
     // The F5 refresh path raises the user-initiated success feedback.

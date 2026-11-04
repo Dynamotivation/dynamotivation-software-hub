@@ -27,18 +27,6 @@
       }
     }
   },
-  "hubUpToDate": "Hub is up to date",
-  "hubUpdateTitle": "Software Hub Update",
-  "hubUpdateReady": "Version {version} is ready to install.",
-  "@hubUpdateReady": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
-  "hubRunningLatest": "You are running the latest version.",
-  "updateNow": "Update now",
   "updateHub": "Update Hub",
   "@updateHub": {
     "description": "Header pill label"

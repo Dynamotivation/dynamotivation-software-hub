@@ -158,36 +158,6 @@ abstract class AppLocalizations {
   /// **'Software Hub update available ({version})'**
   String hubUpdateAvailableTooltip(String version);
 
-  /// No description provided for @hubUpToDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Hub is up to date'**
-  String get hubUpToDate;
-
-  /// No description provided for @hubUpdateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Software Hub Update'**
-  String get hubUpdateTitle;
-
-  /// No description provided for @hubUpdateReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Version {version} is ready to install.'**
-  String hubUpdateReady(String version);
-
-  /// No description provided for @hubRunningLatest.
-  ///
-  /// In en, this message translates to:
-  /// **'You are running the latest version.'**
-  String get hubRunningLatest;
-
-  /// No description provided for @updateNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Update now'**
-  String get updateNow;
-
   /// Header pill label
   ///
   /// In en, this message translates to:
