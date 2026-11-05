@@ -1,14 +1,15 @@
 #include "win32_window.h"
 
 #include <dwmapi.h>
-#include <shobjidl.h>
-#include <propkey.h>
-#include <propvarutil.h>
 #include <flutter_windows.h>
 
 #include "resource.h"
 
 namespace {
+
+// -1 follows Windows; 0 is dark; 1 is light.
+int window_icon_theme = -1;
+
 
 /// Window attribute that enables dark mode window decorations.
 ///
@@ -280,6 +281,7 @@ void Win32Window::UpdateTheme(HWND const window) {
   DWORD size = sizeof(light);
   RegGetValueW(HKEY_CURRENT_USER, kGetPreferredBrightnessRegKey,
                L"SystemUsesLightTheme", RRF_RT_REG_DWORD, nullptr, &light, &size);
+  if (window_icon_theme >= 0) light = window_icon_theme;
   const int id = light ? IDI_APP_ICON : IDI_APP_ICON_DARK;
   SendMessageW(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(
       LoadImageW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
@@ -288,29 +290,12 @@ void Win32Window::UpdateTheme(HWND const window) {
       LoadImageW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)));
 
-  // The grouped taskbar uses the shell relaunch icon, independently of WM_SETICON.
-  IPropertyStore* store = nullptr;
-  if (SUCCEEDED(SHGetPropertyStoreForWindow(window, IID_PPV_ARGS(&store)))) {
-    wchar_t executable[MAX_PATH] = {};
-    GetModuleFileNameW(nullptr, executable, MAX_PATH);
-    const std::wstring icon = std::wstring(executable) +
-        (light ? L",-101" : L",-102");
-    const std::wstring command = L"\"" + std::wstring(executable) + L"\"";
-    auto set = [store](REFPROPERTYKEY key, const wchar_t* text) {
-      PROPVARIANT value;
-      if (SUCCEEDED(InitPropVariantFromString(text, &value))) {
-        store->SetValue(key, value);
-        PropVariantClear(&value);
-      }
-    };
-    set(PKEY_AppUserModel_RelaunchCommand, command.c_str());
-    set(PKEY_AppUserModel_RelaunchDisplayNameResource, L"Dynamotivation Software Hub");
-    set(PKEY_AppUserModel_RelaunchIconResource, icon.c_str());
-    // Setting the ID last tells Explorer to refresh the group's properties.
-    set(PKEY_AppUserModel_ID, L"Dynamotivation.SoftwareHub");
-    store->Commit();
-    store->Release();
-  }
+  // Keep the class fallback in step with the per-window icons. Explorer can
+  // query either when reconstructing a taskbar button.
+  SetClassLongPtrW(window, GCLP_HICON,
+      static_cast<LONG_PTR>(SendMessageW(window, WM_GETICON, ICON_BIG, 0)));
+  SetClassLongPtrW(window, GCLP_HICONSM,
+      static_cast<LONG_PTR>(SendMessageW(window, WM_GETICON, ICON_SMALL, 0)));
 
   DWORD light_mode;
   DWORD light_mode_size = sizeof(light_mode);
@@ -324,4 +309,9 @@ void Win32Window::UpdateTheme(HWND const window) {
     DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE,
                           &enable_dark_mode, sizeof(enable_dark_mode));
   }
+}
+
+void Win32Window::SetWindowIconTheme(HWND window, int theme) {
+  window_icon_theme = theme;
+  UpdateTheme(window);
 }

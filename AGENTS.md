@@ -153,4 +153,4 @@ A new OS frontend is a new `apps/<os>` workspace member, added to the root `pubs
 
 - The Windows runner updates both window icon sizes from SystemUsesLightTheme at startup and on theme broadcasts, using the dark tray artwork resource.
 
-- Native taskbar group icons also use the window shell property store (relaunch icon and explicit AppUserModelID). Theme broadcasts refresh native icons before plugin dispatch, including after Explorer recreates the taskbar. The runner accepts WM_QUERYENDSESSION before plugins and exits on WM_ENDSESSION.
+- The running taskbar button uses native window/class icons, without a shell relaunch-icon override. Explicit Hub Appearance light/dark selects its icon; System follows Windows taskbar mode. The tray independently follows Windows taskbar mode. Native broadcasts refresh before plugin dispatch. The runner accepts WM_QUERYENDSESSION before plugins and exits on WM_ENDSESSION.

@@ -1,3 +1,4 @@
+import 'package:hub_core/hub_core.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../platform/windows_accessibility.dart';
@@ -49,11 +50,18 @@ class BackgroundService with WindowListener {
     windowManager.addListener(this);
     await windowManager.setPreventClose(true);
     watch.start();
-    await _syncTray();
+    await _syncFromSettings();
   }
 
   /// The tray icon exists exactly while background running is set.
-  Future<void> _syncFromSettings() => _syncTray();
+  Future<void> _syncFromSettings() async {
+    await accessibility.setWindowIconTheme(switch (controller.settings.themeMode) {
+      AppThemeMode.system => -1,
+      AppThemeMode.dark => 0,
+      AppThemeMode.light => 1,
+    });
+    await _syncTray();
+  }
 
   /// The taskbar switched between light and dark: swap the icon in place.
   Future<void> _syncTrayIcon() => tray.setIcon(

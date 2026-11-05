@@ -84,6 +84,9 @@ class WindowsAccessibility extends ValueNotifier<WindowsContrastPalette?> {
     await refreshTaskbarTheme();
   }
 
+  Future<void> setWindowIconTheme(int theme) =>
+      channel.invokeMethod<void>('setWindowIconTheme', theme);
+
   Future<void> refreshTaskbarTheme() async {
     final light = await channel.invokeMethod<bool>('readTaskbarTheme');
     if (!_disposed && light != null) taskbarLight.value = light;

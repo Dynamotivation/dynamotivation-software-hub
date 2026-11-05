@@ -73,6 +73,7 @@ class Win32Window {
 
   // Refresh native window and shell taskbar icons before plugin dispatch.
   static void UpdateTheme(HWND const window);
+  static void SetWindowIconTheme(HWND window, int theme);
 
  private:
   friend class WindowClassRegistrar;

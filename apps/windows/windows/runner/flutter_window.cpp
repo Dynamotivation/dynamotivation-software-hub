@@ -51,6 +51,16 @@ bool FlutterWindow::OnCreate() {
           result->Success();
           return;
         }
+        if (call.method_name() == "setWindowIconTheme") {
+          const auto* theme = std::get_if<int32_t>(call.arguments());
+          if (!theme || *theme < -1 || *theme > 1) {
+            result->Error("window_icon", "Expected theme -1, 0 or 1");
+            return;
+          }
+          SetWindowIconTheme(GetHandle(), *theme);
+          result->Success();
+          return;
+        }
         if (call.method_name() == "readTaskbarTheme") {
           // The taskbar and tray follow "Windows mode" (SystemUsesLightTheme),
           // which is separate from the apps' own theme. Missing value: light.
