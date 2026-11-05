@@ -8,11 +8,16 @@ import '../theme/dynamotivation_theme.dart';
 import 'package_image.dart';
 import 'overflow_menu.dart';
 import 'version_label.dart';
+import 'run_action_button.dart';
 
 class PackageDetailPane extends StatefulWidget {
   final SoftwarePackage? package;
   final VoidCallback onUpdate;
   final VoidCallback onLaunch;
+  final VoidCallback? onLaunchAnotherInstance;
+  final VoidCallback? onForceClose;
+  final bool isRunning;
+  final bool isLaunching;
   final VoidCallback onInstall;
   final VoidCallback onUninstall;
   final FocusNode? primaryActionFocus;
@@ -28,6 +33,10 @@ class PackageDetailPane extends StatefulWidget {
     required this.package,
     required this.onUpdate,
     required this.onLaunch,
+    this.onLaunchAnotherInstance,
+    this.onForceClose,
+    this.isRunning = false,
+    this.isLaunching = false,
     required this.onInstall,
     required this.onUninstall,
     this.primaryActionFocus,
@@ -218,28 +227,23 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               if (pkg.hasUpdate) ...[
-                                Button(
+                                RunActionButton(
+                                  name: pkg.name,
+                                  running: widget.isRunning,
+                                  busy: widget.isLaunching,
+                                  enabled: pkg.canLaunch,
+                                  primary: false,
                                   focusNode: widget.primaryActionFocus,
-                                  onPressed: widget.onLaunch,
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(FluentIcons.play, size: 12),
-                                        SizedBox(width: 6),
-                                        Flexible(
-                                          child: Text(context.l10n.launch),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  onLaunch: (another) => another
+                                      ? (widget.onLaunchAnotherInstance ??
+                                            widget.onLaunch)()
+                                      : widget.onLaunch(),
+                                  onForceClose: widget.onForceClose ?? () {},
                                 ),
                                 FilledButton(
-                                  onPressed: widget.onUpdate,
+                                  onPressed: pkg.deviceObserved
+                                      ? null
+                                      : widget.onUpdate,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
@@ -262,25 +266,18 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   ),
                                 ),
                               ] else if (pkg.isInstalled) ...[
-                                FilledButton(
+                                RunActionButton(
+                                  name: pkg.name,
+                                  running: widget.isRunning,
+                                  busy: widget.isLaunching,
+                                  enabled: pkg.canLaunch,
+                                  primary: true,
                                   focusNode: widget.primaryActionFocus,
-                                  onPressed: widget.onLaunch,
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 4,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(FluentIcons.play, size: 13),
-                                        SizedBox(width: 6),
-                                        Flexible(
-                                          child: Text(context.l10n.launch),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  onLaunch: (another) => another
+                                      ? (widget.onLaunchAnotherInstance ??
+                                            widget.onLaunch)()
+                                      : widget.onLaunch(),
+                                  onForceClose: widget.onForceClose ?? () {},
                                 ),
                               ] else if (pkg.isDownloading) ...[
                                 Button(
@@ -307,7 +304,9 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                               ] else ...[
                                 FilledButton(
                                   focusNode: widget.primaryActionFocus,
-                                  onPressed: widget.onInstall,
+                                  onPressed: pkg.deviceObserved
+                                      ? null
+                                      : widget.onInstall,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 14,
@@ -336,7 +335,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                             ],
                           ),
                         ),
-                        if (pkg.isInstalled)
+                        if (pkg.isInstalled && !pkg.deviceObserved)
                           OverflowMenu(
                             triggerLabel: context.l10n.moreOptions,
                             openFolderLabel: context.l10n.openInstallFolder,

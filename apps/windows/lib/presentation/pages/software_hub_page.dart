@@ -185,7 +185,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
 
   Future<void> _handleUninstallPackage() async {
     final package = _controller.selected;
-    if (package == null) return;
+    if (package == null || package.deviceObserved) return;
     final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -222,14 +222,31 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     }
   }
 
-  void _handleLaunchPackage() {
+  Future<void> _handleLaunchPackage({bool anotherInstance = false}) async {
     final package = _controller.selected;
-    if (package == null) return;
-    _showInfo(
-      title: context.l10n.launchingTitle(package.name),
-      content: context.l10n.launchingContent(package.currentVersion),
-      severity: InfoBarSeverity.info,
-    );
+    if (package == null || !package.canLaunch) return;
+    try {
+      await _controller.launchSelected(anotherInstance: anotherInstance);
+      if (!mounted) return;
+      _showInfo(
+        title: context.l10n.launchingTitle(package.name),
+        content: context.l10n.launchingContent(package.currentVersion),
+        severity: InfoBarSeverity.info,
+      );
+    } catch (error) {
+      if (mounted) _showError(error);
+    }
+  }
+
+  VoidCallback? _forceCloseAction(String? id) =>
+      id == null ? null : () => _handleForceClose(id);
+
+  Future<void> _handleForceClose(String id) async {
+    try {
+      await _controller.forceClosePackage(id);
+    } catch (error) {
+      if (mounted) _showError(error);
+    }
   }
 
   /// Keeps the native window title (taskbar, alt-tab) on the localized
@@ -330,6 +347,23 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       package: _controller.selected,
                                       onUpdate: _handleUpdatePackage,
                                       onLaunch: _handleLaunchPackage,
+                                      onLaunchAnotherInstance: () =>
+                                          _handleLaunchPackage(
+                                            anotherInstance: true,
+                                          ),
+                                      onForceClose: _forceCloseAction(
+                                        _controller.selected?.id,
+                                      ),
+                                      isRunning:
+                                          _controller.selected != null &&
+                                          _controller.isRunning(
+                                            _controller.selected!.id,
+                                          ),
+                                      isLaunching:
+                                          _controller.selected != null &&
+                                          _controller.isLaunching(
+                                            _controller.selected!.id,
+                                          ),
                                       onInstall: _handleInstallPackage,
                                       onUninstall: _handleUninstallPackage,
                                       primaryActionFocus: _detailActionFocus,

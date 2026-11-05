@@ -33,3 +33,29 @@ class CatalogUnavailable extends HubException {
   @override
   String toString() => 'CatalogUnavailable($source): $reason';
 }
+
+/// The OS inventory could not be read. Never interpret this as no installs.
+class InstalledSoftwareUnavailable extends HubException {
+  final String reason;
+  const InstalledSoftwareUnavailable(this.reason);
+
+  @override
+  String toString() => 'InstalledSoftwareUnavailable: $reason';
+}
+
+/// An installed application's executable could not be started.
+class PackageLaunchFailed extends HubException {
+  final String id;
+  final String reason;
+  const PackageLaunchFailed(this.id, this.reason);
+
+  @override
+  String toString() => 'PackageLaunchFailed($id): $reason';
+}
+
+class ApplicationProcessFailed extends HubException {
+  final String reason;
+  const ApplicationProcessFailed(this.reason);
+  @override
+  String toString() => 'ApplicationProcessFailed: $reason';
+}

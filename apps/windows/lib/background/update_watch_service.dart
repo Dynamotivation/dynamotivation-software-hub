@@ -31,6 +31,7 @@ class UpdateWatchService {
     required this.texts,
     this.interval = const Duration(hours: 1),
     this.onError = _reportError,
+    this.onRefreshed,
   });
 
   final CatalogUpdateWatcher watcher;
@@ -40,6 +41,9 @@ class UpdateWatchService {
   final AppSettings Function() settings;
   final ShowNotification notify;
   final WatchTexts texts;
+
+  /// Updates the window from the same inventory/catalog snapshot as the poll.
+  final Future<void> Function()? onRefreshed;
 
   final Duration interval;
 
@@ -73,6 +77,7 @@ class UpdateWatchService {
     final CatalogUpdates? updates;
     try {
       updates = await watcher.poll();
+      await onRefreshed?.call();
     } catch (error, stack) {
       onError(error, stack);
       return;

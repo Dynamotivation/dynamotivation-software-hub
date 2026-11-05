@@ -173,5 +173,71 @@
   "clearSearch": "Suche löschen",
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"
+  },
+  "errorInstalledSoftwareUnavailable": "Die installierte Software konnte nicht aus Windows gelesen werden. Aktualisiere die Softwareliste erneut.",
+  "@errorInstalledSoftwareUnavailable": {
+    "description": "Shown when reading installed applications from the Windows registry fails."
+  },
+  "errorLaunchFailed": "Die Anwendung konnte nicht gestartet werden. Aktualisiere die Softwareliste und prüfe, ob sie noch installiert ist.",
+  "@errorLaunchFailed": {
+    "description": "Shown when launching an installed application fails, for example because its executable was removed."
+  },
+  "running": "Läuft",
+  "@running": {
+    "description": "Windows application process control: running."
+  },
+  "launchAnotherInstance": "Weitere Instanz starten",
+  "@launchAnotherInstance": {
+    "description": "Windows application process control: launchAnotherInstance."
+  },
+  "forceClose": "Beenden erzwingen",
+  "@forceClose": {
+    "description": "Windows application process control: forceClose."
+  },
+  "clickAction": "Klick",
+  "@clickAction": {
+    "description": "Windows application process control: clickAction."
+  },
+  "yesAction": "Ja",
+  "@yesAction": {
+    "description": "Windows application process control: yesAction."
+  },
+  "noAction": "Nein",
+  "@noAction": {
+    "description": "Windows application process control: noAction."
+  },
+  "forceCloseTitle": "Beenden von {name} erzwingen?",
+  "@forceCloseTitle": {
+    "description": "Windows application process control: forceCloseTitle.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "forceCloseBody": "Bist du sicher? Alle laufenden Instanzen von {name} werden zwangsweise beendet. Ungespeicherte Änderungen gehen verloren.",
+  "@forceCloseBody": {
+    "description": "Windows application process control: forceCloseBody.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierClickHint": "{shortcut}, um die Aktion „{action}“ auszuführen.",
+  "@modifierClickHint": {
+    "description": "Windows application process control: modifierClickHint.",
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessOperation": "Die Anwendungsprozesse konnten nicht gelesen oder beendet werden. Prüfe, ob sie unter deinem Windows-Konto laufen, und versuche es erneut.",
+  "@errorProcessOperation": {
+    "description": "Windows application process control: errorProcessOperation."
   }
 }

@@ -66,11 +66,13 @@ class BackgroundService with WindowListener {
   Future<void> showHub() async {
     await windowManager.show();
     await windowManager.focus();
+    await controller.startProcessWatch();
   }
 
   /// The tray menu's "End": leave the background surface (icon gone) and
   /// quit the process. When it is not running, nothing reacts to anything.
   Future<void> end() async {
+    controller.stopProcessWatch();
     await tray.remove();
     await windowManager.destroy();
   }
@@ -80,8 +82,17 @@ class BackgroundService with WindowListener {
   /// hourly update watch keeps ticking underneath. Otherwise the process
   /// exits; [destroy] quits directly, past the close interception.
   @override
+  void onWindowMinimize() => controller.stopProcessWatch();
+
+  @override
+  void onWindowRestore() {
+    controller.startProcessWatch();
+  }
+
+  @override
   void onWindowClose() {
     if (controller.settings.keepRunningInBackground) {
+      controller.stopProcessWatch();
       windowManager.hide();
     } else {
       windowManager.destroy();

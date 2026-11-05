@@ -224,6 +224,33 @@ class DynTokens {
 }
 
 class DynamotivationTheme {
+  /// Secondary banner actions match the primary action's themed corner radius,
+  /// retaining Fluent's state-dependent stroke and gradient.
+  static ButtonStyle secondaryActionStyle(BuildContext context) => ButtonStyle(
+    shape: WidgetStateProperty.resolveWith((states) {
+      final theme = FluentTheme.of(context);
+      final primary =
+          theme.buttonTheme.filledButtonStyle?.shape?.resolve(states) ??
+          FilledButton.shapeBorder(theme, states);
+      final radius = switch (primary) {
+        RoundedRectangleBorder(:final borderRadius) => borderRadius,
+        RoundedRectangleGradientBorder(:final borderRadius) => borderRadius,
+        _ => BorderRadius.zero,
+      };
+      return switch (ButtonThemeData.shapeBorder(context, states)) {
+        RoundedRectangleBorder border => border.copyWith(borderRadius: radius),
+        RoundedRectangleGradientBorder border => RoundedRectangleGradientBorder(
+          gradient: border.gradient,
+          borderRadius: radius,
+          width: border.width,
+          strokeAlign: border.strokeAlign,
+          style: border.style,
+        ),
+        final border => border,
+      };
+    }),
+  );
+
   static const captionCloseHover = Color(0xFFE81123);
   // Signature Dynamotivation coral/crimson brand accent
   static const Color coralPrimary = Color(0xFFE22050);

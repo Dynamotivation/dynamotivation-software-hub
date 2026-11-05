@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:hub_core/hub_core.dart';
 
 /// Presentation state of the Windows frontend. Holds no business rules; every
@@ -13,6 +14,76 @@ class HubController extends ChangeNotifier {
   });
 
   final HubUseCases _useCases;
+  Timer? _processTimer;
+  int _watchGeneration = 0;
+  Set<String> _runningIds = {};
+  final Set<String> _launchingIds = {};
+  bool _checkingProcesses = false;
+  bool isRunning(String id) => _runningIds.contains(id);
+  bool isLaunching(String id) => _launchingIds.contains(id);
+
+  void stopProcessWatch() {
+    _watchGeneration++;
+    _processTimer?.cancel();
+    _processTimer = null;
+  }
+
+  Future<void> startProcessWatch() async {
+    if (_disposed) return;
+    final generation = ++_watchGeneration;
+    try {
+      await refreshRunningProcesses();
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'hub process monitor',
+        ),
+      );
+    }
+    if (_disposed || generation != _watchGeneration) return;
+    _processTimer ??= Timer.periodic(const Duration(seconds: 2), (_) async {
+      try {
+        await refreshRunningProcesses();
+      } catch (error, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'hub process monitor',
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> refreshRunningProcesses() async {
+    if (_disposed || _checkingProcesses) return;
+    _checkingProcesses = true;
+    try {
+      final running = await _useCases.runningPackageIds();
+      if (_disposed) return;
+      if (!setEquals(running, _runningIds)) {
+        _runningIds = running;
+        notifyListeners();
+      }
+    } finally {
+      _checkingProcesses = false;
+    }
+  }
+
+  Future<void> forceClosePackage(String id) async {
+    if (!_launchingIds.add(id)) return;
+    notifyListeners();
+    try {
+      await _useCases.forceClosePackage(id);
+      await refreshRunningProcesses();
+    } finally {
+      _launchingIds.remove(id);
+      if (!_disposed) notifyListeners();
+    }
+  }
 
   /// Called once a catalog load the user saw completes: the startup load and
   /// every successful manual refresh. The background update watch uses it to
@@ -82,7 +153,9 @@ class HubController extends ChangeNotifier {
             if (snapshot.isFinal) onCatalogSynced?.call();
           },
           onError: (Object error, StackTrace stack) {
-            if (!shownAny && error is CatalogUnavailable) {
+            if (!shownAny &&
+                (error is CatalogUnavailable ||
+                    error is InstalledSoftwareUnavailable)) {
               _loadError = error;
               notifyListeners();
             } else if (!shownAny) {
@@ -194,6 +267,7 @@ class HubController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    stopProcessWatch();
     _catalog?.cancel();
     super.dispose();
   }
@@ -208,6 +282,13 @@ class HubController extends ChangeNotifier {
     _settings = settings;
     notifyListeners();
     await _useCases.saveSettings(settings);
+  }
+
+  /// Takes over the successful background poll without fetching a second time.
+  Future<void> syncFromSource() async {
+    final packages = await _useCases.listPackages();
+    if (_disposed) return;
+    _show(CatalogSnapshot(packages, isFinal: true), null, first: false);
   }
 
   Future<void> refresh() async {
@@ -233,6 +314,20 @@ class HubController extends ChangeNotifier {
     _packages = await _useCases.listPackages();
     notifyListeners();
     return updated;
+  }
+
+  Future<void> launchSelected({bool anotherInstance = false}) async {
+    final id = _selectedId;
+    if (id == null) throw const PackageNotFound('');
+    if (!_launchingIds.add(id)) return;
+    notifyListeners();
+    try {
+      await _useCases.launchPackage(id, anotherInstance: anotherInstance);
+      _runningIds = {..._runningIds, id};
+    } finally {
+      _launchingIds.remove(id);
+      if (!_disposed) notifyListeners();
+    }
   }
 
   Future<SoftwarePackage> installSelected() =>

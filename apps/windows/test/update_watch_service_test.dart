@@ -52,6 +52,26 @@ AppSettings _settings(bool autoCheck, [bool show = true]) =>
 
 void main() {
   test(
+    'successful poll synchronizes window even with notifications disabled',
+    () async {
+      final watcher = _ScriptedWatcher(results: [null], errors: [null]);
+      var refreshed = 0;
+      final service = UpdateWatchService(
+        watcher: watcher,
+        settings: () => _settings(true, false),
+        notify: ({required title, required body}) async =>
+            fail('notifications disabled'),
+        texts: _FixedTexts(),
+        onRefreshed: () async {
+          refreshed++;
+        },
+      );
+      await service.check();
+      expect(refreshed, 1);
+    },
+  );
+
+  test(
     'a poll with changes notifies each new entry and each newer release',
     () async {
       final watcher = _ScriptedWatcher(

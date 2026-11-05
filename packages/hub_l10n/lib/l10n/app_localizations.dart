@@ -667,6 +667,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear search'**
   String get clearSearch;
+
+  /// Shown when reading installed applications from the Windows registry fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed software could not be read from Windows. Try refreshing the software list.'**
+  String get errorInstalledSoftwareUnavailable;
+
+  /// Shown when launching an installed application fails, for example because its executable was removed.
+  ///
+  /// In en, this message translates to:
+  /// **'The application could not be started. Refresh the software list and check that it is still installed.'**
+  String get errorLaunchFailed;
+
+  /// Windows application process control: running.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get running;
+
+  /// Windows application process control: launchAnotherInstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Launch another instance'**
+  String get launchAnotherInstance;
+
+  /// Windows application process control: forceClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Force close'**
+  String get forceClose;
+
+  /// Windows application process control: clickAction.
+  ///
+  /// In en, this message translates to:
+  /// **'click'**
+  String get clickAction;
+
+  /// Windows application process control: yesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yesAction;
+
+  /// Windows application process control: noAction.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get noAction;
+
+  /// Windows application process control: forceCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Force close {name}?'**
+  String forceCloseTitle(String name);
+
+  /// Windows application process control: forceCloseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure? All running instances of {name} will be force closed. Unsaved changes will be lost.'**
+  String forceCloseBody(String name);
+
+  /// Windows application process control: modifierClickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{shortcut} to {action}.'**
+  String modifierClickHint(String shortcut, String action);
+
+  /// Windows application process control: errorProcessOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'The application processes could not be read or stopped. Check that they are running under your Windows account and try again.'**
+  String get errorProcessOperation;
 }
 
 class _AppLocalizationsDelegate

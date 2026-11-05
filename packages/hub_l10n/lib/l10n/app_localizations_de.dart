@@ -342,4 +342,49 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clearSearch => 'Suche löschen';
+
+  @override
+  String get errorInstalledSoftwareUnavailable =>
+      'Die installierte Software konnte nicht aus Windows gelesen werden. Aktualisiere die Softwareliste erneut.';
+
+  @override
+  String get errorLaunchFailed =>
+      'Die Anwendung konnte nicht gestartet werden. Aktualisiere die Softwareliste und prüfe, ob sie noch installiert ist.';
+
+  @override
+  String get running => 'Läuft';
+
+  @override
+  String get launchAnotherInstance => 'Weitere Instanz starten';
+
+  @override
+  String get forceClose => 'Beenden erzwingen';
+
+  @override
+  String get clickAction => 'Klick';
+
+  @override
+  String get yesAction => 'Ja';
+
+  @override
+  String get noAction => 'Nein';
+
+  @override
+  String forceCloseTitle(String name) {
+    return 'Beenden von $name erzwingen?';
+  }
+
+  @override
+  String forceCloseBody(String name) {
+    return 'Bist du sicher? Alle laufenden Instanzen von $name werden zwangsweise beendet. Ungespeicherte Änderungen gehen verloren.';
+  }
+
+  @override
+  String modifierClickHint(String shortcut, String action) {
+    return '$shortcut, um die Aktion „$action“ auszuführen.';
+  }
+
+  @override
+  String get errorProcessOperation =>
+      'Die Anwendungsprozesse konnten nicht gelesen oder beendet werden. Prüfe, ob sie unter deinem Windows-Konto laufen, und versuche es erneut.';
 }

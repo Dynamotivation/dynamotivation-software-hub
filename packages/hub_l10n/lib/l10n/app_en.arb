@@ -315,5 +315,71 @@
   "clearSearch": "Clear search",
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"
+  },
+  "errorInstalledSoftwareUnavailable": "Installed software could not be read from Windows. Try refreshing the software list.",
+  "@errorInstalledSoftwareUnavailable": {
+    "description": "Shown when reading installed applications from the Windows registry fails."
+  },
+  "errorLaunchFailed": "The application could not be started. Refresh the software list and check that it is still installed.",
+  "@errorLaunchFailed": {
+    "description": "Shown when launching an installed application fails, for example because its executable was removed."
+  },
+  "running": "Running",
+  "@running": {
+    "description": "Windows application process control: running."
+  },
+  "launchAnotherInstance": "Launch another instance",
+  "@launchAnotherInstance": {
+    "description": "Windows application process control: launchAnotherInstance."
+  },
+  "forceClose": "Force close",
+  "@forceClose": {
+    "description": "Windows application process control: forceClose."
+  },
+  "clickAction": "click",
+  "@clickAction": {
+    "description": "Windows application process control: clickAction."
+  },
+  "yesAction": "Yes",
+  "@yesAction": {
+    "description": "Windows application process control: yesAction."
+  },
+  "noAction": "No",
+  "@noAction": {
+    "description": "Windows application process control: noAction."
+  },
+  "forceCloseTitle": "Force close {name}?",
+  "@forceCloseTitle": {
+    "description": "Windows application process control: forceCloseTitle.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "forceCloseBody": "Are you sure? All running instances of {name} will be force closed. Unsaved changes will be lost.",
+  "@forceCloseBody": {
+    "description": "Windows application process control: forceCloseBody.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierClickHint": "{shortcut} to {action}.",
+  "@modifierClickHint": {
+    "description": "Windows application process control: modifierClickHint.",
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessOperation": "The application processes could not be read or stopped. Check that they are running under your Windows account and try again.",
+  "@errorProcessOperation": {
+    "description": "Windows application process control: errorProcessOperation."
   }
 }

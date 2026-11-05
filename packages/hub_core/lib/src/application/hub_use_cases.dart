@@ -2,6 +2,8 @@ import 'dart:async';
 
 import '../domain/app_settings.dart';
 import '../domain/software_package.dart';
+import 'application_launcher.dart';
+import 'application_processes.dart';
 import 'catalog_reconciliation.dart';
 import 'catalog_snapshot.dart';
 import 'errors.dart';
@@ -15,11 +17,23 @@ class HubUseCases {
   final PackageRepository _packages;
   final SettingsRepository _settings;
   final IconStore? _icons;
+  final ApplicationLauncher? _launcher;
+  final ApplicationProcesses? _processes;
 
   // ignore: prefer_initializing_formals
-  HubUseCases(this._packages, this._settings, {IconStore? icons})
+  HubUseCases(
+    this._packages,
+    this._settings, {
+    IconStore? icons,
+    ApplicationLauncher? launcher,
+    ApplicationProcesses? processes,
+  })
     // ignore: prefer_initializing_formals
-    : _icons = icons;
+    : _icons = icons,
+       // ignore: prefer_initializing_formals
+       _launcher = launcher,
+       // ignore: prefer_initializing_formals
+       _processes = processes;
 
   Future<List<SoftwarePackage>> listPackages() => _packages.all();
 
@@ -140,6 +154,65 @@ class HubUseCases {
     return package;
   }
 
+  /// Launching does not change installation state. OS failures are wrapped
+  /// here so the frontend only needs a localized application error.
+  Future<void> launchPackage(String id, {bool anotherInstance = false}) async {
+    final package = await _packages.find(id);
+    if (package == null) throw PackageNotFound(id);
+    final launcher = _launcher;
+    if (!package.canLaunch || launcher == null) {
+      throw PackageActionRejected(id, 'No launchable installation is known.');
+    }
+    try {
+      if (!anotherInstance &&
+          _processes != null &&
+          (await _processes.runningExecutables({package.launchExecutable}))
+              .isNotEmpty) {
+        throw PackageActionRejected(id, 'Application is already running.');
+      }
+      await launcher.launch(package.launchExecutable);
+    } on PackageActionRejected {
+      rethrow;
+    } catch (error) {
+      throw PackageLaunchFailed(id, error.toString());
+    }
+  }
+
+  Future<Set<String>> runningPackageIds() async {
+    final processes = _processes;
+    if (processes == null) return {};
+    final packages = await _packages.all();
+    try {
+      final running = await processes.runningExecutables({
+        for (final p in packages)
+          if (p.canLaunch) p.launchExecutable,
+      });
+      return {
+        for (final p in packages)
+          if (running.contains(p.launchExecutable)) p.id,
+      };
+    } catch (error) {
+      throw ApplicationProcessFailed(error.toString());
+    }
+  }
+
+  Future<void> forceClosePackage(String id) async {
+    final package = await _packages.find(id);
+    if (package == null) throw PackageNotFound(id);
+    final processes = _processes;
+    if (!package.canLaunch || processes == null) {
+      throw PackageActionRejected(
+        id,
+        'No running installation can be controlled.',
+      );
+    }
+    try {
+      await processes.terminateAll(package.launchExecutable);
+    } catch (error) {
+      throw ApplicationProcessFailed(error.toString());
+    }
+  }
+
   /// Applies the update command and returns the updated package.
   Future<SoftwarePackage> updatePackage(String id) =>
       _apply(id, (p) => p.update());
@@ -158,6 +231,9 @@ class HubUseCases {
   ) async {
     final package = await _packages.find(id);
     if (package == null) throw PackageNotFound(id);
+    if (package.deviceObserved) {
+      throw PackageActionRejected(id, 'Package management is not implemented.');
+    }
     final SoftwarePackage changed;
     try {
       changed = command(package);

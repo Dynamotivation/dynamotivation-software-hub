@@ -30,6 +30,8 @@ class FlutterWindow : public Win32Window {
   Microsoft::WRL::ComPtr<AccessibilityAlert> accessibility_alert_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> contrast_channel_;
 
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> processes_channel_;
+
   // The project to run.
   flutter::DartProject project_;
 

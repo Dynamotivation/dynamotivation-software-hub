@@ -1,3 +1,5 @@
+import 'software_version.dart';
+
 /// Thrown when a lifecycle command is not allowed in the current state.
 class PackageStateException implements Exception {
   final String packageId;
@@ -64,6 +66,38 @@ class ReleaseNote {
 }
 
 class SoftwarePackage {
+  /// Registry-backed packages are observational until real management exists.
+  final bool deviceObserved;
+  final String launchExecutable;
+
+  bool get canLaunch => isInstalled && launchExecutable.isNotEmpty;
+
+  /// Declared platform ids. Null means an older catalog did not declare them.
+  final List<String>? platformIds;
+
+  bool supportsPlatform(String platform) =>
+      platformIds?.contains(platform) ??
+      (latestRelease.downloads.isEmpty ||
+          latestRelease.downloads.any((d) => d.platform == platform));
+
+  SoftwarePackage withInstallation(
+    String? version, {
+    String? platform,
+    String executable = '',
+  }) => copyWith(
+    deviceObserved: true,
+    currentVersion: version ?? '',
+    launchExecutable: version == null ? '' : executable,
+    status: version == null
+        ? PackageInstallationStatus.notInstalled
+        : (platform == null ||
+                  latestRelease.downloads.isEmpty ||
+                  latestRelease.downloads.any((d) => d.platform == platform)) &&
+              isNewerSoftwareVersion(latestVersion, version)
+        ? PackageInstallationStatus.updateAvailable
+        : PackageInstallationStatus.installed,
+  );
+
   final String id;
   final String name;
   final String description;
@@ -90,6 +124,9 @@ class SoftwarePackage {
   final String? releaseHistoryUrl;
 
   const SoftwarePackage({
+    this.deviceObserved = false,
+    this.launchExecutable = '',
+    this.platformIds,
     required this.id,
     required this.name,
     required this.description,
@@ -173,6 +210,9 @@ class SoftwarePackage {
   }
 
   SoftwarePackage copyWith({
+    bool? deviceObserved,
+    String? launchExecutable,
+    List<String>? platformIds,
     String? id,
     String? name,
     String? description,
@@ -189,6 +229,9 @@ class SoftwarePackage {
     String? releaseHistoryUrl,
   }) {
     return SoftwarePackage(
+      deviceObserved: deviceObserved ?? this.deviceObserved,
+      launchExecutable: launchExecutable ?? this.launchExecutable,
+      platformIds: platformIds ?? this.platformIds,
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,

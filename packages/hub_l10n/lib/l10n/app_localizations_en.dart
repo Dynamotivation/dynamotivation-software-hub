@@ -340,4 +340,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearSearch => 'Clear search';
+
+  @override
+  String get errorInstalledSoftwareUnavailable =>
+      'Installed software could not be read from Windows. Try refreshing the software list.';
+
+  @override
+  String get errorLaunchFailed =>
+      'The application could not be started. Refresh the software list and check that it is still installed.';
+
+  @override
+  String get running => 'Running';
+
+  @override
+  String get launchAnotherInstance => 'Launch another instance';
+
+  @override
+  String get forceClose => 'Force close';
+
+  @override
+  String get clickAction => 'click';
+
+  @override
+  String get yesAction => 'Yes';
+
+  @override
+  String get noAction => 'No';
+
+  @override
+  String forceCloseTitle(String name) {
+    return 'Force close $name?';
+  }
+
+  @override
+  String forceCloseBody(String name) {
+    return 'Are you sure? All running instances of $name will be force closed. Unsaved changes will be lost.';
+  }
+
+  @override
+  String modifierClickHint(String shortcut, String action) {
+    return '$shortcut to $action.';
+  }
+
+  @override
+  String get errorProcessOperation =>
+      'The application processes could not be read or stopped. Check that they are running under your Windows account and try again.';
 }

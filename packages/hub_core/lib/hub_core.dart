@@ -18,3 +18,14 @@ export 'src/infrastructure/hub_services.dart';
 export 'src/infrastructure/icon_cache.dart';
 export 'src/infrastructure/in_memory_settings_repository.dart';
 export 'src/infrastructure/website_package_repository.dart';
+
+export 'src/domain/installed_application.dart';
+export 'src/domain/software_version.dart';
+export 'src/application/installed_application_repository.dart';
+export 'src/infrastructure/device_package_repository.dart';
+export 'src/infrastructure/windows_installed_application_repository.dart';
+
+export 'src/application/application_launcher.dart';
+export 'src/infrastructure/windows_application_launcher.dart';
+
+export 'src/application/application_processes.dart';

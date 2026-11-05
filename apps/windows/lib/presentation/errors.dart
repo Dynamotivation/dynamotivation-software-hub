@@ -5,7 +5,10 @@ import 'package:hub_l10n/hub_l10n.dart';
 /// their localized message; anything else is shown as-is rather than hidden.
 String describeError(AppLocalizations l10n, Object error) => switch (error) {
   PackageNotFound(:final id) => l10n.errorPackageNotFound(id),
+  ApplicationProcessFailed() => l10n.errorProcessOperation,
+  PackageLaunchFailed() => l10n.errorLaunchFailed,
   PackageActionRejected() => l10n.errorActionRejected,
+  InstalledSoftwareUnavailable() => l10n.errorInstalledSoftwareUnavailable,
   CatalogUnavailable() => l10n.errorCatalogUnavailable,
   _ => error.toString(),
 };

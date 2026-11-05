@@ -1,4 +1,5 @@
 #include "flutter_window.h"
+#include "application_processes.h"
 
 #include <optional>
 #include <flutter/standard_method_codec.h>
@@ -80,6 +81,45 @@ bool FlutterWindow::OnCreate() {
             {flutter::EncodableValue("disabled"), color(COLOR_GRAYTEXT)},
         });
       });
+  processes_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), "dynamotivation/application_processes",
+      &flutter::StandardMethodCodec::GetInstance());
+  processes_channel_->SetMethodCallHandler([](const auto& call, auto result) {
+    const bool terminate = call.method_name() == "terminate";
+    if (!terminate && call.method_name() != "running") { result->NotImplemented(); return; }
+    std::vector<std::string> inputs;
+    if (terminate) {
+      const auto* path = std::get_if<std::string>(call.arguments());
+      if (path) inputs.push_back(*path);
+    } else if (const auto* list = std::get_if<flutter::EncodableList>(call.arguments())) {
+      for (const auto& value : *list) {
+        const auto* path = std::get_if<std::string>(&value);
+        if (!path) { result->Error("processes", "Invalid executable list"); return; }
+        inputs.push_back(*path);
+      }
+    }
+    if (terminate && inputs.size() != 1) { result->Error("processes", "Expected executable path"); return; }
+    std::vector<std::wstring> paths;
+    for (const auto& input : inputs) {
+      const int length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+          input.data(), static_cast<int>(input.size()), nullptr, 0);
+      if (length <= 0) { result->Error("processes", "Invalid executable path"); return; }
+      std::wstring path(length, L'\0');
+      MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, input.data(),
+          static_cast<int>(input.size()), path.data(), length);
+      for (auto& ch : path) if (ch == L'/') ch = L'\\';
+      paths.push_back(std::move(path));
+    }
+    const auto state = InspectApplicationProcesses(paths, terminate);
+    if (state.error != ERROR_SUCCESS) {
+      result->Error("processes", "Windows process operation failed",
+          flutter::EncodableValue(static_cast<int64_t>(state.error)));
+      return;
+    }
+    flutter::EncodableList running;
+    for (size_t i = 0; i < inputs.size(); ++i) if (state.running[i]) running.emplace_back(inputs[i]);
+    if (terminate) result->Success(); else result->Success(running);
+  });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -97,6 +137,7 @@ bool FlutterWindow::OnCreate() {
 void FlutterWindow::OnDestroy() {
   accessibility_alert_ = nullptr;
   contrast_channel_ = nullptr;
+  processes_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

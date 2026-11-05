@@ -5,6 +5,7 @@ import 'package:hub_images/hub_images.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'platform/windows_application_processes.dart';
 import 'platform/windows_accessibility.dart';
 import 'background/background_service.dart';
 import 'background/background_strings.dart';
@@ -33,7 +34,14 @@ void main(List<String> args) async {
     titleBarStyle: TitleBarStyle.hidden,
   );
 
-  final services = HubServices.production(args);
+  final services = HubServices.production(
+    args,
+    installations: WindowsInstalledApplicationRepository(),
+    launcher: WindowsApplicationLauncher(),
+    processes: WindowsApplicationProcesses(),
+    platform: 'windows',
+    excludedPackageIds: const {'dynamotivation-software-hub'},
+  );
   final useCases = services.useCases;
 
   // The watcher's baseline follows what the window actually showed, so a
@@ -55,6 +63,7 @@ void main(List<String> args) async {
   );
 
   await controller.load(preferredId: null);
+  await controller.startProcessWatch();
   if (startDark) {
     await controller.updateSettings(
       controller.settings.copyWith(themeMode: AppThemeMode.dark),
@@ -83,6 +92,7 @@ void main(List<String> args) async {
     strings: strings,
     watch: UpdateWatchService(
       watcher: watcher,
+      onRefreshed: controller.syncFromSource,
       settings: () => controller.settings,
       notify: ({required title, required body}) =>
           notifications.show(title: title, body: body),
