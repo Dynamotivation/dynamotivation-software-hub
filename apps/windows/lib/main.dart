@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -41,19 +42,25 @@ void main(List<String> args) async {
   final useCases = services.useCases;
 
   // The version the catalog compares against is the release version without
-  // the pubspec build suffix (`0.1.11+1` -> `0.1.11`).
+  // the pubspec build suffix (`0.1.12+1` -> `0.1.12`).
   final packageInfo = await PackageInfo.fromPlatform();
   final selfVersion = packageInfo.version.split('+').first;
 
-  // The watcher's baseline follows what the window actually showed, so a
-  // manual refresh never re-announces anything through the hourly watch.
-  final watcher = CatalogUpdateWatcher(useCases);
+  // What was announced lives in the cache folder, so a relaunch (including
+  // the restart after a self-update) announces nothing twice. A manual
+  // refresh counts what it showed as known; the startup load settles first
+  // and then triggers the one startup summary (see below).
+  final watcher = CatalogUpdateWatcher(useCases, store: services.announcements);
+  final startupSettled = Completer<void>();
   final controller = HubController(
     useCases,
     selfVersion: selfVersion,
+    onStartupSynced: () {
+      if (!startupSettled.isCompleted) startupSettled.complete();
+    },
     onCatalogSynced: () async {
       try {
-        await watcher.rebaseline();
+        await watcher.markSeen();
       } catch (error, stack) {
         reportBackgroundError(error, stack);
       }
@@ -97,6 +104,7 @@ void main(List<String> args) async {
     controller: controller,
     tray: tray,
     strings: strings,
+    accessibility: accessibility,
     watch: UpdateWatchService(
       watcher: watcher,
       settings: () => controller.settings,
@@ -106,6 +114,10 @@ void main(List<String> args) async {
             body: body,
             imagePath: await notificationIcons.pngPath(iconUrl),
           ),
+      showInApp: controller.postNotice,
+      // Toasts are for a window that is unfocused or hidden in the tray.
+      isWindowFocused: () async =>
+          await windowManager.isVisible() && await windowManager.isFocused(),
       onRefreshed: controller.syncFromSource,
       texts: strings,
     ),
@@ -119,6 +131,13 @@ void main(List<String> args) async {
     await windowManager.show();
     await windowManager.focus();
   });
+
+  // At most one summary of what the user was not told about before the last
+  // close, once the catalog settled and the window is up (so a relaunched,
+  // focused hub gets an in-app notice, never a toast).
+  unawaited(
+    startupSettled.future.then((_) => background.watch.announceStartup()),
+  );
 
   runApp(
     HubImageScope(

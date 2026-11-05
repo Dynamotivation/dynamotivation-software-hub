@@ -36,4 +36,8 @@ class BackgroundStrings implements WatchTexts {
   @override
   String updateNotificationBody(String name, String version) =>
       _l10n.updateNotificationBody(name, version);
+  @override
+  String get changesSummaryTitle => _l10n.catalogChangesTitle;
+  @override
+  String changesSummaryBody(int count) => _l10n.catalogChangesBody(count);
 }

@@ -2,6 +2,7 @@
 /// macOS, Linux, ...) depends on this library and on nothing below `src/`.
 library;
 
+export 'src/application/announcement_store.dart';
 export 'src/application/catalog_update_watcher.dart';
 export 'src/application/catalog_reconciliation.dart';
 export 'src/application/catalog_snapshot.dart';
@@ -15,6 +16,7 @@ export 'src/domain/app_settings.dart';
 export 'src/domain/software_package.dart';
 export 'src/infrastructure/catalog_cache.dart';
 export 'src/infrastructure/catalog_source.dart';
+export 'src/infrastructure/file_announcement_store.dart';
 export 'src/infrastructure/hub_services.dart';
 export 'src/infrastructure/icon_cache.dart';
 export 'src/infrastructure/in_memory_settings_repository.dart';

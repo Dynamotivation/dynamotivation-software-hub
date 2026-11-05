@@ -8,6 +8,7 @@ import '../controllers/hub_controller.dart';
 import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
+import '../widgets/notice_banners.dart';
 import '../widgets/package_detail_pane.dart';
 import '../widgets/package_sidebar.dart';
 import '../widgets/settings_view.dart';
@@ -291,6 +292,10 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                       onUpdateHub: _controller.hubUpdate == null
                           ? null
                           : _handleUpdateHub,
+                    ),
+                    NoticeBanners(
+                      notices: _controller.notices,
+                      onDismiss: _controller.dismissNotice,
                     ),
                     Expanded(
                       child: Padding(

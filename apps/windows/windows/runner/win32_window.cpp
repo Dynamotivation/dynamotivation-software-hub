@@ -7,6 +7,10 @@
 
 namespace {
 
+// -1 follows Windows; 0 is dark; 1 is light.
+int window_icon_theme = -1;
+
+
 /// Window attribute that enables dark mode window decorations.
 ///
 /// Redefined in case the developer's machine has a Windows SDK older than
@@ -144,19 +148,6 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
-  // Supply both window icon sizes explicitly for the title bar and taskbar.
-  const auto module = GetModuleHandle(nullptr);
-  SendMessage(window, WM_SETICON, ICON_BIG,
-              reinterpret_cast<LPARAM>(LoadImage(
-                  module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
-                  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
-                  LR_SHARED)));
-  SendMessage(window, WM_SETICON, ICON_SMALL,
-              reinterpret_cast<LPARAM>(LoadImage(
-                  module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
-                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-                  LR_SHARED)));
-
   UpdateTheme(window);
 
   return OnCreate();
@@ -286,6 +277,26 @@ void Win32Window::OnDestroy() {
 }
 
 void Win32Window::UpdateTheme(HWND const window) {
+  DWORD light = 1;
+  DWORD size = sizeof(light);
+  RegGetValueW(HKEY_CURRENT_USER, kGetPreferredBrightnessRegKey,
+               L"SystemUsesLightTheme", RRF_RT_REG_DWORD, nullptr, &light, &size);
+  if (window_icon_theme >= 0) light = window_icon_theme;
+  const int id = light ? IDI_APP_ICON : IDI_APP_ICON_DARK;
+  SendMessageW(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(
+      LoadImageW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
+                 GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_SHARED)));
+  SendMessageW(window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(
+      LoadImageW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
+                 GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)));
+
+  // Keep the class fallback in step with the per-window icons. Explorer can
+  // query either when reconstructing a taskbar button.
+  SetClassLongPtrW(window, GCLP_HICON,
+      static_cast<LONG_PTR>(SendMessageW(window, WM_GETICON, ICON_BIG, 0)));
+  SetClassLongPtrW(window, GCLP_HICONSM,
+      static_cast<LONG_PTR>(SendMessageW(window, WM_GETICON, ICON_SMALL, 0)));
+
   DWORD light_mode;
   DWORD light_mode_size = sizeof(light_mode);
   LSTATUS result = RegGetValue(HKEY_CURRENT_USER, kGetPreferredBrightnessRegKey,
@@ -298,4 +309,9 @@ void Win32Window::UpdateTheme(HWND const window) {
     DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE,
                           &enable_dark_mode, sizeof(enable_dark_mode));
   }
+}
+
+void Win32Window::SetWindowIconTheme(HWND window, int theme) {
+  window_icon_theme = theme;
+  UpdateTheme(window);
 }
