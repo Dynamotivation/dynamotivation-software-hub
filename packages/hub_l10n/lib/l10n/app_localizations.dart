@@ -158,41 +158,29 @@ abstract class AppLocalizations {
   /// **'Software Hub update available ({version})'**
   String hubUpdateAvailableTooltip(String version);
 
-  /// No description provided for @hubUpToDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Hub is up to date'**
-  String get hubUpToDate;
-
-  /// No description provided for @hubUpdateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Software Hub Update'**
-  String get hubUpdateTitle;
-
-  /// No description provided for @hubUpdateReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Version {version} is ready to install.'**
-  String hubUpdateReady(String version);
-
-  /// No description provided for @hubRunningLatest.
-  ///
-  /// In en, this message translates to:
-  /// **'You are running the latest version.'**
-  String get hubRunningLatest;
-
-  /// No description provided for @updateNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Update now'**
-  String get updateNow;
-
   /// Header pill label
   ///
   /// In en, this message translates to:
   /// **'Update Hub'**
   String get updateHub;
+
+  /// No description provided for @hubUpdateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {percent}%'**
+  String hubUpdateDownloading(int percent);
+
+  /// No description provided for @errorSetupUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The update could not be downloaded. Check your connection and try again.'**
+  String get errorSetupUnavailable;
+
+  /// No description provided for @errorSetupLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The update setup could not be started.'**
+  String get errorSetupLaunchFailed;
 
   /// No description provided for @catalogSynchronized.
   ///
@@ -667,6 +655,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear search'**
   String get clearSearch;
+
+  /// Header pill label once the update is downloaded
+  ///
+  /// In en, this message translates to:
+  /// **'Restart to update'**
+  String get hubUpdateRestart;
+
+  /// Tooltip of the header pill once the update is downloaded
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is downloaded. Restart to update; otherwise it installs when you close the Hub.'**
+  String hubUpdateReadyTooltip(String version);
+
+  /// Title of the summary notification (toast or in-app) when several apps are new or have an update
+  ///
+  /// In en, this message translates to:
+  /// **'New in the Software Hub'**
+  String get catalogChangesTitle;
+
+  /// Body of the summary notification that collapses several catalog changes into one message
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 app is new or has an update available.} other{{count} apps are new or have an update available.}}'**
+  String catalogChangesBody(int count);
+
+  /// Label of the button that dismisses an in-app notification
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dismissNotification;
 }
 
 class _AppLocalizationsDelegate

@@ -43,6 +43,12 @@ class WindowsAccessibility extends ValueNotifier<WindowsContrastPalette?> {
   bool _disposed = false;
   int _generation = 0;
 
+  /// True while the taskbar (and so the tray) is light, false while dark;
+  /// null until read. This is Windows' "Windows mode", which can differ from
+  /// the apps' theme. Kept current by the same native broadcasts as the
+  /// contrast palette.
+  final ValueNotifier<bool?> taskbarLight = ValueNotifier<bool?>(null);
+
   WindowsAccessibility() : super(null);
 
   /// Single MSAA alert: Flutter's dual MSAA/UIA announce path repeats speech
@@ -67,6 +73,7 @@ class WindowsAccessibility extends ValueNotifier<WindowsContrastPalette?> {
       if (call.method != 'changed') return;
       try {
         await refresh();
+        await refreshTaskbarTheme();
       } catch (error, stack) {
         FlutterError.reportError(
           FlutterErrorDetails(exception: error, stack: stack),
@@ -74,6 +81,15 @@ class WindowsAccessibility extends ValueNotifier<WindowsContrastPalette?> {
       }
     });
     await refresh();
+    await refreshTaskbarTheme();
+  }
+
+  Future<void> setWindowIconTheme(int theme) =>
+      channel.invokeMethod<void>('setWindowIconTheme', theme);
+
+  Future<void> refreshTaskbarTheme() async {
+    final light = await channel.invokeMethod<bool>('readTaskbarTheme');
+    if (!_disposed && light != null) taskbarLight.value = light;
   }
 
   Future<void> refresh() async {
@@ -91,6 +107,7 @@ class WindowsAccessibility extends ValueNotifier<WindowsContrastPalette?> {
   @override
   void dispose() {
     _disposed = true;
+    taskbarLight.dispose();
     channel.setMethodCallHandler(null);
     super.dispose();
   }

@@ -40,6 +40,20 @@ class _Repo implements PackageRepository, CachedPackageSource {
   Future<void> save(SoftwarePackage package) async {}
 }
 
+/// A source with no separate cache: reading it is the load.
+class _Plain implements PackageRepository {
+  _Plain(this.packages);
+  final List<SoftwarePackage> packages;
+  @override
+  Future<List<SoftwarePackage>> all() async => packages;
+  @override
+  Future<SoftwarePackage?> find(String id) async => null;
+  @override
+  Future<void> refresh() async {}
+  @override
+  Future<void> save(SoftwarePackage package) async {}
+}
+
 class _Icons implements IconStore {
   final gate = Completer<void>();
   final requested = <String>[];
@@ -115,5 +129,77 @@ void main() {
     await done.future;
     expect(snapshots, hasLength(1));
     expect(errors.single, isA<CatalogUnavailable>());
+  });
+
+  group('the hub itself', () {
+    SoftwarePackage hubEntry(String version) => SoftwarePackage(
+      id: hubPackageId,
+      name: 'Hub',
+      description: '',
+      subtitle: '',
+      currentVersion: '',
+      latestVersion: version,
+      status: PackageInstallationStatus.notInstalled,
+      latestRelease: ReleaseNote(
+        version: version,
+        date: '',
+        highlights: const [],
+        downloads: [
+          DownloadLink(
+            platform: 'windows',
+            arch: 'x64',
+            url: 'https://example.com/hub-setup-$version.exe',
+            sha256: 'a' * 64,
+            size: 1,
+          ),
+        ],
+      ),
+      olderReleases: const [],
+      availableVersions: [version],
+    );
+
+    test('is not listed in any snapshot, with or without a cache', () async {
+      final fresh = [_pkg('a', 'A'), hubEntry('0.2.0')];
+      for (final repo in <PackageRepository>[
+        _Repo([_pkg('a', 'A'), hubEntry('0.1.0')], fresh),
+        _Plain(fresh),
+      ]) {
+        final snapshots = await _hub(repo)
+            .openCatalog(departGrace: Duration.zero)
+            .toList();
+        for (final s in snapshots) {
+          expect(s.packages.map((p) => p.id), ['a']);
+        }
+        expect(snapshots.last.hub?.latestVersion, '0.2.0');
+      }
+    });
+
+    test('is not in listPackages or cachedPackages', () async {
+      final hub = _hub(_Repo([_pkg('a', 'A'), hubEntry('0.1.0')], [_pkg('a', 'A'), hubEntry('0.1.0')]));
+      expect((await hub.listPackages()).map((p) => p.id), ['a']);
+      expect((await hub.cachedPackages())!.map((p) => p.id), ['a']);
+    });
+
+    test('a catalog of only the hub lists nothing', () async {
+      final snapshots = await _hub(
+        _Plain([hubEntry('0.1.0')]),
+      ).openCatalog().toList();
+      expect(snapshots.single.packages, isEmpty);
+      expect(snapshots.single.hub, isNotNull);
+    });
+
+    test('self-update still finds the release hidden from the list', () async {
+      final hub = _hub(_Plain([_pkg('a', 'A'), hubEntry('0.2.0')]));
+      final catalog = await hub.currentCatalog();
+      expect(catalog.packages.map((p) => p.id), ['a']);
+
+      final offer = hub.selfUpdateOffer(
+        packages: [?catalog.hub],
+        installedVersion: '0.1.0',
+        platform: 'windows',
+        arch: 'x64',
+      );
+      expect(offer?.version, '0.2.0');
+    });
   });
 }

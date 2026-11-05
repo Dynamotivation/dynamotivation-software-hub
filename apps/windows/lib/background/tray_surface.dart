@@ -40,6 +40,13 @@ class TraySurface {
     });
   }
 
+  /// Swaps the icon image, e.g. when the taskbar changes between light and
+  /// dark. Does nothing while the icon is not installed.
+  Future<void> setIcon(String iconAsset) async {
+    if (!_installed) return;
+    await _tray.setImage(iconAsset);
+  }
+
   /// Removes the icon. Like [install], idempotent.
   Future<void> remove() async {
     if (!_installed) return;

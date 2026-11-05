@@ -33,3 +33,26 @@ class CatalogUnavailable extends HubException {
   @override
   String toString() => 'CatalogUnavailable($source): $reason';
 }
+
+/// The setup of an update could not be downloaded, or does not match the
+/// digest and size the catalog promised. [reason] is for developers; show a
+/// localized message instead.
+class SetupUnavailable extends HubException {
+  final Uri source;
+  final String reason;
+  const SetupUnavailable(this.source, this.reason);
+
+  @override
+  String toString() => 'SetupUnavailable($source): $reason';
+}
+
+/// A staged setup could not be started. [reason] is for developers; show a
+/// localized message instead.
+class SetupLaunchFailed extends HubException {
+  final String path;
+  final String reason;
+  const SetupLaunchFailed(this.path, this.reason);
+
+  @override
+  String toString() => 'SetupLaunchFailed($path): $reason';
+}

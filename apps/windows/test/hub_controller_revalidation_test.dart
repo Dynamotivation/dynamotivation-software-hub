@@ -36,7 +36,7 @@ class _Repo implements PackageRepository, CachedPackageSource {
 HubController _controller(_Repo repo, {void Function()? onSynced}) =>
     HubController(
       HubUseCases(repo, InMemorySettingsRepository()),
-      onCatalogSynced: onSynced,
+      onStartupSynced: onSynced,
       departDuration: const Duration(milliseconds: 20),
     );
 

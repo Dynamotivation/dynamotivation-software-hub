@@ -8,6 +8,7 @@ import '../controllers/hub_controller.dart';
 import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
+import '../widgets/notice_banners.dart';
 import '../widgets/package_detail_pane.dart';
 import '../widgets/package_sidebar.dart';
 import '../widgets/settings_view.dart';
@@ -222,6 +223,16 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     }
   }
 
+  /// "Restart to update": install the downloaded update and come back. A
+  /// failed download shows as a toast.
+  Future<void> _handleUpdateHub() async {
+    try {
+      await _controller.updateHub();
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
+  }
+
   void _handleLaunchPackage() {
     final package = _controller.selected;
     if (package == null) return;
@@ -273,12 +284,18 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                       isSettingsOpen: _isSettingsOpen,
                       onToggleSettings: _toggleSettings,
                       settingsFocusNode: _settingsButtonFocus,
-                      hubUpdateVersion: '0.2.0',
-                      onUpdateHub: () => _showInfo(
-                        title: context.l10n.hubUpdateTitle,
-                        content: context.l10n.hubUpdateReady('0.2.0'),
-                        severity: InfoBarSeverity.info,
-                      ),
+                      hubUpdateVersion: _controller.hubUpdate?.version,
+                      hubUpdateReady: _controller.isHubUpdateReady,
+                      hubUpdateProgress: _controller.isStagingHubUpdate
+                          ? _controller.hubStageProgress
+                          : null,
+                      onUpdateHub: _controller.hubUpdate == null
+                          ? null
+                          : _handleUpdateHub,
+                    ),
+                    NoticeBanners(
+                      notices: _controller.notices,
+                      onDismiss: _controller.dismissNotice,
                     ),
                     Expanded(
                       child: Padding(
