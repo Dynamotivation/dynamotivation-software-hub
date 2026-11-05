@@ -10,12 +10,10 @@
   "settings": "Einstellungen",
   "backToSoftware": "Zurück zur Software",
   "hubUpdateAvailableTooltip": "Software-Hub-Update verfügbar ({version})",
-  "hubUpToDate": "Hub ist auf dem neuesten Stand",
-  "hubUpdateTitle": "Software-Hub-Update",
-  "hubUpdateReady": "Version {version} kann installiert werden.",
-  "hubRunningLatest": "Sie verwenden die neueste Version.",
-  "updateNow": "Jetzt aktualisieren",
   "updateHub": "Hub aktualisieren",
+  "hubUpdateDownloading": "Wird geladen … {percent} %",
+  "errorSetupUnavailable": "Das Update konnte nicht heruntergeladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "errorSetupLaunchFailed": "Das Update-Setup konnte nicht gestartet werden.",
   "catalogSynchronized": "Katalog synchronisiert",
   "catalogUpToDate": "Alle Softwarepakete sind auf dem neuesten Stand.",
   "packageUpdatedTitle": "{name} aktualisiert",
@@ -94,7 +92,6 @@
   "menuSoftware": "Software",
   "menuWindow": "Fenster",
   "aboutMenuItem": "Über {productName}",
-  "minimize": "Minimieren",
   "zoom": "Zoom",
   "enterFullScreen": "Vollbild aktivieren",
   "exitFullScreen": "Vollbild beenden",
@@ -162,14 +159,22 @@
   },
   "errorPackageNotFound": "Das Paket \"{id}\" wurde nicht gefunden.",
   "errorCatalogUnavailable": "Der Software-Katalog konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
-  "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
+  "@errorCatalogUnavailable": {
+    "description": "Shown when the online software catalog cannot be fetched or parsed."
+  },
   "errorActionRejected": "Diese Aktion ist für das Paket derzeit nicht verfügbar.",
   "selectedPackage": "Ausgewählt",
-  "@selectedPackage": {"description": "Screen-reader indication for the selected software row"},
+  "@selectedPackage": {
+    "description": "Screen-reader indication for the selected software row"
+  },
   "switchStateOn": "ein",
-  "@switchStateOn": {"description": "Spoken enabled state following a switch label after activation"},
+  "@switchStateOn": {
+    "description": "Spoken enabled state following a switch label after activation"
+  },
   "switchStateOff": "aus",
-  "@switchStateOff": {"description": "Spoken disabled state following a switch label after activation"},
+  "@switchStateOff": {
+    "description": "Spoken disabled state following a switch label after activation"
+  },
   "clearSearch": "Suche löschen",
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"
@@ -239,5 +244,24 @@
   "errorProcessOperation": "Die Anwendungsprozesse konnten nicht gelesen oder beendet werden. Prüfe, ob sie unter deinem Windows-Konto laufen, und versuche es erneut.",
   "@errorProcessOperation": {
     "description": "Windows application process control: errorProcessOperation."
+  },
+  "hubUpdateRestart": "Neu starten und aktualisieren",
+  "hubUpdateReadyTooltip": "Version {version} ist heruntergeladen. Neu starten, um zu aktualisieren; sonst wird sie beim Schließen des Hubs installiert.",
+  "catalogChangesTitle": "Neu im Software Hub",
+  "@catalogChangesTitle": {
+    "description": "Title of the summary notification (toast or in-app) when several apps are new or have an update"
+  },
+  "catalogChangesBody": "{count, plural, one{1 App ist neu oder hat ein Update.} other{{count} Apps sind neu oder haben ein Update.}}",
+  "@catalogChangesBody": {
+    "description": "Body of the summary notification that collapses several catalog changes into one message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dismissNotification": "Ausblenden",
+  "@dismissNotification": {
+    "description": "Label of the button that dismisses an in-app notification"
   }
 }

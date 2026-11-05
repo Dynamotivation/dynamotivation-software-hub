@@ -71,6 +71,10 @@ class Win32Window {
   // Called when Destroy is called.
   virtual void OnDestroy();
 
+  // Refresh native window and shell taskbar icons before plugin dispatch.
+  static void UpdateTheme(HWND const window);
+  static void SetWindowIconTheme(HWND window, int theme);
+
  private:
   friend class WindowClassRegistrar;
 
@@ -87,8 +91,6 @@ class Win32Window {
   // Retrieves a class instance pointer for |window|
   static Win32Window* GetThisFromHandle(HWND const window) noexcept;
 
-  // Update the window frame's theme to match the system theme.
-  static void UpdateTheme(HWND const window);
 
   bool quit_on_close_ = false;
 

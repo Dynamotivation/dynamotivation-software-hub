@@ -1,6 +1,9 @@
 import unittest
+import os
+from pathlib import Path
+import tempfile
 
-from check_version import release_version, require_increment
+from check_version import release_version, require_increment, require_release_notes
 
 
 class VersionGateTest(unittest.TestCase):
@@ -26,6 +29,23 @@ class VersionGateTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             require_increment(release_version("version: 1.2.3+2"),
                               release_version("version: 1.2.3+1"))
+
+    def test_release_notes_are_required_and_nonempty(self):
+        with tempfile.TemporaryDirectory() as folder:
+            oldcwd = os.getcwd()
+            os.chdir(folder)
+            try:
+                os.mkdir("release-notes")
+                with self.assertRaises(ValueError):
+                    require_release_notes("1.2.3")
+                (Path("release-notes") / "1.2.3.md").write_text("\n")
+                with self.assertRaises(ValueError):
+                    require_release_notes("1.2.3")
+                (Path("release-notes") / "1.2.3.md").write_text("- Works.\n")
+                self.assertEqual(require_release_notes("1.2.3"),
+                                 Path("release-notes") / "1.2.3.md")
+            finally:
+                os.chdir(oldcwd)
 
 
 if __name__ == "__main__":

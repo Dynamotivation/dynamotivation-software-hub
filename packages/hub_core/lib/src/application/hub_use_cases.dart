@@ -9,6 +9,7 @@ import 'catalog_snapshot.dart';
 import 'errors.dart';
 import 'icon_store.dart';
 import 'package_repository.dart';
+import 'self_update.dart';
 import 'settings_repository.dart';
 
 /// The operations a frontend can perform. Frontends depend on this class,
@@ -19,6 +20,7 @@ class HubUseCases {
   final IconStore? _icons;
   final ApplicationLauncher? _launcher;
   final ApplicationProcesses? _processes;
+  final SetupInstaller? _installer;
 
   // ignore: prefer_initializing_formals
   HubUseCases(
@@ -27,23 +29,49 @@ class HubUseCases {
     IconStore? icons,
     ApplicationLauncher? launcher,
     ApplicationProcesses? processes,
+    SetupInstaller? installer,
   })
     // ignore: prefer_initializing_formals
     : _icons = icons,
        // ignore: prefer_initializing_formals
        _launcher = launcher,
        // ignore: prefer_initializing_formals
-       _processes = processes;
+       _processes = processes,
+       // ignore: prefer_initializing_formals
+       _installer = installer;
 
-  Future<List<SoftwarePackage>> listPackages() => _packages.all();
+  /// The software to list. The hub itself is not part of it: it is not
+  /// software to install from inside itself, and must not count in update
+  /// totals or notifications. Its entry stays in the catalog data and is
+  /// available through [currentCatalog] for the self-update lookup.
+  Future<List<SoftwarePackage>> listPackages() async =>
+      _splitHub(await _packages.all()).$1;
+
+  /// The catalog as it is held now: the software to list plus the hub's own
+  /// entry ([CatalogSnapshot.hub]) for [selfUpdateOffer].
+  Future<CatalogSnapshot> currentCatalog() async {
+    final (visible, hub) = _splitHub(await _packages.all());
+    return CatalogSnapshot(visible, hub: hub, isFinal: true);
+  }
+
+  static (List<SoftwarePackage>, SoftwarePackage?) _splitHub(
+    List<SoftwarePackage> all,
+  ) => (
+    [
+      for (final p in all)
+        if (p.id != hubPackageId) p,
+    ],
+    all.where((p) => p.id == hubPackageId).firstOrNull,
+  );
 
   /// The last known catalog without waiting for the network, or null if the
   /// catalog source keeps none.
   Future<List<SoftwarePackage>?> cachedPackages() async {
     final source = _packages;
-    return source is CachedPackageSource
-        ? (source as CachedPackageSource).cachedPackages()
+    final cached = source is CachedPackageSource
+        ? await (source as CachedPackageSource).cachedPackages()
         : null;
+    return cached == null ? null : _splitHub(cached).$1;
   }
 
   /// Opens the catalog the way a user should experience it: the last known
@@ -73,15 +101,22 @@ class HubUseCases {
     }
 
     Future<void> run() async {
-      var shown = await cachedPackages() ?? const <SoftwarePackage>[];
+      final source = _packages;
+      final rawCache = source is CachedPackageSource
+          ? await (source as CachedPackageSource).cachedPackages()
+          : null;
+      final (cachedVisible, cachedHub) = _splitHub(rawCache ?? const []);
+      var hub = cachedHub;
+      var shown = cachedVisible;
       final hadCache = shown.isNotEmpty;
-      if (hadCache) emit(CatalogSnapshot(shown, fromCache: true));
+      if (hadCache) emit(CatalogSnapshot(shown, hub: hub, fromCache: true));
 
       // Without a cache the first read is the load; with one, refresh it.
       if (hadCache) await _packages.refresh();
-      final fresh = await _packages.all();
+      final (fresh, freshHub) = _splitHub(await _packages.all());
+      hub = freshHub;
       if (!hadCache) {
-        emit(CatalogSnapshot(fresh, isFinal: true));
+        emit(CatalogSnapshot(fresh, hub: hub, isFinal: true));
         return;
       }
 
@@ -92,14 +127,14 @@ class HubUseCases {
           if (!updated.containsKey(p.id)) p.id,
       };
       shown = [for (final p in shown) updated[p.id] ?? p];
-      emit(CatalogSnapshot(shown, departing: leaving));
+      emit(CatalogSnapshot(shown, hub: hub, departing: leaving));
       if (leaving.isNotEmpty) {
         await Future<void>.delayed(departGrace);
         shown = [
           for (final p in shown)
             if (!leaving.contains(p.id)) p,
         ];
-        emit(CatalogSnapshot(shown));
+        emit(CatalogSnapshot(shown, hub: hub));
       }
 
       Future<void> ready(String? url) async {
@@ -116,7 +151,7 @@ class HubUseCases {
                     .indexOf(a.id)
                     .compareTo(plan.order.indexOf(b.id)),
               );
-            emit(CatalogSnapshot(shown));
+            emit(CatalogSnapshot(shown, hub: hub));
           }(),
         for (final p in plan.iconChanged)
           () async {
@@ -125,10 +160,10 @@ class HubUseCases {
               for (final s in shown)
                 s.id == p.id ? s.copyWith(iconUrl: p.iconUrl) : s,
             ];
-            emit(CatalogSnapshot(shown));
+            emit(CatalogSnapshot(shown, hub: hub));
           }(),
       ]);
-      emit(CatalogSnapshot(shown, isFinal: true));
+      emit(CatalogSnapshot(shown, hub: hub, isFinal: true));
     }
 
     run()
@@ -222,6 +257,61 @@ class HubUseCases {
 
   Future<SoftwarePackage> uninstallPackage(String id) =>
       _apply(id, (p) => p.uninstall());
+
+  /// The hub's own pending update from [packages] (the hub's entry,
+  /// [CatalogSnapshot.hub], must be among them), or null when the catalog
+  /// lists no newer release for itself or offers no download for this
+  /// device. [installedVersion] is the running app's release version.
+  /// [platform] and [arch] default to this device; callers may pin them.
+  SelfUpdateOffer? selfUpdateOffer({
+    required List<SoftwarePackage> packages,
+    required String installedVersion,
+    String? platform,
+    String? arch,
+  }) =>
+      evaluateSelfUpdate(
+        packages: packages,
+        installedVersion: installedVersion,
+        platform: platform,
+        arch: arch,
+      );
+
+  /// Stages the setup of [offer] in the app's own cache and returns the
+  /// staged file's path. Requires the composition root to have wired a
+  /// [SetupInstaller]; without one this is a [PackageActionRejected] that
+  /// says no installer is available.
+  Future<String> stageSelfUpdate(SelfUpdateOffer offer, {void Function(double progress)? onProgress}) async {
+    final installer = _installer;
+    if (installer == null) {
+      throw PackageActionRejected(
+        hubPackageId,
+        'No self-update installer is wired up.',
+      );
+    }
+    return installer.stage(offer, onProgress: onProgress);
+  }
+
+  /// Runs a staged setup silently once the frontend has quit (the setup then
+  /// finds no running Hub), and with [restart] opens the Hub again afterwards.
+  Future<void> installSelfUpdate(String stagedFile, {required bool restart}) async {
+    final installer = _installer;
+    if (installer == null) {
+      throw PackageActionRejected(
+        hubPackageId,
+        'No self-update installer is wired up.',
+      );
+    }
+    await installer.install(stagedFile, restart: restart);
+  }
+
+  /// Deletes staged setups other than [keep], e.g. leftovers from failed
+  /// or superseded updates. The app may call it once at startup; failures
+  /// reach the caller.
+  Future<void> clearStagedSelfUpdates({String? keep}) async {
+    final installer = _installer;
+    if (installer == null) return;
+    await installer.clearStaged(keep: keep);
+  }
 
   /// Runs a lifecycle command on the stored package. Domain refusals are
   /// rethrown as [PackageActionRejected] so frontends only handle [HubException].

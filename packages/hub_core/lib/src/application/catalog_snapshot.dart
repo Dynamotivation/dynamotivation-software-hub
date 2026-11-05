@@ -4,7 +4,14 @@ import '../domain/software_package.dart';
 /// emits a sequence of these while the catalog settles.
 class CatalogSnapshot {
   /// Everything to list, in catalog order. Includes [departing] packages.
+  /// Never contains the hub itself (see [hub]).
   final List<SoftwarePackage> packages;
+
+  /// The hub's own catalog entry, kept apart from [packages] so it is not
+  /// listed as software, counted or announced, while the self-update lookup
+  /// ([HubUseCases.selfUpdateOffer]) still finds its release. Null when the
+  /// catalog does not list the hub.
+  final SoftwarePackage? hub;
 
   /// Packages the catalog no longer lists but that are still in [packages] so
   /// the frontend can let them leave gracefully. The next snapshot drops them.
@@ -19,6 +26,7 @@ class CatalogSnapshot {
 
   const CatalogSnapshot(
     this.packages, {
+    this.hub,
     this.departing = const {},
     this.fromCache = false,
     this.isFinal = false,

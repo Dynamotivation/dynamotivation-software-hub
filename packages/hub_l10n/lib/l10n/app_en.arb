@@ -27,22 +27,20 @@
       }
     }
   },
-  "hubUpToDate": "Hub is up to date",
-  "hubUpdateTitle": "Software Hub Update",
-  "hubUpdateReady": "Version {version} is ready to install.",
-  "@hubUpdateReady": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
-  "hubRunningLatest": "You are running the latest version.",
-  "updateNow": "Update now",
   "updateHub": "Update Hub",
   "@updateHub": {
     "description": "Header pill label"
   },
+  "hubUpdateDownloading": "Downloading… {percent}%",
+  "@hubUpdateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "errorSetupUnavailable": "The update could not be downloaded. Check your connection and try again.",
+  "errorSetupLaunchFailed": "The update setup could not be started.",
   "catalogSynchronized": "Catalog Synchronized",
   "catalogUpToDate": "All software package listings are up to date.",
   "packageUpdatedTitle": "{name} Updated",
@@ -105,9 +103,13 @@
   "aboutThisSoftware": "About this software",
   "whatsNew": "What's new",
   "olderReleasesLoadFailed": "Older releases could not be loaded. Check your connection.",
-  "@olderReleasesLoadFailed": {"description": "Shown in place of the older release notes when fetching them failed."},
+  "@olderReleasesLoadFailed": {
+    "description": "Shown in place of the older release notes when fetching them failed."
+  },
   "retry": "Try again",
-  "@retry": {"description": "Button that repeats a failed action."},
+  "@retry": {
+    "description": "Button that repeats a failed action."
+  },
   "olderReleases": "Older releases ({count})",
   "@olderReleases": {
     "placeholders": {
@@ -189,7 +191,6 @@
       }
     }
   },
-  "minimize": "Minimize",
   "@minimize": {
     "description": "Window menu item: minimize the window to the Dock"
   },
@@ -304,14 +305,22 @@
     }
   },
   "errorCatalogUnavailable": "The software catalog could not be loaded. Check your connection and try again.",
-  "@errorCatalogUnavailable": {"description": "Shown when the online software catalog cannot be fetched or parsed."},
+  "@errorCatalogUnavailable": {
+    "description": "Shown when the online software catalog cannot be fetched or parsed."
+  },
   "errorActionRejected": "This action is not available for the package right now.",
   "selectedPackage": "Selected",
-  "@selectedPackage": {"description": "Screen-reader indication for the selected software row"},
+  "@selectedPackage": {
+    "description": "Screen-reader indication for the selected software row"
+  },
   "switchStateOn": "on",
-  "@switchStateOn": {"description": "Spoken enabled state following a switch label after activation"},
+  "@switchStateOn": {
+    "description": "Spoken enabled state following a switch label after activation"
+  },
   "switchStateOff": "off",
-  "@switchStateOff": {"description": "Spoken disabled state following a switch label after activation"},
+  "@switchStateOff": {
+    "description": "Spoken disabled state following a switch label after activation"
+  },
   "clearSearch": "Clear search",
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"
@@ -381,5 +390,35 @@
   "errorProcessOperation": "The application processes could not be read or stopped. Check that they are running under your Windows account and try again.",
   "@errorProcessOperation": {
     "description": "Windows application process control: errorProcessOperation."
+  },
+  "hubUpdateRestart": "Restart to update",
+  "@hubUpdateRestart": {
+    "description": "Header pill label once the update is downloaded"
+  },
+  "hubUpdateReadyTooltip": "Version {version} is downloaded. Restart to update; otherwise it installs when you close the Hub.",
+  "@hubUpdateReadyTooltip": {
+    "description": "Tooltip of the header pill once the update is downloaded",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogChangesTitle": "New in the Software Hub",
+  "@catalogChangesTitle": {
+    "description": "Title of the summary notification (toast or in-app) when several apps are new or have an update"
+  },
+  "catalogChangesBody": "{count, plural, one{1 app is new or has an update available.} other{{count} apps are new or have an update available.}}",
+  "@catalogChangesBody": {
+    "description": "Body of the summary notification that collapses several catalog changes into one message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dismissNotification": "Dismiss",
+  "@dismissNotification": {
+    "description": "Label of the button that dismisses an in-app notification"
   }
 }

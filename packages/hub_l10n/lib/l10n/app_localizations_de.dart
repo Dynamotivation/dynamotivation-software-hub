@@ -42,24 +42,20 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get hubUpToDate => 'Hub ist auf dem neuesten Stand';
+  String get updateHub => 'Hub aktualisieren';
 
   @override
-  String get hubUpdateTitle => 'Software-Hub-Update';
-
-  @override
-  String hubUpdateReady(String version) {
-    return 'Version $version kann installiert werden.';
+  String hubUpdateDownloading(int percent) {
+    return 'Wird geladen … $percent %';
   }
 
   @override
-  String get hubRunningLatest => 'Sie verwenden die neueste Version.';
+  String get errorSetupUnavailable =>
+      'Das Update konnte nicht heruntergeladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
 
   @override
-  String get updateNow => 'Jetzt aktualisieren';
-
-  @override
-  String get updateHub => 'Hub aktualisieren';
+  String get errorSetupLaunchFailed =>
+      'Das Update-Setup konnte nicht gestartet werden.';
 
   @override
   String get catalogSynchronized => 'Katalog synchronisiert';
@@ -387,4 +383,29 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get errorProcessOperation =>
       'Die Anwendungsprozesse konnten nicht gelesen oder beendet werden. Prüfe, ob sie unter deinem Windows-Konto laufen, und versuche es erneut.';
+
+  @override
+  String get hubUpdateRestart => 'Neu starten und aktualisieren';
+
+  @override
+  String hubUpdateReadyTooltip(String version) {
+    return 'Version $version ist heruntergeladen. Neu starten, um zu aktualisieren; sonst wird sie beim Schließen des Hubs installiert.';
+  }
+
+  @override
+  String get catalogChangesTitle => 'Neu im Software Hub';
+
+  @override
+  String catalogChangesBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Apps sind neu oder haben ein Update.',
+      one: '1 App ist neu oder hat ein Update.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dismissNotification => 'Ausblenden';
 }

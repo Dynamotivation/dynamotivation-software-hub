@@ -52,6 +52,27 @@ bool FlutterWindow::OnCreate() {
           result->Success();
           return;
         }
+        if (call.method_name() == "setWindowIconTheme") {
+          const auto* theme = std::get_if<int32_t>(call.arguments());
+          if (!theme || *theme < -1 || *theme > 1) {
+            result->Error("window_icon", "Expected theme -1, 0 or 1");
+            return;
+          }
+          SetWindowIconTheme(GetHandle(), *theme);
+          result->Success();
+          return;
+        }
+        if (call.method_name() == "readTaskbarTheme") {
+          // The taskbar and tray follow "Windows mode" (SystemUsesLightTheme),
+          // which is separate from the apps' own theme. Missing value: light.
+          DWORD value = 1;
+          DWORD size = sizeof(value);
+          RegGetValueW(HKEY_CURRENT_USER,
+                       L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                       L"SystemUsesLightTheme", RRF_RT_REG_DWORD, nullptr, &value, &size);
+          result->Success(flutter::EncodableValue(value != 0));
+          return;
+        }
         if (call.method_name() != "readContrast") {
           result->NotImplemented();
           return;
@@ -149,9 +170,26 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // An installer (through the Restart Manager) or a logoff/shutdown asks the
+  // app to end with WM_ENDSESSION. The app answers an ordinary close by
+  // hiding to the tray (window_manager's preventClose), so without this a
+  // Hub sleeping in the tray could never be closed by Setup. Leave the
+  // message loop; the runner then ends the process.
+  if (message == WM_ENDSESSION && wparam != 0) {
+    PostQuitMessage(0);
+    return 0;
+  }
   if (message == WM_GETOBJECT && static_cast<LONG>(lparam) == OBJID_ALERT &&
       accessibility_alert_) {
     return LresultFromObject(IID_IAccessible, wparam, accessibility_alert_.Get());
+  }
+  if (message == WM_QUERYENDSESSION) {
+    return TRUE;
+  }
+  static const UINT taskbar_created = RegisterWindowMessageW(L"TaskbarCreated");
+  if (message == WM_SETTINGCHANGE || message == WM_THEMECHANGED ||
+      message == WM_SYSCOLORCHANGE || message == taskbar_created) {
+    UpdateTheme(hwnd);
   }
   // Broadcast settings changes must reach Dart even if a plugin handles them.
   if (contrast_channel_ && (message == WM_SETTINGCHANGE ||

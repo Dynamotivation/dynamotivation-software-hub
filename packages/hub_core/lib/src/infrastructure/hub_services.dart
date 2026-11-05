@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../application/announcement_store.dart';
 import '../application/hub_use_cases.dart';
 import '../application/application_launcher.dart';
 import '../application/application_processes.dart';
@@ -7,8 +8,10 @@ import '../application/installed_application_repository.dart';
 import 'catalog_cache.dart';
 import 'catalog_source.dart';
 import 'device_package_repository.dart';
+import 'file_announcement_store.dart';
 import 'icon_cache.dart';
 import 'in_memory_settings_repository.dart';
+import 'setup_installer.dart';
 import 'website_package_repository.dart';
 
 /// Folder name under the OS per-user cache directory (see [cacheDirectory]).
@@ -21,9 +24,19 @@ class HubServices {
   final HubUseCases useCases;
   final IconCache icons;
 
-  HubServices({required this.useCases, required this.icons});
+  /// What the user was already told about, kept in the cache folder. A
+  /// frontend that announces catalog changes hands it to its
+  /// `CatalogUpdateWatcher`.
+  final AnnouncementStore announcements;
 
-  /// The website catalog, cached on disk, with icons cached beside it.
+  HubServices({
+    required this.useCases,
+    required this.icons,
+    AnnouncementStore? announcements,
+  }) : announcements = announcements ?? InMemoryAnnouncementStore();
+
+  /// The website catalog, cached on disk, with icons cached beside it and
+  /// the hub's own updates staged in an `updates` folder inside the cache.
   /// [args] may carry `--catalog-url=<uri>`.
   factory HubServices.production(
     List<String> args, {
@@ -57,8 +70,10 @@ class HubServices {
         icons: icons,
         launcher: launcher,
         processes: processes,
+        installer: StagedSetupInstaller(cache),
       ),
       icons: icons,
+      announcements: FileAnnouncementStore(cache),
     );
   }
 }

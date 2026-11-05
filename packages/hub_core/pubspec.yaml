@@ -9,6 +9,7 @@ environment:
 dependencies:
   pub_semver: ^2.2.1
   path: ^1.9.1
+  crypto: ^3.0.6
 
 dev_dependencies:
   lints: ^6.0.0

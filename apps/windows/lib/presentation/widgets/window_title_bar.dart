@@ -18,6 +18,12 @@ class WindowTitleBar extends StatefulWidget {
   final VoidCallback? onUpdateHub;
   final String? hubUpdateVersion;
 
+  /// The update is downloaded: the pill offers "Restart to update".
+  final bool hubUpdateReady;
+
+  /// Download progress 0..1 while the update downloads, else null.
+  final double? hubUpdateProgress;
+
   const WindowTitleBar({
     super.key,
     required this.isSettingsOpen,
@@ -25,6 +31,8 @@ class WindowTitleBar extends StatefulWidget {
     required this.onToggleSettings,
     this.onUpdateHub,
     this.hubUpdateVersion,
+    this.hubUpdateReady = false,
+    this.hubUpdateProgress,
   });
 
   @override
@@ -213,14 +221,20 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _UpdateHubPill(
-                                iconOnly:
-                                    MediaQuery.sizeOf(context).width < 800,
-                                tokens: tokens,
-                                hubUpdateVersion: widget.hubUpdateVersion,
-                                onUpdateHub: widget.onUpdateHub,
-                              ),
-                              const SizedBox(width: 6),
+                              // Only while the Hub has an update to offer.
+                              if (widget.hubUpdateVersion != null &&
+                                  widget.onUpdateHub != null) ...[
+                                _UpdateHubPill(
+                                  iconOnly:
+                                      MediaQuery.sizeOf(context).width < 800,
+                                  tokens: tokens,
+                                  hubUpdateVersion: widget.hubUpdateVersion!,
+                                  ready: widget.hubUpdateReady,
+                                  progress: widget.hubUpdateProgress,
+                                  onUpdateHub: widget.onUpdateHub!,
+                                ),
+                                const SizedBox(width: 6),
+                              ],
                               AccessibleIconButton(
                                 label: context.l10n.settings,
                                 tooltip: withShortcut(
@@ -267,50 +281,38 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
 class _UpdateHubPill extends StatelessWidget {
   final DynTokens tokens;
   final bool iconOnly;
-  final String? hubUpdateVersion;
-  final VoidCallback? onUpdateHub;
+  final String hubUpdateVersion;
+  final bool ready;
+  final double? progress;
+  final VoidCallback onUpdateHub;
 
   const _UpdateHubPill({
     required this.tokens,
     this.iconOnly = false,
     required this.hubUpdateVersion,
+    required this.ready,
+    required this.progress,
     required this.onUpdateHub,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final label = ready ? l10n.hubUpdateRestart : l10n.updateHub;
+    final tooltip = ready
+        ? l10n.hubUpdateReadyTooltip(hubUpdateVersion)
+        : progress != null
+        ? l10n.hubUpdateDownloading((progress! * 100).round())
+        : l10n.hubUpdateAvailableTooltip(hubUpdateVersion);
     return Tooltip(
-      message: hubUpdateVersion != null
-          ? context.l10n.hubUpdateAvailableTooltip(hubUpdateVersion!)
-          : context.l10n.hubUpToDate,
+      message: tooltip,
       child: Semantics(
         container: true,
         button: true,
-        label: context.l10n.updateHub,
+        label: label,
         child: HoverButton(
-          semanticLabel: context.l10n.updateHub,
-          onPressed:
-              onUpdateHub ??
-              () {
-                displayInfoBar(
-                  context,
-                  builder: (context, close) => InfoBar(
-                    title: Text(context.l10n.hubUpdateTitle),
-                    content: Text(
-                      hubUpdateVersion != null
-                          ? context.l10n.hubUpdateReady(hubUpdateVersion!)
-                          : context.l10n.hubRunningLatest,
-                    ),
-                    severity: InfoBarSeverity.info,
-                    action: hubUpdateVersion != null
-                        ? Button(
-                            child: Text(context.l10n.updateNow),
-                            onPressed: () {},
-                          )
-                        : null,
-                  ),
-                );
-              },
+          semanticLabel: label,
+          onPressed: onUpdateHub,
           builder: (context, states) {
             final isHover = states.isHovered;
             return FocusBorder(
@@ -353,7 +355,7 @@ class _UpdateHubPill extends StatelessWidget {
                     if (!iconOnly) ...[
                       const SizedBox(width: 6),
                       Text(
-                        context.l10n.updateHub,
+                        label,
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,

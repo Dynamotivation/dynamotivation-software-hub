@@ -10,5 +10,7 @@ String describeError(AppLocalizations l10n, Object error) => switch (error) {
   PackageActionRejected() => l10n.errorActionRejected,
   InstalledSoftwareUnavailable() => l10n.errorInstalledSoftwareUnavailable,
   CatalogUnavailable() => l10n.errorCatalogUnavailable,
+  SetupUnavailable() => l10n.errorSetupUnavailable,
+  SetupLaunchFailed() => l10n.errorSetupLaunchFailed,
   _ => error.toString(),
 };

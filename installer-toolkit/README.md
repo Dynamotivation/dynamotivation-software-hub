@@ -7,12 +7,21 @@ branded, per-user, per-DPI-crisp setup.
 ## Decisions (don't reopen these without a reason)
 
 - **Inno Setup 5.6.1** everywhere, for consistency across all apps. Kept even
-  though our apps floor at Windows 10 (and Inno 5's stock icons are dated).
+  even though Inno 5's stock icons are dated. Each app sets its own Windows floor
+  with `MinVersion` (Software Hub: Windows 10; the GameMaker games: Windows 7 SP1).
+  A single number is the Windows NT version, so `6.1.7601` means Windows 7 SP1.
 - **Per-user installs** (`PrivilegesRequired=lowest`), fixed install path
   `...\Programs\Dynamotivation\<App>`, no folder page, no language dialog.
   Setup language follows the Windows display language (en/de).
 - **No platform tags, no badges** in the wizard. United brand artwork.
 - **One icon everywhere:** the app exe embeds the same `.ico` as the setup.
+- **Self-update, no code in app scripts:** the app downloads the setup into its own
+  cache folder and checks its SHA-256. Apps that run the setup themselves start it
+  after they have quit (a Hub-style app first shows "update ready", installs on
+  "restart" or on close, `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`, and reopens
+  itself from the app side); apps that hand over to the wizard start it as it is
+  and quit (the generator). Setup's own "close applications" page stays the fallback.
+  The uninstaller removes the app's data folder with `[UninstallDelete]`.
 
 ## Layout
 
@@ -22,6 +31,7 @@ setup/<app>.iss           per-app script (see setup/software-hub.iss example)
 tools/render_assets.py    renders wizard + ico artwork from SVG masters
 tools/capture_window.py   QA helper: screenshot a Setup window to PNG
 assets/setup-icon.svg     the installer icon master (badge cut out of the D)
+assets/app-icon.svg       optional unbadged mark for the wizard artwork (default: setup-icon.svg); also renders assets/app.ico for the app exe
 assets/full-logo.svg      the official roundel (from dynamotivation-assets)
 assets/…                  example generated output for the Software Hub
 ```
@@ -43,6 +53,9 @@ ISCC /DAppVersion=x.y.z /DSourceDir=C:\path\to\app\build\...\Release setup\<app>
 Local Inno lives at `D:\tools\InnoSetup5` (5.6.1). `common.iss` expects the app
 script to define `AppId` (GUID, doubled brace), `AppName`, `AppExeName`,
 `MinVersion` and `SourceDir` (the built Release folder) before including it.
+Setups are 64-bit only by default. A 32-bit app defines
+`AllowedArchitectures "x86 x64"` and `Is32BitApp` first, otherwise 32-bit Windows
+is refused and the app is installed in 64-bit mode.
 CI example: see the Software Hub's `.github/workflows/ci.yml`, whose
 `windows-installer` job downloads Inno 5.6.1 with a SHA-256 pin, signs and
 compiles. Build locally first; CI runs only on request or release tags.

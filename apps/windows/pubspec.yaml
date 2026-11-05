@@ -2,7 +2,7 @@ name: dynamotivation_software_hub
 description: "Dynamotivation Software Hub desktop application in Flutter"
 publish_to: 'none'
 
-version: 0.1.11+1
+version: 0.1.13+1
 resolution: workspace
 
 environment:
@@ -20,8 +20,11 @@ dependencies:
 
   fluent_ui: ^4.17.0
   window_manager: ^0.5.2
+  package_info_plus: ^8.3.0
   flutter_svg: ^2.3.0
-  local_notifier: ^0.1.6
+  # Windows-only toasts (WinRT, with images). Deliberately not the cross-platform
+  # flutter_local_notifications package: no other frontend uses it yet.
+  flutter_local_notifications_windows: ^3.1.1
   system_tray: ^2.0.3
 
 dev_dependencies:

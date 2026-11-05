@@ -8,6 +8,10 @@
 #define AppExeName "dynamotivation_software_hub.exe"
 #define OutputBase "dynamotivation-software-hub"
 #define MinVersion "10.0.10240"
+; The app's per-user data folder (its catalog cache and staged self-update setups).
+#define AppDataName "Dynamotivation Software Hub"
+; Toast identity the app registers (hubAppUserModelId in the app).
+#define NotificationId "Dynamotivation.SoftwareHub"
 #ifndef SourceDir
   #define SourceDir "..\apps\windows\build\windows\x64\runner\Release"
 #endif
@@ -18,3 +22,19 @@
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+
+[Registry]
+; The app registers its toast identity (name, icon, click handler) under these keys the
+; first time it shows a notification. Setup never wrote them, so remove them on uninstall.
+Root: HKCU; Subkey: "Software\Classes\AppUserModelId\{#NotificationId}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\PushNotifications\Backup\{#NotificationId}"; Flags: uninsdeletekey dontcreatekey
+
+[InstallDelete]
+; Older versions showed toasts through a Start menu shortcut named after the app.
+Type: files; Name: "{userprograms}\{#AppName}.lnk"
+
+[UninstallDelete]
+; The app writes its cache and the setup of the next version here; Setup never installed
+; it, so without this the uninstaller leaves the folder behind.
+Type: filesandordirs; Name: "{localappdata}\{#AppDataName}"
+Type: dirifempty; Name: "{app}"
