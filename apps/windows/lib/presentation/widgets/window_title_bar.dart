@@ -139,9 +139,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
                               // mipmapped filtering: much smoother edges than
                               // rasterising the vector straight to 40 px.
                               child: Image.asset(
-                                tokens.isDark
-                                    ? 'assets/dynamotivation-logo-dark-192.png'
-                                    : 'assets/dynamotivation-logo-light-192.png',
+                                'assets/dynamotivation-logo-dark-192.png',
                                 fit: BoxFit.contain,
                                 filterQuality: FilterQuality.high,
                                 excludeFromSemantics: true,
