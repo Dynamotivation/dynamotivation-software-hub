@@ -91,103 +91,90 @@ Future<HubController> _controller(
 Future<void> _settle() => Future<void>.delayed(Duration.zero);
 
 void main() {
-  test(
-    'a newer hub release downloads in the background and becomes ready',
-    () async {
-      final installer = RecordingInstaller();
-      final c = await _controller(installer);
-      await c.load();
-      await _settle();
+  test('a newer hub release downloads in the background and becomes ready',
+      () async {
+    final installer = RecordingInstaller();
+    final c = await _controller(installer);
+    await c.load();
+    await _settle();
 
-      expect(c.hubUpdate!.version, '0.2.0');
-      expect(installer.stages, ['0.2.0']);
-      expect(c.isHubUpdateReady, isTrue);
-      expect(
-        installer.installs,
-        isEmpty,
-      ); // nothing installs until asked or closed
-    },
-  );
+    expect(c.hubUpdate!.version, '0.2.0');
+    expect(installer.stages, ['0.2.0']);
+    expect(c.isHubUpdateReady, isTrue);
+    expect(installer.installs, isEmpty); // nothing installs until asked or closed
+  });
 
-  test(
-    'the hub is not listed as software but its update is still found',
-    () async {
-      final c = await _controller(RecordingInstaller());
-      await c.load();
-      await _settle();
+  test('the hub is not listed as software but its update is still found',
+      () async {
+    final c = await _controller(RecordingInstaller());
+    await c.load();
+    await _settle();
 
-      expect(c.packages.map((p) => p.name), ['Other Tool']);
-      expect(c.hubUpdate!.version, '0.2.0');
+    expect(c.packages.map((p) => p.name), ['Other Tool']);
+    expect(c.hubUpdate!.version, '0.2.0');
 
-      // The same after a manual refresh and after a background sync.
-      await c.refresh();
-      expect(c.packages.map((p) => p.name), ['Other Tool']);
-      expect(c.hubUpdate!.version, '0.2.0');
-      await c.syncFromSource();
-      expect(c.packages.map((p) => p.name), ['Other Tool']);
-      expect(c.hubUpdate!.version, '0.2.0');
-    },
-  );
+    // The same after a manual refresh and after a background sync.
+    await c.refresh();
+    expect(c.packages.map((p) => p.name), ['Other Tool']);
+    expect(c.hubUpdate!.version, '0.2.0');
+    await c.syncFromSource();
+    expect(c.packages.map((p) => p.name), ['Other Tool']);
+    expect(c.hubUpdate!.version, '0.2.0');
+  });
 
-  test(
-    'with automatic updates off nothing downloads until the user asks',
-    () async {
-      final installer = RecordingInstaller();
-      final c = await _controller(installer, autoUpdates: false);
-      await c.load();
-      await _settle();
-      expect(c.hubUpdate, isNotNull);
-      expect(installer.stages, isEmpty);
-      expect(c.isHubUpdateReady, isFalse);
+  test('with automatic updates off nothing downloads until the user asks',
+      () async {
+    final installer = RecordingInstaller();
+    final c = await _controller(installer, autoUpdates: false);
+    await c.load();
+    await _settle();
+    expect(c.hubUpdate, isNotNull);
+    expect(installer.stages, isEmpty);
+    expect(c.isHubUpdateReady, isFalse);
 
-      var quit = 0;
-      c.quitForUpdate = () async => quit++;
-      await c.updateHub();
-      expect(installer.stages, ['0.2.0']);
-      expect(installer.installs.single.restart, isTrue);
-      expect(quit, 1);
-    },
-  );
+    var quit = 0;
+    c.quitForUpdate = () async => quit++;
+    await c.updateHub();
+    expect(installer.stages, ['0.2.0']);
+    expect(installer.installs.single.restart, isTrue);
+    expect(quit, 1);
+  });
 
-  test(
-    'restart to update installs the staged setup and reopens the hub once',
-    () async {
-      final installer = RecordingInstaller();
-      final c = await _controller(installer);
-      await c.load();
-      await _settle();
+  test('restart to update installs the staged setup and reopens the hub once',
+      () async {
+    final installer = RecordingInstaller();
+    final c = await _controller(installer);
+    await c.load();
+    await _settle();
 
-      var quit = 0;
-      c.quitForUpdate = () async => quit++;
-      await c.updateHub();
+    var quit = 0;
+    c.quitForUpdate = () async => quit++;
+    await c.updateHub();
 
-      expect(installer.stages, ['0.2.0']); // no second download
-      expect(installer.installs.single.restart, isTrue);
-      expect(installer.installs.single.file, contains('0.2.0'));
-      expect(quit, 1);
+    expect(installer.stages, ['0.2.0']); // no second download
+    expect(installer.installs.single.restart, isTrue);
+    expect(installer.installs.single.file, contains('0.2.0'));
+    expect(quit, 1);
 
-      // Quitting runs the exit hook too; the update must not be started twice.
-      await c.installStagedOnExit();
-      expect(installer.installs, hasLength(1));
-    },
-  );
+    // Quitting runs the exit hook too; the update must not be started twice.
+    await c.installStagedOnExit();
+    expect(installer.installs, hasLength(1));
+  });
 
-  test(
-    'closing the hub with a downloaded update installs it, without reopening',
-    () async {
-      final installer = RecordingInstaller();
-      final c = await _controller(installer);
-      await c.load();
-      await _settle();
+  test('closing the hub with a downloaded update installs it, without reopening',
+      () async {
+    final installer = RecordingInstaller();
+    final c = await _controller(installer);
+    await c.load();
+    await _settle();
 
-      await c.installStagedOnExit();
-      expect(installer.installs, hasLength(1));
-      expect(installer.installs.single.restart, isFalse);
+    await c.installStagedOnExit();
+    expect(installer.installs, hasLength(1));
+    expect(installer.installs.single.restart, isFalse);
 
-      await c.installStagedOnExit();
-      expect(installer.installs, hasLength(1));
-    },
-  );
+    await c.installStagedOnExit();
+    expect(installer.installs, hasLength(1));
+  });
 
   test('closing without a downloaded update installs nothing', () async {
     final installer = RecordingInstaller();
@@ -197,45 +184,41 @@ void main() {
     expect(installer.installs, isEmpty);
   });
 
-  test(
-    'a failed background download is reported, not retried, and not ready',
-    () async {
-      final reported = <FlutterErrorDetails>[];
-      final previous = FlutterError.onError;
-      FlutterError.onError = reported.add;
-      addTearDown(() => FlutterError.onError = previous);
+  test('a failed background download is reported, not retried, and not ready',
+      () async {
+    final reported = <FlutterErrorDetails>[];
+    final previous = FlutterError.onError;
+    FlutterError.onError = reported.add;
+    addTearDown(() => FlutterError.onError = previous);
 
-      final installer = _FailingInstaller();
-      final c = await _controller(installer);
-      await c.load();
-      await _settle();
+    final installer = _FailingInstaller();
+    final c = await _controller(installer);
+    await c.load();
+    await _settle();
 
-      expect(reported.single.exception, isA<SetupUnavailable>());
-      expect(c.isHubUpdateReady, isFalse);
-      expect(c.hubUpdate, isNotNull); // still offered
-      c.select(c.packages.first);
-      await _settle();
-      expect(installer.stages, hasLength(1)); // no retry loop
-    },
-  );
+    expect(reported.single.exception, isA<SetupUnavailable>());
+    expect(c.isHubUpdateReady, isFalse);
+    expect(c.hubUpdate, isNotNull); // still offered
+    c.select(c.packages.first);
+    await _settle();
+    expect(installer.stages, hasLength(1)); // no retry loop
+  });
 
-  test(
-    'pressing restart after a failed download surfaces the error and stays',
-    () async {
-      final previous = FlutterError.onError;
-      FlutterError.onError = (_) {};
-      addTearDown(() => FlutterError.onError = previous);
+  test('pressing restart after a failed download surfaces the error and stays',
+      () async {
+    final previous = FlutterError.onError;
+    FlutterError.onError = (_) {};
+    addTearDown(() => FlutterError.onError = previous);
 
-      final c = await _controller(_FailingInstaller());
-      await c.load();
-      await _settle();
+    final c = await _controller(_FailingInstaller());
+    await c.load();
+    await _settle();
 
-      var quit = 0;
-      c.quitForUpdate = () async => quit++;
-      await expectLater(c.updateHub(), throwsA(isA<SetupUnavailable>()));
-      expect(quit, 0);
-    },
-  );
+    var quit = 0;
+    c.quitForUpdate = () async => quit++;
+    await expectLater(c.updateHub(), throwsA(isA<SetupUnavailable>()));
+    expect(quit, 0);
+  });
 
   test('a current install offers no update', () async {
     final installer = RecordingInstaller();

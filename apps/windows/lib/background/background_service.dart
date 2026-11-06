@@ -55,13 +55,11 @@ class BackgroundService with WindowListener {
 
   /// The tray icon exists exactly while background running is set.
   Future<void> _syncFromSettings() async {
-    await accessibility.setWindowIconTheme(
-      switch (controller.settings.themeMode) {
-        AppThemeMode.system => -1,
-        AppThemeMode.dark => 0,
-        AppThemeMode.light => 1,
-      },
-    );
+    await accessibility.setWindowIconTheme(switch (controller.settings.themeMode) {
+      AppThemeMode.system => -1,
+      AppThemeMode.dark => 0,
+      AppThemeMode.light => 1,
+    });
     await _syncTray();
   }
 
