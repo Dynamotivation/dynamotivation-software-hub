@@ -80,3 +80,102 @@ Name: "{userdesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+
+; --- Settings and saved files ---------------------------------------------------
+; An app whose settings or saves live outside its install folder lists those folders
+; before including this file, separated by "|" (Inno constants allowed):
+;   #define UserDataDirs "{localappdata}\my_app|{userappdata}\My App"
+; After the uninstall confirmation, the uninstaller then offers "Keep my settings and
+; saved files" (checked). Clearing it deletes the listed folders after the program is
+; removed. A silent uninstall keeps them unless it is started with /REMOVEUSERDATA=1.
+; Caches and other files the app can recreate do not belong in this list; remove those
+; unconditionally with [UninstallDelete]. This block uses the event functions
+; InitializeUninstallProgressForm and CurUninstallStepChanged, so an app script that
+; includes it must not define them itself.
+#ifdef UserDataDirs
+[CustomMessages]
+en.UserDataCaption=Uninstall {#AppName}
+de.UserDataCaption={#AppName} deinstallieren
+en.UserDataKeep=&Keep my settings and saved files
+de.UserDataKeep=&Meine Einstellungen und gespeicherten Dateien behalten
+en.UserDataHint=Keep them to pick up where you left off after reinstalling. Clear the box to remove {#AppName} completely.
+de.UserDataHint=Behalte sie, um nach einer Neuinstallation dort weiterzumachen, wo du aufgehört hast. Entferne den Haken, um {#AppName} vollständig zu entfernen.
+
+[Code]
+var
+  RemoveUserData: Boolean;
+
+{ Shown once the user has confirmed the uninstall, before anything is removed. }
+function AskKeepUserData: Boolean;
+var
+  Form: TSetupForm;
+  Hint: TNewStaticText;
+  Keep: TNewCheckBox;
+  Ok: TNewButton;
+begin
+  Form := CreateCustomForm();
+  try
+    Form.ClientWidth := ScaleX(400);
+    Form.Caption := CustomMessage('UserDataCaption');
+    Keep := TNewCheckBox.Create(Form);
+    Keep.Parent := Form;
+    Keep.Left := ScaleX(16);
+    Keep.Top := ScaleY(16);
+    Keep.Width := Form.ClientWidth - ScaleX(32);
+    Keep.Height := ScaleY(17);
+    Keep.Caption := CustomMessage('UserDataKeep');
+    Keep.Checked := True;
+    Hint := TNewStaticText.Create(Form);
+    Hint.Parent := Form;
+    Hint.Left := ScaleX(34);
+    Hint.Top := Keep.Top + Keep.Height + ScaleY(6);
+    Hint.Width := Form.ClientWidth - ScaleX(50);
+    Hint.AutoSize := False;
+    Hint.WordWrap := True;
+    Hint.Height := ScaleY(42);
+    Hint.Caption := CustomMessage('UserDataHint');
+    Ok := TNewButton.Create(Form);
+    Ok.Parent := Form;
+    Ok.Width := ScaleX(75);
+    Ok.Height := ScaleY(23);
+    Ok.Left := Form.ClientWidth - Ok.Width - ScaleX(16);
+    Ok.Top := Hint.Top + Hint.Height + ScaleY(12);
+    Ok.Caption := SetupMessage(msgButtonOK);
+    Ok.ModalResult := mrOk;
+    Ok.Default := True;
+    Form.ClientHeight := Ok.Top + Ok.Height + ScaleY(16);
+    Form.ActiveControl := Keep;
+    Form.Center;
+    Form.ShowModal();
+    Result := Keep.Checked;
+  finally
+    Form.Free();
+  end;
+end;
+
+procedure InitializeUninstallProgressForm;
+begin
+  if UninstallSilent then
+    RemoveUserData := ExpandConstant('{param:REMOVEUSERDATA|0}') = '1'
+  else
+    RemoveUserData := not AskKeepUserData;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  Dirs, Dir: String;
+  Split: Integer;
+begin
+  if (CurUninstallStep <> usPostUninstall) or not RemoveUserData then
+    Exit;
+  Dirs := '{#UserDataDirs}|';
+  while Dirs <> '' do
+  begin
+    Split := Pos('|', Dirs);
+    Dir := Trim(Copy(Dirs, 1, Split - 1));
+    Delete(Dirs, 1, Split);
+    if Dir <> '' then
+      DelTree(ExpandConstant(Dir), True, True, True);
+  end;
+end;
+#endif
