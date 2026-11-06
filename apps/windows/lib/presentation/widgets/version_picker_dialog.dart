@@ -6,6 +6,7 @@ import 'package:hub_l10n/hub_l10n.dart';
 
 import '../errors.dart';
 import '../theme/dynamotivation_theme.dart';
+import 'click_cursor.dart';
 
 /// Choose a release of [name] to install. Loads the choices itself (the
 /// release history may need fetching first) and returns the chosen version,
@@ -47,7 +48,7 @@ class _VersionPickerDialogState extends State<VersionPickerDialog> {
               children: [
                 Text(describeError(l10n, snapshot.error!)),
                 const SizedBox(height: 12),
-                Button(onPressed: _retry, child: Text(l10n.retry)),
+                ClickButton(onPressed: _retry, child: Text(l10n.retry)),
               ],
             );
           }
@@ -83,12 +84,12 @@ class _VersionPickerDialogState extends State<VersionPickerDialog> {
         },
       ),
       actions: [
-        Button(
+        ClickButton(
           autofocus: true,
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.cancel),
         ),
-        FilledButton(
+        ClickFilledButton(
           onPressed: _chosen == null
               ? null
               : () => Navigator.pop(context, _chosen),
@@ -113,12 +114,17 @@ class _VersionPickerDialogState extends State<VersionPickerDialog> {
     ].join(' · ');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: RadioButton<String>(
-        value: choice.version,
+      child: ClickCursor(
         enabled: choice.selectable,
-        content: Text(
-          label,
-          style: choice.selectable ? null : TextStyle(color: tokens.textMuted),
+        child: RadioButton<String>(
+          value: choice.version,
+          enabled: choice.selectable,
+          content: Text(
+            label,
+            style: choice.selectable
+                ? null
+                : TextStyle(color: tokens.textMuted),
+          ),
         ),
       ),
     );

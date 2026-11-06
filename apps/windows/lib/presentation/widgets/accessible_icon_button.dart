@@ -1,5 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import 'click_cursor.dart';
+
 /// A distinct, named semantic button even inside controls that merge semantics.
 /// Keyboard focus and screen-reader focus refer to the same owned focus node.
 class AccessibleIconButton extends StatefulWidget {
@@ -68,7 +70,7 @@ class _AccessibleIconButtonState extends State<AccessibleIconButton> {
     excludeSemantics: true,
     child: Tooltip(
       message: widget.tooltip ?? widget.label,
-      child: IconButton(
+      child: ClickIconButton(
         focusNode: _focus,
         icon: widget.icon,
         onPressed: widget.onPressed != null ? _activate : null,

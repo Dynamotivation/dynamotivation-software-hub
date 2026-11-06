@@ -12,6 +12,7 @@ import 'package_image.dart';
 import 'accessible_icon_button.dart';
 import 'version_label.dart';
 import '../theme/dynamotivation_theme.dart';
+import 'click_cursor.dart';
 
 class PackageSidebar extends StatefulWidget {
   final List<SoftwarePackage> packages;
@@ -247,7 +248,7 @@ class _PackageSidebarState extends State<PackageSidebar>
                             context.l10n.checkForUpdates,
                             AppShortcuts.refresh,
                           ),
-                          child: IconButton(
+                          child: ClickIconButton(
                             icon: Semantics(
                               label: context.l10n.checkForUpdates,
                               child: RotationTransition(
@@ -285,6 +286,7 @@ class _PackageSidebarState extends State<PackageSidebar>
 
                   // Available section header (collapsible)
                   HoverButton(
+                    cursor: SystemMouseCursors.click,
                     onPressed: () {
                       setState(() {
                         _availableExpanded = !_availableExpanded;
@@ -386,6 +388,7 @@ class _PackageTile extends StatelessWidget {
         : Colors.transparent;
 
     return HoverButton(
+      cursor: SystemMouseCursors.click,
       key: ValueKey('package-${package.id}'),
       onPressed: onTap,
       builder: (context, states) {

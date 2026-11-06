@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'click_cursor.dart';
 
 /// Install, Update or Uninstall. While its setup runs, the same button turns
 /// into a progress button: a spinner and status text, with a download
@@ -93,8 +94,8 @@ class SetupActionButton extends StatelessWidget {
     );
     final pressed = enabled && !inProgress ? onPressed : null;
     return filled
-        ? FilledButton(focusNode: focus, onPressed: pressed, child: child)
-        : Button(
+        ? ClickFilledButton(focusNode: focus, onPressed: pressed, child: child)
+        : ClickButton(
             focusNode: focus,
             style: DynamotivationTheme.secondaryActionStyle(context),
             onPressed: pressed,

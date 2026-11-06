@@ -8,6 +8,7 @@ import '../controllers/hub_controller.dart';
 import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
+import '../widgets/click_cursor.dart';
 import '../widgets/notice_banners.dart';
 import '../widgets/package_detail_pane.dart';
 import '../widgets/package_sidebar.dart';
@@ -238,12 +239,12 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
         title: Text(l10n.uninstallConfirmTitle(package.name)),
         content: Text(l10n.uninstallConfirmBody),
         actions: [
-          Button(
+          ClickButton(
             autofocus: true,
             onPressed: () => Navigator.pop(context, false),
             child: Text(l10n.cancel),
           ),
-          FilledButton(
+          ClickFilledButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(l10n.uninstall),
           ),
@@ -458,7 +459,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       children: [
                                         Align(
                                           alignment: Alignment.centerLeft,
-                                          child: Button(
+                                          child: ClickButton(
                                             onPressed: _focusSearch,
                                             child: Text(
                                               context.l10n.backToSoftware,

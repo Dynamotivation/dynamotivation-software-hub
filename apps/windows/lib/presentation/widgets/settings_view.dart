@@ -7,6 +7,7 @@ import 'package:hub_scroll/hub_scroll.dart';
 import '../theme/dynamotivation_theme.dart';
 import 'accessible_icon_button.dart';
 import 'accessible_switch.dart';
+import 'click_cursor.dart';
 
 /// Settings in the style of the Windows 11 Settings app: a page title, then
 /// cards whose rows pair a title and description with a control on the right.
@@ -136,33 +137,35 @@ class _SettingsViewState extends State<SettingsView>
                           title: l10n.appearance,
                           control: SizedBox(
                             width: 180,
-                            child: ComboBox<AppThemeMode>(
-                              focusNode: _appearanceFocus,
-                              isExpanded: true,
-                              value: settings.themeMode,
-                              // ComboBox already supplies the selected value as
-                              // its semantic label. Keep the painted copy from
-                              // repeating it in the merged row announcement.
-                              selectedItemBuilder: (context) => [
-                                for (final mode in AppThemeMode.values)
-                                  ExcludeSemantics(
-                                    child: Text(themeName(mode)),
-                                  ),
-                              ],
-                              items: [
-                                for (final mode in AppThemeMode.values)
-                                  ComboBoxItem(
-                                    value: mode,
-                                    child: Text(themeName(mode)),
-                                  ),
-                              ],
-                              onChanged: (mode) {
-                                if (mode != null) {
-                                  onSettingsChanged(
-                                    settings.copyWith(themeMode: mode),
-                                  );
-                                }
-                              },
+                            child: ClickCursor(
+                              child: ComboBox<AppThemeMode>(
+                                focusNode: _appearanceFocus,
+                                isExpanded: true,
+                                value: settings.themeMode,
+                                // ComboBox already supplies the selected value as
+                                // its semantic label. Keep the painted copy from
+                                // repeating it in the merged row announcement.
+                                selectedItemBuilder: (context) => [
+                                  for (final mode in AppThemeMode.values)
+                                    ExcludeSemantics(
+                                      child: Text(themeName(mode)),
+                                    ),
+                                ],
+                                items: [
+                                  for (final mode in AppThemeMode.values)
+                                    ComboBoxItem(
+                                      value: mode,
+                                      child: Text(themeName(mode)),
+                                    ),
+                                ],
+                                onChanged: (mode) {
+                                  if (mode != null) {
+                                    onSettingsChanged(
+                                      settings.copyWith(themeMode: mode),
+                                    );
+                                  }
+                                },
+                              ),
                             ),
                           ),
                         ),

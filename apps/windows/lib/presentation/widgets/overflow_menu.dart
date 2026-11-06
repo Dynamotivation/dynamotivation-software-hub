@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/dynamotivation_theme.dart';
 import 'accessible_icon_button.dart';
+import 'click_cursor.dart';
 
 /// The package overflow menu ("More options").
 ///
@@ -188,12 +189,15 @@ class _AccessibleMenuItemState extends State<_AccessibleMenuItem> {
     label: widget.label,
     onTap: widget.onPressed,
     onFocus: widget.onPressed == null ? null : _focus.requestFocus,
-    child: MenuFlyoutItem(
-      leading: widget.leading,
-      text: Text(widget.label, style: widget.textStyle),
-      focusNode: _focus,
-      closeAfterClick: false,
-      onPressed: widget.onPressed,
-    ).build(context),
+    child: ClickCursor(
+      enabled: widget.onPressed != null,
+      child: MenuFlyoutItem(
+        leading: widget.leading,
+        text: Text(widget.label, style: widget.textStyle),
+        focusNode: _focus,
+        closeAfterClick: false,
+        onPressed: widget.onPressed,
+      ).build(context),
+    ),
   );
 }

@@ -114,6 +114,7 @@ Root `pubspec.yaml` is the Dart workspace; every package and app is a member.
 - **Launch / Update Button Order**:
   - Launch is always the leftmost action button; Update sits to its right, in every frontend. Launch gets the muscle-memory spot, so an accidental double-click can never trigger an update.
   - Keep the existing emphasis hierarchy: Update stays the filled/prominent control (or the Launch button de-emphasized via a secondary style) — position changes, emphasis does not.
+- **Hand cursor**: Fluent controls defer to the arrow cursor. Every clickable control in `apps/windows` shows the hand while enabled: use `ClickButton`, `ClickFilledButton`, `ClickIconButton` or wrap in `ClickCursor` (`widgets/click_cursor.dart`), and give a `HoverButton` `cursor: SystemMouseCursors.click`. Never use the bare Fluent `Button`, `FilledButton` or `IconButton`.
 - **Windows rendering notes**:
   - Build the Fluent themes once (`_DynamotivationAppState` holds them). A fresh `FluentThemeData` per rebuild makes `FluentApp` animate between equal themes and flashes filled buttons square-cornered; `test/button_shape_test.dart` guards this and the secondary Launch action, which matches the primary action corner radius while preserving Fluent stroke states.
   - The refresh icon is the painted `SpinnableRefreshIcon` in `package_sidebar.dart`, not a font glyph or SVG: the glyph's detached arrowhead swings outside the ring while spinning. `test/refresh_icon_test.dart` checks it never crops.

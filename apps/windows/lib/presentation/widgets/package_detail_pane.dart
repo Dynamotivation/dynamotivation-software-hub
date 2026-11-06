@@ -13,6 +13,7 @@ import 'version_label.dart';
 import 'run_action_button.dart';
 import 'setup_action_button.dart';
 import 'animated_action_width.dart';
+import 'click_cursor.dart';
 
 class PackageDetailPane extends StatefulWidget {
   final SoftwarePackage? package;
@@ -318,7 +319,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   ),
                                 ),
                               ] else if (pkg.isDownloading) ...[
-                                Button(
+                                ClickButton(
                                   onPressed: () {},
                                   child: Padding(
                                     padding: EdgeInsets.symmetric(
@@ -500,6 +501,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
               // Older releases expander / accordion
               if (pkg.olderReleaseCount > 0) ...[
                 HoverButton(
+                  cursor: SystemMouseCursors.click,
                   onPressed: () {
                     setState(() {
                       _olderExpanded = !_olderExpanded;
@@ -569,7 +571,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Button(
+                              ClickButton(
                                 onPressed: widget.onRetryHistory,
                                 child: Text(context.l10n.retry),
                               ),

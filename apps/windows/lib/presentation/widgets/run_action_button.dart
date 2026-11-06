@@ -4,6 +4,7 @@ import 'package:hub_keys/hub_keys.dart';
 import 'package:hub_l10n/hub_l10n.dart';
 
 import '../theme/dynamotivation_theme.dart';
+import 'click_cursor.dart';
 
 /// Launch, or for a running app "Running" with a force close part beside it.
 /// Sized by its content; the detail banner animates width changes
@@ -95,12 +96,12 @@ class _RunActionButtonState extends State<RunActionButton> {
         title: Text(l10n.forceCloseTitle(widget.name)),
         content: Text(l10n.forceCloseBody(widget.name)),
         actions: [
-          Button(
+          ClickButton(
             autofocus: true,
             onPressed: () => Navigator.pop(context, false),
             child: Text(l10n.noAction),
           ),
-          FilledButton(
+          ClickFilledButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(l10n.yesAction),
           ),
@@ -228,7 +229,7 @@ class _RunActionButtonState extends State<RunActionButton> {
             if (!widget.running || _control) activate();
           };
     final button = widget.primary && !close
-        ? FilledButton(
+        ? ClickFilledButton(
             focusNode: focus,
             style: style,
             onPressed: onPressed,
@@ -240,7 +241,7 @@ class _RunActionButtonState extends State<RunActionButton> {
               child: child,
             ),
           )
-        : Button(
+        : ClickButton(
             focusNode: focus,
             style: style,
             onPressed: onPressed,
