@@ -40,7 +40,15 @@ CatalogReconciliation reconcileCatalog(
     if (next == null) continue;
     textUpdated.add(
       current
-          .copyWith(name: next.name, description: next.description)
+          .copyWith(
+            name: next.name,
+            description: next.description,
+            platformIds: next.platformIds,
+            deviceObserved: next.deviceObserved,
+            launchExecutable: next.launchExecutable,
+            currentVersion: next.deviceObserved ? next.currentVersion : null,
+            status: next.deviceObserved ? next.status : null,
+          )
           .withReleasesOf(next),
     );
     final url = next.iconUrl;

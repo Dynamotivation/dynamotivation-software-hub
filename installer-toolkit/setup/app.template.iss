@@ -17,6 +17,10 @@
 #define AssetDir "..\assets"
 ; Optional publisher override (default Dynamotivation).
 ;#define Publisher "Dynamotivation"
+; Folders outside {app} that hold the user's settings or saves, separated by "|". With
+; this defined, the uninstaller offers to keep them (see common.iss); leave it out if the
+; app keeps nothing there.
+;#define UserDataDirs "{localappdata}\<app data folder>"
 ; --- Content -------------------------------------------------------------------
 ; Where the unpacked application bundle lives. CI passes it as /DSourceDir.
 #ifndef SourceDir

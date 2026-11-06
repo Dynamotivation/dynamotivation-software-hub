@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/dynamotivation_theme.dart';
 import 'accessible_icon_button.dart';
+import 'click_cursor.dart';
 
 /// The package overflow menu ("More options").
 ///
@@ -18,21 +19,25 @@ import 'accessible_icon_button.dart';
 class OverflowMenu extends StatefulWidget {
   final String triggerLabel;
   final String? openFolderLabel;
-  final String? verifyLabel;
-  final String uninstallLabel;
+
+  /// Shown only when not null.
+  final String? installVersionLabel;
+
+  /// Shown only when not null.
+  final String? uninstallLabel;
   final VoidCallback? onOpenInstallFolder;
-  final VoidCallback? onVerifyFiles;
+  final VoidCallback? onInstallVersion;
   final VoidCallback? onUninstall;
   final FocusNode? triggerFocus;
 
   const OverflowMenu({
     super.key,
     required this.triggerLabel,
-    required this.uninstallLabel,
+    this.installVersionLabel,
+    this.uninstallLabel,
     this.openFolderLabel,
-    this.verifyLabel,
     this.onOpenInstallFolder,
-    this.onVerifyFiles,
+    this.onInstallVersion,
     this.onUninstall,
     this.triggerFocus,
   });
@@ -115,26 +120,27 @@ class _MenuSurface extends StatelessWidget {
                   onPressed: state._closeWith(state.widget.onOpenInstallFolder),
                 ),
               ),
-            if (state.widget.verifyLabel != null)
+            if (state.widget.installVersionLabel != null)
               MenuFlyoutItemBuilder(
                 builder: (context) => _AccessibleMenuItem(
-                  leading: const Icon(FluentIcons.verified_brand, size: 14),
-                  label: state.widget.verifyLabel!,
-                  onPressed: state._closeWith(state.widget.onVerifyFiles),
+                  leading: const Icon(FluentIcons.history, size: 14),
+                  label: state.widget.installVersionLabel!,
+                  onPressed: state._closeWith(state.widget.onInstallVersion),
                 ),
               ),
-            MenuFlyoutItemBuilder(
-              builder: (context) => _AccessibleMenuItem(
-                leading: Icon(
-                  FluentIcons.delete,
-                  size: 14,
-                  color: tokens.critical,
+            if (state.widget.uninstallLabel != null)
+              MenuFlyoutItemBuilder(
+                builder: (context) => _AccessibleMenuItem(
+                  leading: Icon(
+                    FluentIcons.delete,
+                    size: 14,
+                    color: tokens.critical,
+                  ),
+                  label: state.widget.uninstallLabel!,
+                  textStyle: TextStyle(color: tokens.critical),
+                  onPressed: state._closeWith(state.widget.onUninstall),
                 ),
-                label: state.widget.uninstallLabel,
-                textStyle: TextStyle(color: tokens.critical),
-                onPressed: state._closeWith(state.widget.onUninstall),
               ),
-            ),
           ],
         ),
       ),
@@ -183,12 +189,15 @@ class _AccessibleMenuItemState extends State<_AccessibleMenuItem> {
     label: widget.label,
     onTap: widget.onPressed,
     onFocus: widget.onPressed == null ? null : _focus.requestFocus,
-    child: MenuFlyoutItem(
-      leading: widget.leading,
-      text: Text(widget.label, style: widget.textStyle),
-      focusNode: _focus,
-      closeAfterClick: false,
-      onPressed: widget.onPressed,
-    ).build(context),
+    child: ClickCursor(
+      enabled: widget.onPressed != null,
+      child: MenuFlyoutItem(
+        leading: widget.leading,
+        text: Text(widget.label, style: widget.textStyle),
+        focusNode: _focus,
+        closeAfterClick: false,
+        onPressed: widget.onPressed,
+      ).build(context),
+    ),
   );
 }

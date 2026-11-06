@@ -17,6 +17,9 @@
 #endif
 ; Assets live one level above setup/ so the toolkit layout works as a subtree too.
 #define AssetDir "..\assets"
+; Settings and saved files the uninstaller offers to keep (see common.iss): the setup
+; logs the Hub writes and the settings folders of its 2026 prototypes.
+#define UserDataDirs "{localappdata}\" + AppDataName + "\Logs|{userappdata}\Dynamotivation\SoftwareHub|{userappdata}\Dynamotivation\Dynamotivation Software Hub"
 
 #include "common.iss"
 
@@ -35,6 +38,9 @@ Type: files; Name: "{userprograms}\{#AppName}.lnk"
 
 [UninstallDelete]
 ; The app writes its cache and the setup of the next version here; Setup never installed
-; it, so without this the uninstaller leaves the folder behind.
-Type: filesandordirs; Name: "{localappdata}\{#AppDataName}"
+; it, so without this the uninstaller leaves the folder behind. The cache is always
+; removed; the logs next to it only when the user does not keep their data (UserDataDirs).
+Type: filesandordirs; Name: "{localappdata}\{#AppDataName}\Cache"
+Type: dirifempty; Name: "{localappdata}\{#AppDataName}"
+Type: dirifempty; Name: "{userappdata}\Dynamotivation"
 Type: dirifempty; Name: "{app}"

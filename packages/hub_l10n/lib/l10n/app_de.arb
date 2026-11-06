@@ -179,6 +179,72 @@
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"
   },
+  "errorInstalledSoftwareUnavailable": "Die installierte Software konnte nicht aus Windows gelesen werden. Aktualisiere die Softwareliste erneut.",
+  "@errorInstalledSoftwareUnavailable": {
+    "description": "Shown when reading installed applications from the Windows registry fails."
+  },
+  "errorLaunchFailed": "Die Anwendung konnte nicht gestartet werden. Aktualisiere die Softwareliste und prüfe, ob sie noch installiert ist.",
+  "@errorLaunchFailed": {
+    "description": "Shown when launching an installed application fails, for example because its executable was removed."
+  },
+  "running": "Läuft",
+  "@running": {
+    "description": "Windows application process control: running."
+  },
+  "launchAnotherInstance": "Weitere Instanz starten",
+  "@launchAnotherInstance": {
+    "description": "Windows application process control: launchAnotherInstance."
+  },
+  "forceClose": "Beenden erzwingen",
+  "@forceClose": {
+    "description": "Windows application process control: forceClose."
+  },
+  "clickAction": "Klick",
+  "@clickAction": {
+    "description": "Windows application process control: clickAction."
+  },
+  "yesAction": "Ja",
+  "@yesAction": {
+    "description": "Windows application process control: yesAction."
+  },
+  "noAction": "Nein",
+  "@noAction": {
+    "description": "Windows application process control: noAction."
+  },
+  "forceCloseTitle": "Beenden von {name} erzwingen?",
+  "@forceCloseTitle": {
+    "description": "Windows application process control: forceCloseTitle.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "forceCloseBody": "Bist du sicher? Alle laufenden Instanzen von {name} werden zwangsweise beendet. Ungespeicherte Änderungen gehen verloren.",
+  "@forceCloseBody": {
+    "description": "Windows application process control: forceCloseBody.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierClickHint": "{shortcut}, um die Aktion „{action}“ auszuführen.",
+  "@modifierClickHint": {
+    "description": "Windows application process control: modifierClickHint.",
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessOperation": "Die Anwendungsprozesse konnten nicht gelesen oder beendet werden. Prüfe, ob sie unter deinem Windows-Konto laufen, und versuche es erneut.",
+  "@errorProcessOperation": {
+    "description": "Windows application process control: errorProcessOperation."
+  },
   "hubUpdateRestart": "Neu starten und aktualisieren",
   "hubUpdateReadyTooltip": "Version {version} ist heruntergeladen. Neu starten, um zu aktualisieren; sonst wird sie beim Schließen des Hubs installiert.",
   "catalogChangesTitle": "Neu im Software Hub",
@@ -197,5 +263,48 @@
   "dismissNotification": "Ausblenden",
   "@dismissNotification": {
     "description": "Label of the button that dismisses an in-app notification"
-  }
+  },
+  "setupDownloading": "Wird heruntergeladen… {percent} %",
+  "@setupDownloading": {
+    "description": "Status inside the install/update button while the setup downloads",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "setupInstalling": "Wird installiert…",
+  "@setupInstalling": {
+    "description": "Status inside the install button while the setup runs silently"
+  },
+  "setupUpdating": "Wird aktualisiert…",
+  "@setupUpdating": {
+    "description": "Status inside the update button while the setup runs silently"
+  },
+  "errorSetupFailed": "Das Setup wurde nicht abgeschlossen. Details stehen im Protokoll: {path}",
+  "@errorSetupFailed": {
+    "description": "Shown when a silent setup failed or the software is not installed afterwards",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPackageInUse": "Die Anwendung läuft. Schließe sie und versuche es erneut.",
+  "@errorPackageInUse": {
+    "description": "Shown when an update is refused because the application runs"
+  },
+  "setupUninstalling": "Wird deinstalliert…",
+  "@setupUninstalling": {
+    "description": "Status shown in place of Launch while the application's uninstaller runs silently"
+  },
+  "installOtherVersion": "Andere Version installieren…",
+  "installVersionTitle": "Version von {name} installieren",
+  "installVersionBody": "Die gewählte Version ersetzt die installierte. Ältere Versionen können mit neueren gespeicherte Dateien eventuell nicht öffnen.",
+  "installAction": "Installieren",
+  "versionLatest": "neueste",
+  "versionInstalled": "installiert",
+  "versionNoDownload": "kein Download für dieses Gerät",
+  "loadingVersions": "Versionen werden geladen",
+  "setupInstallingVersion": "v{version} wird installiert…"
 }

@@ -1,3 +1,5 @@
+import 'software_version.dart';
+
 /// Thrown when a lifecycle command is not allowed in the current state.
 class PackageStateException implements Exception {
   final String packageId;
@@ -64,6 +66,47 @@ class ReleaseNote {
 }
 
 class SoftwarePackage {
+  /// Registry-backed packages are observational until real management exists.
+  final bool deviceObserved;
+  final String launchExecutable;
+
+  bool get canLaunch => isInstalled && launchExecutable.isNotEmpty;
+
+  /// The device's uninstaller for this package, empty when there is none.
+  final String uninstallExecutable;
+
+  /// Packages read from the device need their registered uninstaller.
+  bool get canUninstall =>
+      isInstalled && (!deviceObserved || uninstallExecutable.isNotEmpty);
+
+  /// Declared platform ids. Null means an older catalog did not declare them.
+  final List<String>? platformIds;
+
+  bool supportsPlatform(String platform) =>
+      platformIds?.contains(platform) ??
+      (latestRelease.downloads.isEmpty ||
+          latestRelease.downloads.any((d) => d.platform == platform));
+
+  SoftwarePackage withInstallation(
+    String? version, {
+    String? platform,
+    String executable = '',
+    String uninstaller = '',
+  }) => copyWith(
+    deviceObserved: true,
+    uninstallExecutable: version == null ? '' : uninstaller,
+    currentVersion: version ?? '',
+    launchExecutable: version == null ? '' : executable,
+    status: version == null
+        ? PackageInstallationStatus.notInstalled
+        : (platform == null ||
+                  latestRelease.downloads.isEmpty ||
+                  latestRelease.downloads.any((d) => d.platform == platform)) &&
+              isNewerSoftwareVersion(latestVersion, version)
+        ? PackageInstallationStatus.updateAvailable
+        : PackageInstallationStatus.installed,
+  );
+
   final String id;
   final String name;
   final String description;
@@ -90,6 +133,10 @@ class SoftwarePackage {
   final String? releaseHistoryUrl;
 
   const SoftwarePackage({
+    this.deviceObserved = false,
+    this.launchExecutable = '',
+    this.uninstallExecutable = '',
+    this.platformIds,
     required this.id,
     required this.name,
     required this.description,
@@ -164,6 +211,34 @@ class SoftwarePackage {
     );
   }
 
+  /// Every known release, newest first: [latestRelease], then the loaded
+  /// [olderReleases].
+  List<ReleaseNote> get releases => [latestRelease, ...olderReleases];
+
+  /// The known release named [version], or null.
+  ReleaseNote? releaseOf(String version) => releases
+      .where((r) => isSameSoftwareVersion(r.version, version))
+      .firstOrNull;
+
+  /// Lifecycle command: install a specific known release, newer or older
+  /// than the installed one, or onto a device without it. Refused for an
+  /// unknown release or the one already installed.
+  SoftwarePackage switchTo(String version) {
+    final release = releaseOf(version);
+    if (release == null) {
+      throw PackageStateException(id, 'Unknown release $version.');
+    }
+    if (isInstalled && isSameSoftwareVersion(currentVersion, version)) {
+      throw PackageStateException(id, '$version is already installed.');
+    }
+    return copyWith(
+      currentVersion: release.version,
+      status: isSameSoftwareVersion(release.version, latestVersion)
+          ? PackageInstallationStatus.installed
+          : PackageInstallationStatus.updateAvailable,
+    );
+  }
+
   /// Lifecycle command: remove an installed package from the device.
   SoftwarePackage uninstall() {
     if (!isInstalled) {
@@ -173,6 +248,10 @@ class SoftwarePackage {
   }
 
   SoftwarePackage copyWith({
+    bool? deviceObserved,
+    String? launchExecutable,
+    String? uninstallExecutable,
+    List<String>? platformIds,
     String? id,
     String? name,
     String? description,
@@ -189,6 +268,10 @@ class SoftwarePackage {
     String? releaseHistoryUrl,
   }) {
     return SoftwarePackage(
+      deviceObserved: deviceObserved ?? this.deviceObserved,
+      launchExecutable: launchExecutable ?? this.launchExecutable,
+      uninstallExecutable: uninstallExecutable ?? this.uninstallExecutable,
+      platformIds: platformIds ?? this.platformIds,
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,

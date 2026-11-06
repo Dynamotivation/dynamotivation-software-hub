@@ -9,6 +9,7 @@ import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
 import 'accessible_icon_button.dart';
+import 'click_cursor.dart';
 
 /// Integrated title bar + brand header (82px gradient band, no OS title bar).
 class WindowTitleBar extends StatefulWidget {
@@ -86,7 +87,7 @@ class _WindowTitleBarState extends State<WindowTitleBar> with WindowListener {
           title: Text(l10n.operationFailed),
           content: Text(describeError(l10n, error)),
           actions: [
-            Button(
+            ClickButton(
               autofocus: true,
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.close),
@@ -311,6 +312,7 @@ class _UpdateHubPill extends StatelessWidget {
         button: true,
         label: label,
         child: HoverButton(
+          cursor: SystemMouseCursors.click,
           semanticLabel: label,
           onPressed: onUpdateHub,
           builder: (context, states) {
@@ -423,6 +425,7 @@ class _CaptionButtonState extends State<_CaptionButton> {
         message: widget.label,
         child: contrast
             ? HoverButton(
+                cursor: SystemMouseCursors.click,
                 focusNode: _focus,
                 onPressed: widget.onPressed,
                 semanticLabel: widget.label,

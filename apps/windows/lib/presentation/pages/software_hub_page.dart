@@ -8,10 +8,12 @@ import '../controllers/hub_controller.dart';
 import '../errors.dart';
 import '../shortcuts.dart';
 import '../theme/dynamotivation_theme.dart';
+import '../widgets/click_cursor.dart';
 import '../widgets/notice_banners.dart';
 import '../widgets/package_detail_pane.dart';
 import '../widgets/package_sidebar.dart';
 import '../widgets/settings_view.dart';
+import '../widgets/version_picker_dialog.dart';
 import '../widgets/window_title_bar.dart';
 
 class SoftwareHubPage extends StatefulWidget {
@@ -184,9 +186,52 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     }
   }
 
-  Future<void> _handleUninstallPackage() async {
+  /// The running setup of the selected package, if any.
+  PackageOperation? get _selectedOperation {
+    final op = _controller.operation;
+    return op != null && op.packageId == _controller.selected?.id ? op : null;
+  }
+
+  /// An uninstall, or a version switch of an installed package, shows its
+  /// progress in Launch's place; install and update in their own buttons.
+  String? _launchSlotStatus(AppLocalizations l10n) {
+    final op = _selectedOperation;
+    if (op == null) return null;
+    if (op.isUninstall) return l10n.setupUninstalling;
+    if (op.isSwitchVersion && (_controller.selected?.isInstalled ?? false)) {
+      return l10n.setupInstallingVersion(op.version ?? '');
+    }
+    return null;
+  }
+
+  Future<void> _handleInstallVersion() async {
     final package = _controller.selected;
     if (package == null) return;
+    final l10n = context.l10n;
+    final version = await showDialog<String>(
+      context: context,
+      builder: (context) => VersionPickerDialog(
+        name: package.name,
+        load: _controller.releaseChoicesForSelected,
+      ),
+    );
+    _detailOverflowFocus.requestFocus();
+    if (version == null || !mounted) return;
+    try {
+      final installed = await _controller.installVersionSelected(version);
+      if (!mounted) return;
+      _showInfo(
+        title: l10n.packageInstalledTitle(installed.name),
+        content: l10n.packageInstalledContent(installed.currentVersion),
+      );
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
+  }
+
+  Future<void> _handleUninstallPackage() async {
+    final package = _controller.selected;
+    if (package == null || !package.canUninstall) return;
     final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -194,12 +239,12 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
         title: Text(l10n.uninstallConfirmTitle(package.name)),
         content: Text(l10n.uninstallConfirmBody),
         actions: [
-          Button(
+          ClickButton(
             autofocus: true,
             onPressed: () => Navigator.pop(context, false),
             child: Text(l10n.cancel),
           ),
-          FilledButton(
+          ClickFilledButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(l10n.uninstall),
           ),
@@ -233,14 +278,26 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
     }
   }
 
-  void _handleLaunchPackage() {
+  Future<void> _handleLaunchPackage({bool anotherInstance = false}) async {
     final package = _controller.selected;
-    if (package == null) return;
-    _showInfo(
-      title: context.l10n.launchingTitle(package.name),
-      content: context.l10n.launchingContent(package.currentVersion),
-      severity: InfoBarSeverity.info,
-    );
+    if (package == null || !package.canLaunch) return;
+    try {
+      // The Launch button spins until the app runs; no toast.
+      await _controller.launchSelected(anotherInstance: anotherInstance);
+    } catch (error) {
+      if (mounted) _showError(error);
+    }
+  }
+
+  VoidCallback? _forceCloseAction(String? id) =>
+      id == null ? null : () => _handleForceClose(id);
+
+  Future<void> _handleForceClose(String id) async {
+    try {
+      await _controller.forceClosePackage(id);
+    } catch (error) {
+      if (mounted) _showError(error);
+    }
   }
 
   /// Keeps the native window title (taskbar, alt-tab) on the localized
@@ -289,7 +346,8 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                       hubUpdateProgress: _controller.isStagingHubUpdate
                           ? _controller.hubStageProgress
                           : null,
-                      onUpdateHub: _controller.hubUpdate == null
+                      onUpdateHub:
+                          _controller.hubUpdate == null || _controller.isBusy
                           ? null
                           : _handleUpdateHub,
                     ),
@@ -337,7 +395,9 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       searchQuery: _searchQuery,
                                       onSearchChanged: (q) =>
                                           setState(() => _searchQuery = q),
-                                      onRefresh: _handleRefresh,
+                                      onRefresh: _controller.isBusy
+                                          ? null
+                                          : _handleRefresh,
                                       isRefreshing: _controller.isRefreshing,
                                       searchFocusNode: _searchFocus,
                                     ),
@@ -347,8 +407,37 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       package: _controller.selected,
                                       onUpdate: _handleUpdatePackage,
                                       onLaunch: _handleLaunchPackage,
+                                      onLaunchAnotherInstance: () =>
+                                          _handleLaunchPackage(
+                                            anotherInstance: true,
+                                          ),
+                                      onForceClose: _forceCloseAction(
+                                        _controller.selected?.id,
+                                      ),
+                                      isRunning:
+                                          _controller.selected != null &&
+                                          _controller.isRunning(
+                                            _controller.selected!.id,
+                                          ),
+                                      isLaunching:
+                                          _controller.selected != null &&
+                                          _controller.isLaunching(
+                                            _controller.selected!.id,
+                                          ),
+                                      busy: _controller.isBusy,
+                                      setupInProgress:
+                                          _selectedOperation != null &&
+                                          _launchSlotStatus(context.l10n) ==
+                                              null,
+                                      launchSlotStatus: _launchSlotStatus(
+                                        context.l10n,
+                                      ),
+                                      setupDownloadFraction: _controller
+                                          .operation
+                                          ?.downloadFraction,
                                       onInstall: _handleInstallPackage,
                                       onUninstall: _handleUninstallPackage,
+                                      onInstallVersion: _handleInstallVersion,
                                       primaryActionFocus: _detailActionFocus,
                                       overflowFocus: _detailOverflowFocus,
                                       historyLoading: _controller
@@ -370,7 +459,7 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                                       children: [
                                         Align(
                                           alignment: Alignment.centerLeft,
-                                          child: Button(
+                                          child: ClickButton(
                                             onPressed: _focusSearch,
                                             child: Text(
                                               context.l10n.backToSoftware,

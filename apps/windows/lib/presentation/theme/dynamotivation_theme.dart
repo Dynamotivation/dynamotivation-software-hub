@@ -224,6 +224,46 @@ class DynTokens {
 }
 
 class DynamotivationTheme {
+  /// The one corner radius of every action in the detail banner (Launch,
+  /// Running, force close, Install, Update, their progress states and
+  /// Uninstalling): the themed filled button's. Custom action surfaces must
+  /// take it from here, never from a literal or from plain [Button]'s
+  /// Fluent default. `test/package_setup_ui_test.dart` checks every state.
+  static BorderRadius actionRadius(
+    BuildContext context, [
+    Set<WidgetState> states = const {},
+  ]) {
+    final theme = FluentTheme.of(context);
+    final primary =
+        theme.buttonTheme.filledButtonStyle?.shape?.resolve(states) ??
+        FilledButton.shapeBorder(theme, states);
+    final radius = switch (primary) {
+      RoundedRectangleBorder(:final borderRadius) => borderRadius,
+      RoundedRectangleGradientBorder(:final borderRadius) => borderRadius,
+      _ => BorderRadius.zero,
+    };
+    return radius.resolve(Directionality.of(context));
+  }
+
+  /// Secondary banner actions match the primary action's themed corner radius,
+  /// retaining Fluent's state-dependent stroke and gradient.
+  static ButtonStyle secondaryActionStyle(BuildContext context) => ButtonStyle(
+    shape: WidgetStateProperty.resolveWith((states) {
+      final radius = actionRadius(context, states);
+      return switch (ButtonThemeData.shapeBorder(context, states)) {
+        RoundedRectangleBorder border => border.copyWith(borderRadius: radius),
+        RoundedRectangleGradientBorder border => RoundedRectangleGradientBorder(
+          gradient: border.gradient,
+          borderRadius: radius,
+          width: border.width,
+          strokeAlign: border.strokeAlign,
+          style: border.style,
+        ),
+        final border => border,
+      };
+    }),
+  );
+
   static const captionCloseHover = Color(0xFFE81123);
   // Signature Dynamotivation coral/crimson brand accent
   static const Color coralPrimary = Color(0xFFE22050);

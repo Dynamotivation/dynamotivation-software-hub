@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'platform/windows_application_processes.dart';
 import 'platform/windows_accessibility.dart';
 import 'background/background_service.dart';
 import 'background/background_strings.dart';
@@ -38,7 +39,14 @@ void main(List<String> args) async {
     titleBarStyle: TitleBarStyle.hidden,
   );
 
-  final services = HubServices.production(args);
+  final services = HubServices.production(
+    args,
+    installations: WindowsInstalledApplicationRepository(),
+    launcher: WindowsApplicationLauncher(),
+    processes: WindowsApplicationProcesses(),
+    platform: 'windows',
+    excludedPackageIds: const {'dynamotivation-software-hub'},
+  );
   final useCases = services.useCases;
 
   // The version the catalog compares against is the release version without
@@ -72,6 +80,7 @@ void main(List<String> args) async {
   );
 
   await controller.load(preferredId: null);
+  await controller.startProcessWatch();
   if (startDark) {
     await controller.updateSettings(
       controller.settings.copyWith(themeMode: AppThemeMode.dark),
@@ -107,6 +116,7 @@ void main(List<String> args) async {
     accessibility: accessibility,
     watch: UpdateWatchService(
       watcher: watcher,
+      onRefreshed: controller.syncFromSource,
       settings: () => controller.settings,
       notify: ({required title, required body, iconUrl}) async =>
           notifications.show(
@@ -118,7 +128,6 @@ void main(List<String> args) async {
       // Toasts are for a window that is unfocused or hidden in the tray.
       isWindowFocused: () async =>
           await windowManager.isVisible() && await windowManager.isFocused(),
-      onRefreshed: controller.syncFromSource,
       texts: strings,
     ),
   );
