@@ -31,6 +31,7 @@ class HubController extends ChangeNotifier {
     this.selfPlatform,
     this.selfArch,
     this.quitForUpdate,
+    this.launchTimeout = const Duration(seconds: 15),
   });
 
   final HubUseCases _useCases;
@@ -41,6 +42,17 @@ class HubController extends ChangeNotifier {
   bool _checkingProcesses = false;
   bool isRunning(String id) => _runningIds.contains(id);
   bool isLaunching(String id) => _launchingIds.contains(id);
+
+  /// How long Launch spins waiting for the app's process to appear before
+  /// it turns back into the plain Launch button.
+  final Duration launchTimeout;
+  final Map<String, Timer> _launchTimers = {};
+
+  void _endLaunch(String id, {bool notify = true}) {
+    _launchTimers.remove(id)?.cancel();
+    _launchingIds.remove(id);
+    if (notify && !_disposed) notifyListeners();
+  }
 
   void stopProcessWatch() {
     _watchGeneration++;
@@ -84,7 +96,14 @@ class HubController extends ChangeNotifier {
     try {
       final running = await _useCases.runningPackageIds();
       if (_disposed) return;
-      if (!setEquals(running, _runningIds)) {
+      final started = [
+        for (final id in _launchTimers.keys)
+          if (running.contains(id)) id,
+      ];
+      for (final id in started) {
+        _endLaunch(id, notify: false);
+      }
+      if (!setEquals(running, _runningIds) || started.isNotEmpty) {
         _runningIds = running;
         notifyListeners();
       }
@@ -94,7 +113,7 @@ class HubController extends ChangeNotifier {
   }
 
   Future<void> forceClosePackage(String id) async {
-    if (!_launchingIds.add(id)) return;
+    if (isBusy || !_launchingIds.add(id)) return;
     notifyListeners();
     try {
       await _useCases.forceClosePackage(id);
@@ -362,7 +381,12 @@ class HubController extends ChangeNotifier {
   /// [quitForUpdate]; the setup runs once the process is gone and opens the
   /// hub again. A failed download is rethrown for the page to present.
   Future<void> updateHub() async {
-    if (_hubUpdate == null || _isStagingHubUpdate || _updateLaunched) return;
+    if (_hubUpdate == null ||
+        _isStagingHubUpdate ||
+        _updateLaunched ||
+        isBusy) {
+      return;
+    }
     if (_stagedSetup == null) await _stageHubUpdate(_hubUpdate!);
     final staged = _stagedSetup;
     if (staged == null) return;
@@ -480,6 +504,9 @@ class HubController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     stopProcessWatch();
+    for (final timer in _launchTimers.values) {
+      timer.cancel();
+    }
     _catalog?.cancel();
     super.dispose();
   }
@@ -509,6 +536,7 @@ class HubController extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
+    if (isBusy) return;
     _isRefreshing = true;
     notifyListeners();
     try {
@@ -525,45 +553,171 @@ class HubController extends ChangeNotifier {
     loadSelectedHistory();
   }
 
-  /// Updates the selected package. Throws [HubException] or
-  /// [PackageStateException] on failure.
-  Future<SoftwarePackage> updateSelected() async {
+  PackageOperation? _operation;
+
+  /// The install or update that runs now, or null. While one runs, every
+  /// package action is disabled; only one setup runs at a time.
+  PackageOperation? get operation => _operation;
+
+  /// True while a setup runs: the frontend disables all package actions.
+  bool get isBusy => _operation != null;
+
+  /// Updates the selected package. Throws [HubException] on failure.
+  Future<SoftwarePackage> updateSelected() =>
+      _runSetup(PackageOperationKind.update);
+
+  /// Installs the selected package. Throws [HubException] on failure.
+  Future<SoftwarePackage> installSelected() =>
+      _runSetup(PackageOperationKind.install);
+
+  /// Uninstalls the selected package. Throws [HubException] on failure.
+  Future<SoftwarePackage> uninstallSelected() =>
+      _runSetup(PackageOperationKind.uninstall);
+
+  /// Installs [version] of the selected package, newer or older than the
+  /// installed one. Throws [HubException] on failure.
+  Future<SoftwarePackage> installVersionSelected(String version) =>
+      _runSetup(PackageOperationKind.switchVersion, version: version);
+
+  /// The releases of the selected package to choose from; loads its history
+  /// when needed. Throws [HubException] on failure.
+  Future<List<ReleaseChoice>> releaseChoicesForSelected() async {
     final id = _selectedId;
     if (id == null) throw const PackageNotFound('');
-    final updated = await _useCases.updatePackage(id);
+    final choices = await _useCases.releaseChoices(id);
+    // The history may have been fetched for this; show it in the details.
     _packages = await _useCases.listPackages();
+    if (!_disposed) notifyListeners();
+    return choices;
+  }
+
+  Future<SoftwarePackage> _runSetup(
+    PackageOperationKind kind, {
+    String? version,
+  }) async {
+    final id = _selectedId;
+    if (id == null) throw const PackageNotFound('');
+    if (_operation != null) {
+      throw PackageActionRejected(id, 'Another setup is running.');
+    }
+    _operation = PackageOperation(
+      id,
+      kind: kind,
+      version: version,
+      downloadFraction: kind == PackageOperationKind.uninstall ? null : 0,
+    );
     notifyListeners();
-    return updated;
+    void progress(SetupProgress p) {
+      if (_disposed) return;
+      _operation = PackageOperation(
+        id,
+        kind: kind,
+        version: version,
+        downloadFraction: switch (p) {
+          SetupDownloading(:final fraction) => fraction,
+          SetupRunning() => null,
+        },
+      );
+      notifyListeners();
+    }
+
+    try {
+      return switch (kind) {
+        PackageOperationKind.install => await _useCases.installPackage(
+          id,
+          onProgress: progress,
+        ),
+        PackageOperationKind.update => await _useCases.updatePackage(
+          id,
+          onProgress: progress,
+        ),
+        PackageOperationKind.switchVersion => await _useCases.installVersion(
+          id,
+          version!,
+          onProgress: progress,
+        ),
+        PackageOperationKind.uninstall => await _useCases.uninstallPackage(
+          id,
+          onProgress: progress,
+        ),
+      };
+    } finally {
+      // Success or failure, the list follows what the device shows now.
+      try {
+        _packages = await _useCases.listPackages();
+      } catch (error, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'package setup',
+          ),
+        );
+      }
+      _operation = null;
+      if (!_disposed) notifyListeners();
+    }
   }
 
   Future<void> launchSelected({bool anotherInstance = false}) async {
     final id = _selectedId;
     if (id == null) throw const PackageNotFound('');
-    if (!_launchingIds.add(id)) return;
+    if (isBusy || !_launchingIds.add(id)) return;
     notifyListeners();
     try {
       await _useCases.launchPackage(id, anotherInstance: anotherInstance);
-      _runningIds = {..._runningIds, id};
-    } finally {
+    } catch (_) {
       _launchingIds.remove(id);
       if (!_disposed) notifyListeners();
+      rethrow;
     }
+    if (_disposed) return;
+    if (anotherInstance || isRunning(id)) {
+      // Already running: there is no new state to wait for.
+      _launchingIds.remove(id);
+      notifyListeners();
+      return;
+    }
+    // The button spins until the process watch sees the app running, or
+    // [launchTimeout] passes without it.
+    _launchTimers[id]?.cancel();
+    _launchTimers[id] = Timer(launchTimeout, () => _endLaunch(id));
+    unawaited(
+      refreshRunningProcesses().catchError((Object error, StackTrace stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'hub process monitor',
+          ),
+        );
+      }),
+    );
   }
+}
 
-  Future<SoftwarePackage> installSelected() =>
-      _runOnSelected(_useCases.installPackage);
+enum PackageOperationKind { install, update, switchVersion, uninstall }
 
-  Future<SoftwarePackage> uninstallSelected() =>
-      _runOnSelected(_useCases.uninstallPackage);
+/// A running install, update, version switch or uninstall of [packageId].
+/// [downloadFraction] runs from 0 to 1 while a setup downloads and is null
+/// once the setup or uninstaller runs. [version] is the chosen release of a
+/// version switch.
+@immutable
+class PackageOperation {
+  final String packageId;
+  final PackageOperationKind kind;
+  final double? downloadFraction;
+  final String? version;
 
-  Future<SoftwarePackage> _runOnSelected(
-    Future<SoftwarePackage> Function(String id) command,
-  ) async {
-    final id = _selectedId;
-    if (id == null) throw const PackageNotFound('');
-    final result = await command(id);
-    _packages = await _useCases.listPackages();
-    notifyListeners();
-    return result;
-  }
+  const PackageOperation(
+    this.packageId, {
+    required this.kind,
+    this.downloadFraction = 0,
+    this.version,
+  });
+
+  bool get isUninstall => kind == PackageOperationKind.uninstall;
+  bool get isSwitchVersion => kind == PackageOperationKind.switchVersion;
+
+  bool get isDownloading => downloadFraction != null;
 }

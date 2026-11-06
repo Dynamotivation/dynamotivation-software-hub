@@ -9,6 +9,7 @@ import 'catalog_cache.dart';
 import 'catalog_source.dart';
 import 'device_package_repository.dart';
 import 'file_announcement_store.dart';
+import 'file_install_log.dart';
 import 'icon_cache.dart';
 import 'in_memory_settings_repository.dart';
 import 'setup_installer.dart';
@@ -71,6 +72,10 @@ class HubServices {
         launcher: launcher,
         processes: processes,
         installer: StagedSetupInstaller(cache),
+        installLog: FileInstallLog(
+          Directory('${cache.parent.path}${Platform.pathSeparator}Logs'),
+        ),
+        platform: platform,
       ),
       icons: icons,
       announcements: FileAnnouncementStore(cache),

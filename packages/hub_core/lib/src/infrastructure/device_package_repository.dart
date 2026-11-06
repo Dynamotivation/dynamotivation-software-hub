@@ -7,7 +7,11 @@ import '../domain/software_package.dart';
 /// Combines an independent device inventory with platform-scoped catalog data.
 /// Installation truth always comes from the device, including after refresh.
 class DevicePackageRepository
-    implements PackageRepository, CachedPackageSource, ReleaseHistorySource {
+    implements
+        PackageRepository,
+        CachedPackageSource,
+        ReleaseHistorySource,
+        DeviceInventorySource {
   final PackageRepository catalog;
   final InstalledApplicationRepository installations;
 
@@ -55,6 +59,13 @@ class DevicePackageRepository
       _current = _merge(await _catalogSnapshot(), installed);
     }
     await catalog.refresh();
+    _current = _merge(await catalog.all(), installed);
+  }
+
+  @override
+  Future<void> rescanDevice() async {
+    final installed = await installations.scan();
+    _installed = installed;
     _current = _merge(await catalog.all(), installed);
   }
 
@@ -117,6 +128,7 @@ class DevicePackageRepository
           match?.version,
           platform: platform,
           executable: match?.launchExecutable ?? '',
+          uninstaller: match?.uninstallExecutable ?? '',
         ),
       );
     }
@@ -129,6 +141,7 @@ class DevicePackageRepository
           subtitle: '',
           currentVersion: app.version,
           launchExecutable: app.launchExecutable,
+          uninstallExecutable: app.uninstallExecutable,
           latestVersion: '',
           status: PackageInstallationStatus.installed,
           latestRelease: const ReleaseNote(

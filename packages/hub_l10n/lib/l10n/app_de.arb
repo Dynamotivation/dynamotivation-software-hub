@@ -263,5 +263,48 @@
   "dismissNotification": "Ausblenden",
   "@dismissNotification": {
     "description": "Label of the button that dismisses an in-app notification"
-  }
+  },
+  "setupDownloading": "Wird heruntergeladen… {percent} %",
+  "@setupDownloading": {
+    "description": "Status inside the install/update button while the setup downloads",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "setupInstalling": "Wird installiert…",
+  "@setupInstalling": {
+    "description": "Status inside the install button while the setup runs silently"
+  },
+  "setupUpdating": "Wird aktualisiert…",
+  "@setupUpdating": {
+    "description": "Status inside the update button while the setup runs silently"
+  },
+  "errorSetupFailed": "Das Setup wurde nicht abgeschlossen. Details stehen im Protokoll: {path}",
+  "@errorSetupFailed": {
+    "description": "Shown when a silent setup failed or the software is not installed afterwards",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPackageInUse": "Die Anwendung läuft. Schließe sie und versuche es erneut.",
+  "@errorPackageInUse": {
+    "description": "Shown when an update is refused because the application runs"
+  },
+  "setupUninstalling": "Wird deinstalliert…",
+  "@setupUninstalling": {
+    "description": "Status shown in place of Launch while the application's uninstaller runs silently"
+  },
+  "installOtherVersion": "Andere Version installieren…",
+  "installVersionTitle": "Version von {name} installieren",
+  "installVersionBody": "Die gewählte Version ersetzt die installierte. Ältere Versionen können mit neueren gespeicherte Dateien eventuell nicht öffnen.",
+  "installAction": "Installieren",
+  "versionLatest": "neueste",
+  "versionInstalled": "installiert",
+  "versionNoDownload": "kein Download für dieses Gerät",
+  "loadingVersions": "Versionen werden geladen",
+  "setupInstallingVersion": "v{version} wird installiert…"
 }

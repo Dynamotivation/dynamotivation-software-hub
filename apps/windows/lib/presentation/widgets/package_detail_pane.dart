@@ -1,3 +1,5 @@
+import '../user_date_format.dart';
+
 import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:hub_l10n/hub_l10n.dart';
@@ -9,6 +11,8 @@ import 'package_image.dart';
 import 'overflow_menu.dart';
 import 'version_label.dart';
 import 'run_action_button.dart';
+import 'setup_action_button.dart';
+import 'animated_action_width.dart';
 
 class PackageDetailPane extends StatefulWidget {
   final SoftwarePackage? package;
@@ -18,8 +22,23 @@ class PackageDetailPane extends StatefulWidget {
   final VoidCallback? onForceClose;
   final bool isRunning;
   final bool isLaunching;
+
+  /// True while any setup runs: every action is disabled.
+  final bool busy;
+
+  /// True while this package's setup runs; [setupDownloadFraction] is its
+  /// download progress, null once the setup itself runs.
+  final bool setupInProgress;
+  final double? setupDownloadFraction;
+
+  /// Status of an uninstall or version switch of this installed package; it
+  /// shows, with [setupDownloadFraction], in Launch's place. Null otherwise.
+  final String? launchSlotStatus;
   final VoidCallback onInstall;
   final VoidCallback onUninstall;
+
+  /// Opens the choice of a specific version; null hides it.
+  final VoidCallback? onInstallVersion;
   final FocusNode? primaryActionFocus;
   final FocusNode? overflowFocus;
 
@@ -37,8 +56,13 @@ class PackageDetailPane extends StatefulWidget {
     this.onForceClose,
     this.isRunning = false,
     this.isLaunching = false,
+    this.busy = false,
+    this.setupInProgress = false,
+    this.setupDownloadFraction,
+    this.launchSlotStatus,
     required this.onInstall,
     required this.onUninstall,
+    this.onInstallVersion,
     this.primaryActionFocus,
     this.overflowFocus,
     this.historyLoading = false,
@@ -54,6 +78,41 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
   bool _olderExpanded = false;
   String? _selectedVersion;
   final _scroll = SmoothScrollController();
+
+  /// Whether the package has a release besides the installed one to choose.
+  bool _hasOtherVersions(SoftwarePackage pkg) =>
+      widget.onInstallVersion != null &&
+      (pkg.olderReleaseCount > 0 || !pkg.isInstalled);
+
+  /// Launch, or the progress of an uninstall or version switch in its place
+  /// while that runs.
+  Widget _launchOrUninstalling(SoftwarePackage pkg, {required bool primary}) {
+    final status = widget.launchSlotStatus;
+    if (status != null) {
+      return SetupActionButton(
+        icon: FluentIcons.history,
+        label: pkg.name,
+        runningStatus: status,
+        inProgress: true,
+        downloadFraction: widget.setupDownloadFraction,
+        enabled: false,
+        filled: false,
+        focusNode: widget.primaryActionFocus,
+      );
+    }
+    return RunActionButton(
+      name: pkg.name,
+      running: widget.isRunning,
+      busy: widget.isLaunching,
+      enabled: pkg.canLaunch && !widget.busy,
+      primary: primary,
+      focusNode: widget.primaryActionFocus,
+      onLaunch: (another) => another
+          ? (widget.onLaunchAnotherInstance ?? widget.onLaunch)()
+          : widget.onLaunch(),
+      onForceClose: widget.onForceClose ?? () {},
+    );
+  }
 
   @override
   void dispose() {
@@ -218,7 +277,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
 
                     // Action Buttons Row (Wrap for responsive wrapping)
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Wrap(
@@ -226,58 +285,37 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                             runSpacing: 8,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
+                              // Every slot is an AnimatedActionWidth, so a
+                              // slot whose content changes (Install →
+                              // Downloading → Installing → Launch) animates
+                              // to its new width instead of jumping.
                               if (pkg.hasUpdate) ...[
-                                RunActionButton(
-                                  name: pkg.name,
-                                  running: widget.isRunning,
-                                  busy: widget.isLaunching,
-                                  enabled: pkg.canLaunch,
-                                  primary: false,
-                                  focusNode: widget.primaryActionFocus,
-                                  onLaunch: (another) => another
-                                      ? (widget.onLaunchAnotherInstance ??
-                                            widget.onLaunch)()
-                                      : widget.onLaunch(),
-                                  onForceClose: widget.onForceClose ?? () {},
+                                AnimatedActionWidth(
+                                  child: _launchOrUninstalling(
+                                    pkg,
+                                    primary: false,
+                                  ),
                                 ),
-                                FilledButton(
-                                  onPressed: pkg.deviceObserved
-                                      ? null
-                                      : widget.onUpdate,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
+                                AnimatedActionWidth(
+                                  child: SetupActionButton(
+                                    icon: FluentIcons.up,
+                                    label: context.l10n.updateToVersion(
+                                      pkg.latestVersion,
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(FluentIcons.up, size: 13),
-                                        const SizedBox(width: 6),
-                                        Flexible(
-                                          child: Text(
-                                            context.l10n.updateToVersion(
-                                              pkg.latestVersion,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    runningStatus: context.l10n.setupUpdating,
+                                    inProgress: widget.setupInProgress,
+                                    downloadFraction:
+                                        widget.setupDownloadFraction,
+                                    enabled: !widget.busy,
+                                    onPressed: widget.onUpdate,
                                   ),
                                 ),
                               ] else if (pkg.isInstalled) ...[
-                                RunActionButton(
-                                  name: pkg.name,
-                                  running: widget.isRunning,
-                                  busy: widget.isLaunching,
-                                  enabled: pkg.canLaunch,
-                                  primary: true,
-                                  focusNode: widget.primaryActionFocus,
-                                  onLaunch: (another) => another
-                                      ? (widget.onLaunchAnotherInstance ??
-                                            widget.onLaunch)()
-                                      : widget.onLaunch(),
-                                  onForceClose: widget.onForceClose ?? () {},
+                                AnimatedActionWidth(
+                                  child: _launchOrUninstalling(
+                                    pkg,
+                                    primary: true,
+                                  ),
                                 ),
                               ] else if (pkg.isDownloading) ...[
                                 Button(
@@ -302,46 +340,43 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   ),
                                 ),
                               ] else ...[
-                                FilledButton(
-                                  focusNode: widget.primaryActionFocus,
-                                  onPressed: pkg.deviceObserved
-                                      ? null
-                                      : widget.onInstall,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 4,
+                                AnimatedActionWidth(
+                                  child: SetupActionButton(
+                                    icon: FluentIcons.download,
+                                    label: context.l10n.installVersion(
+                                      pkg.latestVersion,
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          FluentIcons.download,
-                                          size: 13,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Flexible(
-                                          child: Text(
-                                            context.l10n.installVersion(
-                                              pkg.latestVersion,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    runningStatus: context.l10n.setupInstalling,
+                                    inProgress: widget.setupInProgress,
+                                    downloadFraction:
+                                        widget.setupDownloadFraction,
+                                    enabled: !widget.busy,
+                                    onPressed: widget.onInstall,
+                                    focusNode: widget.primaryActionFocus,
                                   ),
                                 ),
                               ],
                             ],
                           ),
                         ),
-                        if (pkg.isInstalled && !pkg.deviceObserved)
+                        if (pkg.canUninstall || _hasOtherVersions(pkg))
                           OverflowMenu(
                             triggerLabel: context.l10n.moreOptions,
-                            openFolderLabel: context.l10n.openInstallFolder,
-                            verifyLabel: context.l10n.verifyFiles,
-                            uninstallLabel: context.l10n.uninstall,
-                            onUninstall: widget.onUninstall,
+                            openFolderLabel: pkg.isInstalled
+                                ? context.l10n.openInstallFolder
+                                : null,
+                            installVersionLabel: _hasOtherVersions(pkg)
+                                ? context.l10n.installOtherVersion
+                                : null,
+                            onInstallVersion: widget.busy
+                                ? null
+                                : widget.onInstallVersion,
+                            uninstallLabel: pkg.canUninstall
+                                ? context.l10n.uninstall
+                                : null,
+                            onUninstall: widget.busy
+                                ? null
+                                : widget.onUninstall,
                             triggerFocus: widget.overflowFocus,
                           ),
                       ],
@@ -421,7 +456,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      pkg.latestRelease.date,
+                      formatUserDate(pkg.latestRelease.date),
                       style: TextStyle(fontSize: 12, color: tokens.textSubtle),
                     ),
                   ],
@@ -569,7 +604,7 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    rel.date,
+                                    formatUserDate(rel.date),
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       color: tokens.textSubtle,

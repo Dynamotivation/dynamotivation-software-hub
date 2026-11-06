@@ -22,13 +22,25 @@ class _Inventory implements InstalledApplicationRepository {
   ];
 }
 
+class _Processes implements ApplicationProcesses {
+  final running = <String>{};
+  @override
+  Future<Set<String>> runningExecutables(Set<String> executables) async =>
+      running.intersection(executables);
+  @override
+  Future<void> terminateAll(String executable) async => running.clear();
+}
+
 class _Launcher implements ApplicationLauncher {
+  final _Processes processes;
+  _Launcher(this.processes);
   final calls = <String>[];
   bool fail = false;
   @override
   Future<void> launch(String executable) async {
     if (fail) throw StateError('missing executable');
     calls.add(executable);
+    processes.running.add(executable);
   }
 }
 
@@ -59,7 +71,8 @@ void main() {
           platformIds: const ['windows'],
         ),
       ], refreshDelay: Duration.zero);
-      final launcher = _Launcher();
+      final processes = _Processes();
+      final launcher = _Launcher(processes);
       final useCases = HubUseCases(
         DevicePackageRepository(
           catalog: catalog,
@@ -68,6 +81,7 @@ void main() {
         ),
         InMemorySettingsRepository(),
         launcher: launcher,
+        processes: processes,
       );
       final controller = HubController(useCases, departDuration: Duration.zero);
       await tester.runAsync(() async {
@@ -82,7 +96,7 @@ void main() {
       final update = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'Update to v1.1.0'),
       );
-      expect(update.onPressed, isNull);
+      expect(update.onPressed, isNotNull);
       expect(controller.selected!.isInstalled, isTrue);
 
       final launchFinder = find.widgetWithText(Button, 'Launch');

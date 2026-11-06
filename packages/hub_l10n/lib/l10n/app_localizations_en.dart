@@ -405,4 +405,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dismissNotification => 'Dismiss';
+
+  @override
+  String setupDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get setupInstalling => 'Installing…';
+
+  @override
+  String get setupUpdating => 'Updating…';
+
+  @override
+  String errorSetupFailed(String path) {
+    return 'The setup did not finish. Details are in the log: $path';
+  }
+
+  @override
+  String get errorPackageInUse =>
+      'The application is running. Close it, then try again.';
+
+  @override
+  String get setupUninstalling => 'Uninstalling…';
+
+  @override
+  String get installOtherVersion => 'Install another version…';
+
+  @override
+  String installVersionTitle(String name) {
+    return 'Install a version of $name';
+  }
+
+  @override
+  String get installVersionBody =>
+      'The chosen version replaces the installed one. Older versions may not open files saved by newer ones.';
+
+  @override
+  String get installAction => 'Install';
+
+  @override
+  String get versionLatest => 'latest';
+
+  @override
+  String get versionInstalled => 'installed';
+
+  @override
+  String get versionNoDownload => 'no download for this device';
+
+  @override
+  String get loadingVersions => 'Loading versions';
+
+  @override
+  String setupInstallingVersion(String version) {
+    return 'Installing v$version…';
+  }
 }

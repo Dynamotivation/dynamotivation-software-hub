@@ -82,3 +82,25 @@ class SetupLaunchFailed extends HubException {
   @override
   String toString() => 'SetupLaunchFailed($path): $reason';
 }
+
+/// A setup ran but did not install the software: it ended with
+/// [exitCode], or the device does not show the new version afterwards
+/// (null [exitCode]). [logPath] holds what happened.
+class SetupFailed extends HubException {
+  final String id;
+  final int? exitCode;
+  final String logPath;
+  const SetupFailed(this.id, this.exitCode, this.logPath);
+
+  @override
+  String toString() => 'SetupFailed($id): exit $exitCode, log $logPath';
+}
+
+/// The software runs, so its setup cannot replace it. Close it first.
+class PackageInUse extends HubException {
+  final String id;
+  const PackageInUse(this.id);
+
+  @override
+  String toString() => 'PackageInUse($id)';
+}

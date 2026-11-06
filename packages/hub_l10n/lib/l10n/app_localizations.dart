@@ -757,6 +757,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get dismissNotification;
+
+  /// Status inside the install/update button while the setup downloads
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {percent}%'**
+  String setupDownloading(int percent);
+
+  /// Status inside the install button while the setup runs silently
+  ///
+  /// In en, this message translates to:
+  /// **'Installing…'**
+  String get setupInstalling;
+
+  /// Status inside the update button while the setup runs silently
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get setupUpdating;
+
+  /// Shown when a silent setup failed or the software is not installed afterwards
+  ///
+  /// In en, this message translates to:
+  /// **'The setup did not finish. Details are in the log: {path}'**
+  String errorSetupFailed(String path);
+
+  /// Shown when an update is refused because the application runs
+  ///
+  /// In en, this message translates to:
+  /// **'The application is running. Close it, then try again.'**
+  String get errorPackageInUse;
+
+  /// Status shown in place of Launch while the application's uninstaller runs silently
+  ///
+  /// In en, this message translates to:
+  /// **'Uninstalling…'**
+  String get setupUninstalling;
+
+  /// Overflow menu item that opens the choice of a specific release to install, older or newer
+  ///
+  /// In en, this message translates to:
+  /// **'Install another version…'**
+  String get installOtherVersion;
+
+  /// Title of the dialog that lists the releases of an application to install
+  ///
+  /// In en, this message translates to:
+  /// **'Install a version of {name}'**
+  String installVersionTitle(String name);
+
+  /// Explanation in the dialog that lists releases to install
+  ///
+  /// In en, this message translates to:
+  /// **'The chosen version replaces the installed one. Older versions may not open files saved by newer ones.'**
+  String get installVersionBody;
+
+  /// Confirm button of the version choice dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get installAction;
+
+  /// Note beside the newest release in the version choice
+  ///
+  /// In en, this message translates to:
+  /// **'latest'**
+  String get versionLatest;
+
+  /// Note beside the release installed on this device in the version choice
+  ///
+  /// In en, this message translates to:
+  /// **'installed'**
+  String get versionInstalled;
+
+  /// Note beside a release that offers no download this device can run; it cannot be chosen
+  ///
+  /// In en, this message translates to:
+  /// **'no download for this device'**
+  String get versionNoDownload;
+
+  /// Accessible label of the spinner while the release list loads
+  ///
+  /// In en, this message translates to:
+  /// **'Loading versions'**
+  String get loadingVersions;
+
+  /// Status shown in place of Launch while a chosen version downloads or installs
+  ///
+  /// In en, this message translates to:
+  /// **'Installing v{version}…'**
+  String setupInstallingVersion(String version);
 }
 
 class _AppLocalizationsDelegate

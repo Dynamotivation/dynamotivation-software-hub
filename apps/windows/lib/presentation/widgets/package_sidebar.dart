@@ -20,7 +20,7 @@ class PackageSidebar extends StatefulWidget {
   final ValueChanged<SoftwarePackage> onSelectPackage;
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;
-  final VoidCallback onRefresh;
+  final VoidCallback? onRefresh;
   final bool isRefreshing;
   final FocusNode? searchFocusNode;
 
@@ -413,18 +413,6 @@ class _PackageTile extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 16,
-                    child: isSelected
-                        ? ExcludeSemantics(
-                            child: Icon(
-                              FluentIcons.check_mark,
-                              size: 12,
-                              color: tokens.text,
-                            ),
-                          )
-                        : null,
-                  ),
                   // Package App Icon
                   Container(
                     width: 38,

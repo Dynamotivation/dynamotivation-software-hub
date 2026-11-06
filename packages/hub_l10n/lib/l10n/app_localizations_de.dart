@@ -408,4 +408,59 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dismissNotification => 'Ausblenden';
+
+  @override
+  String setupDownloading(int percent) {
+    return 'Wird heruntergeladen… $percent %';
+  }
+
+  @override
+  String get setupInstalling => 'Wird installiert…';
+
+  @override
+  String get setupUpdating => 'Wird aktualisiert…';
+
+  @override
+  String errorSetupFailed(String path) {
+    return 'Das Setup wurde nicht abgeschlossen. Details stehen im Protokoll: $path';
+  }
+
+  @override
+  String get errorPackageInUse =>
+      'Die Anwendung läuft. Schließe sie und versuche es erneut.';
+
+  @override
+  String get setupUninstalling => 'Wird deinstalliert…';
+
+  @override
+  String get installOtherVersion => 'Andere Version installieren…';
+
+  @override
+  String installVersionTitle(String name) {
+    return 'Version von $name installieren';
+  }
+
+  @override
+  String get installVersionBody =>
+      'Die gewählte Version ersetzt die installierte. Ältere Versionen können mit neueren gespeicherte Dateien eventuell nicht öffnen.';
+
+  @override
+  String get installAction => 'Installieren';
+
+  @override
+  String get versionLatest => 'neueste';
+
+  @override
+  String get versionInstalled => 'installiert';
+
+  @override
+  String get versionNoDownload => 'kein Download für dieses Gerät';
+
+  @override
+  String get loadingVersions => 'Versionen werden geladen';
+
+  @override
+  String setupInstallingVersion(String version) {
+    return 'v$version wird installiert…';
+  }
 }

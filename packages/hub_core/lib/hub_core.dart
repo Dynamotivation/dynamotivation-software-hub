@@ -17,6 +17,7 @@ export 'src/domain/software_package.dart';
 export 'src/infrastructure/catalog_cache.dart';
 export 'src/infrastructure/catalog_source.dart';
 export 'src/infrastructure/file_announcement_store.dart';
+export 'src/infrastructure/file_install_log.dart';
 export 'src/infrastructure/hub_services.dart';
 export 'src/infrastructure/icon_cache.dart';
 export 'src/infrastructure/in_memory_settings_repository.dart';

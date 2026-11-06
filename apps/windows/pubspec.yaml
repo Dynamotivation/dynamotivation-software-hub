@@ -26,6 +26,7 @@ dependencies:
   # flutter_local_notifications package: no other frontend uses it yet.
   flutter_local_notifications_windows: ^3.1.1
   system_tray: ^2.0.3
+  ffi: ^2.2.0
 
 dev_dependencies:
   integration_test:
@@ -33,6 +34,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  fake_async: ^1.3.3
 
 flutter:
   uses-material-design: true

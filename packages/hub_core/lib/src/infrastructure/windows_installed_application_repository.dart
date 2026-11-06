@@ -51,6 +51,7 @@ class WindowsInstalledApplicationRepository
           name: name,
           version: text('DisplayVersion'),
           launchExecutable: executableFromDisplayIcon(text('DisplayIcon')),
+          uninstallExecutable: uninstallerFromCommand(text('UninstallString')),
         ),
       );
     }
@@ -72,6 +73,21 @@ class WindowsInstalledApplicationRepository
       return '';
     }
     return executable;
+  }
+
+  /// Inno registers `"<app>\unins000.exe"` as the uninstall command. Only
+  /// that absolute Inno uninstaller is accepted; its own arguments are
+  /// dropped, the hub passes the silent ones itself.
+  static String uninstallerFromCommand(String value) {
+    final match = RegExp(
+      r'^\s*(?:"([^"\r\n]+\.exe)"|([^"\s]+\.exe))(?:\s+[^\r\n]*)?$',
+      caseSensitive: false,
+    ).firstMatch(value);
+    final executable = (match?[1] ?? match?[2] ?? '').trim();
+    final windows = path.Context(style: path.Style.windows);
+    if (!windows.isAbsolute(executable)) return '';
+    final name = windows.basename(executable).toLowerCase();
+    return RegExp(r'^unins\d+\.exe$').hasMatch(name) ? executable : '';
   }
 
   static Future<String> readRegistry() async {
@@ -111,6 +127,7 @@ $items = @(
                 DisplayName = [string]$key.GetValue('DisplayName')
                 DisplayVersion = [string]$key.GetValue('DisplayVersion')
                 DisplayIcon = [string]$key.GetValue('DisplayIcon')
+                UninstallString = [string]$key.GetValue('UninstallString')
               }
             } finally { $key.Dispose() }
           }

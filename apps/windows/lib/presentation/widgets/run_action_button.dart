@@ -5,7 +5,9 @@ import 'package:hub_l10n/hub_l10n.dart';
 
 import '../theme/dynamotivation_theme.dart';
 
-/// Fixed footprint: a running app splits the same button into two equal parts.
+/// Launch, or for a running app "Running" with a force close part beside it.
+/// Sized by its content; the detail banner animates width changes
+/// (`AnimatedActionWidth`).
 class RunActionButton extends StatefulWidget {
   final String name;
   final bool running;
@@ -181,7 +183,10 @@ class _RunActionButtonState extends State<RunActionButton> {
     final focus = close ? _closeFocus : _launchFocus;
     final enabled = widget.enabled && !widget.busy;
     final hint = widget.running
-        ? '${l10n.modifierClickHint(controlClickLabel(l10n.clickAction), label)}\n${withShortcut(label, const SingleActivator(LogicalKeyboardKey.enter, control: true))}'
+        ? withShortcut(
+            l10n.modifierClickHint(controlClickLabel(l10n.clickAction), label),
+            const SingleActivator(LogicalKeyboardKey.enter, control: true),
+          )
         : label;
     void activate() {
       if (close) {
@@ -202,7 +207,15 @@ class _RunActionButtonState extends State<RunActionButton> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(FluentIcons.play, size: 13),
+              if (widget.busy && !widget.running)
+                SizedBox.square(
+                  dimension: 13,
+                  child: MediaQuery.disableAnimationsOf(context)
+                      ? const Icon(FluentIcons.sync, size: 13)
+                      : const ProgressRing(strokeWidth: 2),
+                )
+              else
+                Icon(FluentIcons.play, size: 13),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(widget.running ? l10n.running : l10n.launch),
@@ -220,7 +233,10 @@ class _RunActionButtonState extends State<RunActionButton> {
             style: style,
             onPressed: onPressed,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: close ? 2 : 10,
+                vertical: 4,
+              ),
               child: child,
             ),
           )
@@ -229,7 +245,10 @@ class _RunActionButtonState extends State<RunActionButton> {
             style: style,
             onPressed: onPressed,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: close ? 2 : 10,
+                vertical: 4,
+              ),
               child: child,
             ),
           );
@@ -265,17 +284,12 @@ class _RunActionButtonState extends State<RunActionButton> {
   }
 
   @override
-  Widget build(BuildContext context) => SizedBox(
+  Widget build(BuildContext context) => IntrinsicHeight(
     key: const ValueKey('run-action-footprint'),
-    width: 240,
-    child: IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: _part(close: false)),
-          if (widget.running) Expanded(child: _part(close: true)),
-        ],
-      ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [_part(close: false), if (widget.running) _part(close: true)],
     ),
   );
 }
