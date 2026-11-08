@@ -351,10 +351,6 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                           ? null
                           : _handleUpdateHub,
                     ),
-                    NoticeBanners(
-                      notices: _controller.notices,
-                      onDismiss: _controller.dismissNotice,
-                    ),
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -492,52 +488,63 @@ class _SoftwareHubPageState extends State<SoftwareHubPage> {
                   bottom: 24,
                   child: Align(
                     alignment: Alignment.bottomCenter,
-                    child: AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : FluentTheme.of(context).mediumAnimationDuration,
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.4),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        NoticeBanners(
+                          notices: _controller.notices,
+                          onDismiss: _controller.dismissNotice,
                         ),
-                      ),
-                      child: _toast == null
-                          ? const SizedBox.shrink(key: ValueKey('none'))
-                          : Semantics(
-                              liveRegion: true,
-                              key: ValueKey('toast-$_toastSequence'),
-                              child: PhysicalModel(
-                                color: Colors.transparent,
-                                elevation: 8,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 520,
-                                  ),
-                                  // InfoBar is translucent; give it an
-                                  // opaque base so nothing shows through.
-                                  child: ColoredBox(
-                                    color: DynTokens.of(context).card,
-                                    child: InfoBar(
-                                      isLong: true,
-                                      onClose: () {
-                                        _toastTimer?.cancel();
-                                        setState(() => _toast = null);
-                                      },
-                                      title: Text(_toast!.title),
-                                      content: Text(_toast!.content),
-                                      severity: _toast!.severity,
+                        AnimatedSwitcher(
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : FluentTheme.of(context).mediumAnimationDuration,
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.4),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              ),
+                          child: _toast == null
+                              ? const SizedBox.shrink(key: ValueKey('none'))
+                              : Semantics(
+                                  liveRegion: true,
+                                  key: ValueKey('toast-$_toastSequence'),
+                                  child: PhysicalModel(
+                                    color: Colors.transparent,
+                                    elevation: 8,
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 520,
+                                      ),
+                                      // InfoBar is translucent; give it an
+                                      // opaque base so nothing shows through.
+                                      child: ColoredBox(
+                                        color: DynTokens.of(context).card,
+                                        child: InfoBar(
+                                          isLong: true,
+                                          onClose: () {
+                                            _toastTimer?.cancel();
+                                            setState(() => _toast = null);
+                                          },
+                                          title: Text(_toast!.title),
+                                          content: Text(_toast!.content),
+                                          severity: _toast!.severity,
+                                          style: hubInfoBarStyle(context),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

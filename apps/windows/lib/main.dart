@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:hub_core/hub_core.dart';
 import 'package:hub_images/hub_images.dart';
@@ -9,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'platform/single_instance.dart';
 import 'platform/windows_application_processes.dart';
 import 'platform/windows_accessibility.dart';
 import 'background/background_service.dart';
@@ -21,6 +23,16 @@ import 'presentation/controllers/hub_controller.dart';
 
 /// Composition root of the Windows frontend.
 void main(List<String> args) async {
+  // One Hub per user. A second launch asks the running one to show its window
+  // and ends here, before any window, tray icon or network work exists.
+  // Development builds use their own lock, so they do not hand control to the
+  // installed Hub.
+  final instance = await SingleInstance.acquire(
+    cacheDirectory(hubCacheName),
+    name: kReleaseMode ? 'instance' : 'instance-dev',
+  );
+  if (instance == null) exit(0);
+
   WidgetsFlutterBinding.ensureInitialized();
 
   final accessibility = WindowsAccessibility();
@@ -135,6 +147,7 @@ void main(List<String> args) async {
   // staged setup launched.
   controller.quitForUpdate = () => background.end();
   await background.start();
+  instance.listen(() => unawaited(background.showHub()));
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();

@@ -64,10 +64,7 @@ void main() {
         _package('b', latestVersion: '2.0'),
         _package('c', latestVersion: '1.0'),
       ],
-      {
-        'a': {'1.0'},
-        'b': {'2.0'},
-      },
+      {'a': '1.0', 'b': '2.0'},
     );
 
     expect(updates.newPackages.map((p) => p.id), ['c']);
@@ -75,21 +72,74 @@ void main() {
     expect(updates.count, 2);
   });
 
-  test('a version that was announced once is not announced again', () {
+  test('a lower version than the last announced one is never reported', () {
     final updates = unannouncedUpdates(
-      [_package('a', latestVersion: '1.0')],
-      {'a': {'1.0', '2.0'}},
+      [_package('a', latestVersion: '1.9.1')],
+      {'a': '2.0'},
     );
     expect(updates.isEmpty, isTrue);
   });
 
+  test('a lower version never lowers the stored one, so no repeat', () async {
+    final store = InMemoryAnnouncementStore();
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '2.0'),
+    ]);
+    final watcher = watcherOf(repository, store);
+    await watcher.poll();
+
+    repository.packages = [_package('a', latestVersion: '1.9.1')];
+    expect((await watcher.poll()).isEmpty, isTrue);
+    await watcher.markSeen();
+    expect(await store.load(), {'a': '2.0'});
+
+    repository.packages = [_package('a', latestVersion: '2.0')];
+    expect((await watcher.poll()).isEmpty, isTrue);
+  });
+
+  test('the last announced version is not announced again', () {
+    final updates = unannouncedUpdates(
+      [_package('a', latestVersion: '1.0')],
+      {'a': '1.0'},
+    );
+    expect(updates.isEmpty, isTrue);
+  });
+
+  test('a first release is new software, even if the id was seen before', () {
+    final updates = unannouncedUpdates(
+      [_package('a', latestVersion: '0.1.0'), _package('b', latestVersion: '')],
+      {'a': ''},
+    );
+
+    expect(updates.newPackages.map((p) => p.id), ['a']);
+    expect(updates.versionUpdates, isEmpty);
+  });
+
+  test(
+    'an entry without a release is neither reported nor remembered',
+    () async {
+      final store = InMemoryAnnouncementStore();
+      await store.save({'x': '1.0'});
+      final watcher = watcherOf(
+        _StubPackageRepository([_package('a', latestVersion: '')]),
+        store,
+      );
+
+      expect((await watcher.poll()).isEmpty, isTrue);
+      await watcher.markSeen();
+      expect(await store.load(), {'x': '1.0'});
+    },
+  );
+
   test('first run settles the baseline without reporting', () async {
     final store = InMemoryAnnouncementStore();
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '1.0'),
+    ]);
     final watcher = watcherOf(repository, store);
 
     expect((await watcher.poll()).isEmpty, isTrue);
-    expect(await store.load(), {'a': {'1.0'}});
+    expect(await store.load(), {'a': '1.0'});
   });
 
   test('an empty first catalog does not settle a baseline', () async {
@@ -103,29 +153,36 @@ void main() {
     expect((await watcher.poll()).isEmpty, isTrue);
   });
 
-  test('later polls report what changed, until it is marked announced', () async {
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
-    final watcher = watcherOf(repository);
-    await watcher.poll();
+  test(
+    'later polls report what changed, until it is marked announced',
+    () async {
+      final repository = _StubPackageRepository([
+        _package('a', latestVersion: '1.0'),
+      ]);
+      final watcher = watcherOf(repository);
+      await watcher.poll();
 
-    repository.packages = [
-      _package('a', latestVersion: '2.0'),
-      _package('b', name: 'New Tool'),
-    ];
+      repository.packages = [
+        _package('a', latestVersion: '2.0'),
+        _package('b', name: 'New Tool', latestVersion: '1.0'),
+      ];
 
-    final updates = await watcher.poll();
-    expect(updates.newPackages.single.name, 'New Tool');
-    expect(updates.versionUpdates.single.id, 'a');
+      final updates = await watcher.poll();
+      expect(updates.newPackages.single.name, 'New Tool');
+      expect(updates.versionUpdates.single.id, 'a');
 
-    // Not marked yet (e.g. delivery failed): still pending.
-    expect((await watcher.poll()).count, 2);
-    await watcher.markAnnounced(updates);
-    expect((await watcher.poll()).isEmpty, isTrue);
-  });
+      // Not marked yet (e.g. delivery failed): still pending.
+      expect((await watcher.poll()).count, 2);
+      await watcher.markAnnounced(updates);
+      expect((await watcher.poll()).isEmpty, isTrue);
+    },
+  );
 
   test('the announced state survives a restart', () async {
     final store = InMemoryAnnouncementStore();
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '1.0'),
+    ]);
     await watcherOf(repository, store).poll();
     repository.packages = [
       _package('a', latestVersion: '2.0'),
@@ -147,7 +204,9 @@ void main() {
 
   test('a relaunch announces only what was not announced before', () async {
     final store = InMemoryAnnouncementStore();
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '1.0'),
+    ]);
     await watcherOf(repository, store).poll();
 
     // Offline while the app was closed: three entries appear meanwhile.
@@ -165,7 +224,9 @@ void main() {
   });
 
   test('a failed poll changes nothing', () async {
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '1.0'),
+    ]);
     final watcher = watcherOf(repository);
     await watcher.poll();
 
@@ -177,7 +238,9 @@ void main() {
   });
 
   test('markSeen absorbs the state the user already saw', () async {
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '1.0'),
+    ]);
     final watcher = watcherOf(repository);
     await watcher.poll();
 
@@ -188,7 +251,9 @@ void main() {
   });
 
   test('the hub itself is never reported', () async {
-    final repository = _StubPackageRepository([_package('a', latestVersion: '1.0')]);
+    final repository = _StubPackageRepository([
+      _package('a', latestVersion: '1.0'),
+    ]);
     final watcher = watcherOf(repository);
     await watcher.poll();
 
@@ -207,12 +272,25 @@ void main() {
     test('round-trips the announced versions', () async {
       final store = FileAnnouncementStore(Directory('${dir.path}/nested'));
       expect(await store.load(), isNull);
-      await store.save({'a': {'1.0', '2.0'}, 'b': {'0.1'}});
-      expect(await FileAnnouncementStore(Directory('${dir.path}/nested')).load(), {
-        'a': {'1.0', '2.0'},
-        'b': {'0.1'},
-      });
+      await store.save({'a': '2.0', 'b': '0.1'});
+      expect(
+        await FileAnnouncementStore(Directory('${dir.path}/nested')).load(),
+        {'a': '2.0', 'b': '0.1'},
+      );
     });
+
+    test(
+      'a file from older builds keeps the newest version per package',
+      () async {
+        File('${dir.path}/announced.json').writeAsStringSync(
+          '{"announced":{"a":["1.9","10.0","2.0"],"b":["","0.1.0"],"c":[""]}}',
+        );
+        expect(await FileAnnouncementStore(dir).load(), {
+          'a': '10.0',
+          'b': '0.1.0',
+        });
+      },
+    );
 
     test('an unreadable file counts as nothing stored', () async {
       File('${dir.path}/announced.json').writeAsStringSync('{not json');
