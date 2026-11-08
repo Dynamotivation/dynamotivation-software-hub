@@ -202,11 +202,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trayEnd => 'End';
 
   @override
-  String get newSoftwareTitle => 'New software available';
+  String get newSoftwareTitle => 'New software released';
 
   @override
   String newSoftwareBody(String name) {
-    return '$name has been added to the Software Hub.';
+    return '$name is out. Be among the first to try it.';
   }
 
   @override

@@ -1,4 +1,5 @@
 import '../domain/software_package.dart';
+import '../domain/software_version.dart';
 import 'announcement_store.dart';
 import 'hub_use_cases.dart';
 
@@ -27,25 +28,46 @@ class CatalogUpdates {
   List<SoftwarePackage> get packages => [...newPackages, ...versionUpdates];
 }
 
-/// What of [catalog] is not in [announced] yet: ids never announced are new,
-/// known ids with an unannounced newest version are updates. Entries that
-/// disappeared are not reported; they vanish from the website without a
-/// user-facing trail worth announcing.
+/// Whether [candidate] is ahead of the [last] version the user knows. Only a
+/// newer version is ahead: a lower one is never announced. Versions that
+/// cannot be ordered (not parseable) count as ahead when they differ, since
+/// nothing better can be said.
+bool _isAhead(String candidate, String last) {
+  if (isNewerSoftwareVersion(candidate, last)) return true;
+  if (isNewerSoftwareVersion(last, candidate)) return false;
+  return !isSameSoftwareVersion(last, candidate);
+}
+
+/// What of [catalog] the user was not told about yet. This is the one place
+/// that decides what counts as known:
+///  - No release yet (empty version): not reported, not remembered. There is
+///    nothing to try, and the first release later is new software.
+///  - No stored version: **new software**.
+///  - A newest version that is newer than the stored one: an **update**. A
+///    lower or equal version is never reported, so a published version that
+///    moves back down, or flips back and forth, stays silent.
+/// Entries that disappeared are not reported; they vanish from the website
+/// without a user-facing trail worth announcing.
 CatalogUpdates unannouncedUpdates(
   List<SoftwarePackage> catalog,
   Announced announced,
-) => CatalogUpdates(
-  newPackages: [
-    for (final p in catalog)
-      if (!announced.containsKey(p.id)) p,
-  ],
-  versionUpdates: [
-    for (final p in catalog)
-      if (announced[p.id] case final versions?
-          when !versions.contains(p.latestVersion))
-        p,
-  ],
-);
+) {
+  final newPackages = <SoftwarePackage>[];
+  final versionUpdates = <SoftwarePackage>[];
+  for (final p in catalog) {
+    if (p.latestVersion.isEmpty) continue;
+    final last = announced[p.id];
+    if (last == null || last.isEmpty) {
+      newPackages.add(p);
+    } else if (_isAhead(p.latestVersion, last)) {
+      versionUpdates.add(p);
+    }
+  }
+  return CatalogUpdates(
+    newPackages: newPackages,
+    versionUpdates: versionUpdates,
+  );
+}
 
 /// Finds what is new in the catalog since the user was last told, and
 /// remembers what was told.
@@ -87,19 +109,26 @@ class CatalogUpdateWatcher {
     final announced = await _state();
     if (announced == null) {
       // An empty catalog says nothing: wait for a real one to settle on.
-      if (catalog.isNotEmpty) await _remember(catalog);
+      if (catalog.isNotEmpty) await _record(catalog);
       return const CatalogUpdates();
     }
     return unannouncedUpdates(catalog, announced);
   }
 
-  Future<void> _remember(List<SoftwarePackage> packages) async {
-    final next = <String, Set<String>>{
-      for (final e in (_announced ?? const <String, Set<String>>{}).entries)
-        e.key: {...e.value},
-    };
+  /// The only writer of the stored state: records the newest version of each
+  /// of [packages] as the last one the user knows. The stored version only
+  /// ever moves up, so a catalog that briefly shows a lower one cannot make
+  /// the higher one look new again. Packages without a release are skipped, or
+  /// the software would later look known and its first release like a mere
+  /// update.
+  Future<void> _record(List<SoftwarePackage> packages) async {
+    final next = {...?_announced};
     for (final p in packages) {
-      (next[p.id] ??= {}).add(p.latestVersion);
+      if (p.latestVersion.isEmpty) continue;
+      final last = next[p.id];
+      if (last == null || last.isEmpty || _isAhead(p.latestVersion, last)) {
+        next[p.id] = p.latestVersion;
+      }
     }
     await _store.save(next);
     _announced = next;
@@ -118,20 +147,22 @@ class CatalogUpdateWatcher {
   Future<CatalogUpdates> pending() =>
       _serial(() async => _evaluate(await _useCases.listPackages()));
 
-  /// Records that the user was told about [updates].
+  /// Records that the user was *told* about [updates] (a notification was
+  /// delivered, or notifications are off). Call it only after delivery, so a
+  /// failed delivery is retried by the next check.
   Future<void> markAnnounced(CatalogUpdates updates) => _serial(() async {
     if (updates.isEmpty) return;
     await _state();
-    await _remember(updates.packages);
+    await _record(updates.packages);
   });
 
-  /// Records the whole current catalog as known without reporting anything.
-  /// The frontend calls this after the user saw a manual refresh in the
-  /// window, so the next check does not announce what was on screen.
+  /// Records that the user *saw* the whole current catalog on screen, without
+  /// reporting anything. The frontend calls this after a load or a manual
+  /// refresh, so the next check does not announce what was already visible.
   Future<void> markSeen() => _serial(() async {
     await _state();
     final catalog = await _useCases.listPackages();
     if (catalog.isEmpty && _announced == null) return;
-    await _remember(catalog);
+    await _record(catalog);
   });
 }

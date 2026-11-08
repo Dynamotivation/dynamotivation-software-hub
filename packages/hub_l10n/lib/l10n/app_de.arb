@@ -62,11 +62,11 @@
   "@trayEnd": {
     "description": "System tray menu item: close the hub process"
   },
-  "newSoftwareTitle": "Neue Software verfügbar",
+  "newSoftwareTitle": "Neue Software veröffentlicht",
   "@newSoftwareTitle": {
     "description": "Title of the background notification for a new catalog entry"
   },
-  "newSoftwareBody": "{name} wurde dem Software Hub hinzugefügt.",
+  "newSoftwareBody": "{name} ist erschienen. Gehören Sie zu den Ersten, die es ausprobieren.",
   "@newSoftwareBody": {
     "description": "Body of the background notification for a new catalog entry",
     "placeholders": {

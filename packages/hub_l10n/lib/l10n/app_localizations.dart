@@ -437,13 +437,13 @@ abstract class AppLocalizations {
   /// Title of the background notification for a new catalog entry
   ///
   /// In en, this message translates to:
-  /// **'New software available'**
+  /// **'New software released'**
   String get newSoftwareTitle;
 
   /// Body of the background notification for a new catalog entry
   ///
   /// In en, this message translates to:
-  /// **'{name} has been added to the Software Hub.'**
+  /// **'{name} is out. Be among the first to try it.'**
   String newSoftwareBody(String name);
 
   /// Body of the background notification for a newer release; the title is updateAvailable

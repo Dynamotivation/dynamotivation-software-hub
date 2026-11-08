@@ -9,7 +9,7 @@ const _catalog = '''
       "description": "A test entry.",
       "url": "https://dynamotivation.com/portfolio/software/germemz/",
       "icon": {
-        "url": "https://dynamotivation.com/images/germemz.avif",
+        "url": "https://dynamotivation.com/images/germemz.webp",
         "width": 512,
         "height": 512
       },
@@ -36,7 +36,7 @@ void main() {
       expect(p.id, 'germemz');
       expect(p.name, 'Germemz');
       expect(p.description, 'A test entry.');
-      expect(p.iconUrl, 'https://dynamotivation.com/images/germemz.avif');
+      expect(p.iconUrl, 'https://dynamotivation.com/images/germemz.webp');
       expect(p.status, PackageInstallationStatus.notInstalled);
     });
 
