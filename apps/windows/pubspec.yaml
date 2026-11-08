@@ -2,7 +2,7 @@ name: dynamotivation_software_hub
 description: "Dynamotivation Software Hub desktop application in Flutter"
 publish_to: 'none'
 
-version: 0.1.14+1
+version: 0.1.15+1
 resolution: workspace
 
 environment:
