@@ -59,8 +59,12 @@ export GH_TOKEN="$GH_TOKEN_HUB"
     echo "Website already lists $RELEASE_VERSION."
   else
     git commit -am "Release Dynamotivation Software Hub $RELEASE_VERSION"
-    git push --force origin "$branch"
+    # Git asks gh for its credentials, and gh answers with $GH_TOKEN as it is
+    # when git runs. Here that is the Hub's own token, which cannot write to
+    # the website, so every command that touches the website gets the website
+    # token explicitly, the push included.
     with_website_token() { GH_TOKEN="$WEBSITE_RELEASE_DATA_TOKEN" GH_REPO="$WEBSITE_REPO" "$@"; }
+    with_website_token git push --force origin "$branch"
     pr="$(with_website_token gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
     if [[ -z "$pr" ]]; then
       with_website_token gh pr create --base main --head "$branch" \
