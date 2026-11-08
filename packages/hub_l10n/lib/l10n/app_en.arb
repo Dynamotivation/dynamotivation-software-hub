@@ -325,6 +325,72 @@
   "@clearSearch": {
     "description": "Accessible label and tooltip for clearing the software search field"
   },
+  "errorInstalledSoftwareUnavailable": "Installed software could not be read from Windows. Try refreshing the software list.",
+  "@errorInstalledSoftwareUnavailable": {
+    "description": "Shown when reading installed applications from the Windows registry fails."
+  },
+  "errorLaunchFailed": "The application could not be started. Refresh the software list and check that it is still installed.",
+  "@errorLaunchFailed": {
+    "description": "Shown when launching an installed application fails, for example because its executable was removed."
+  },
+  "running": "Running",
+  "@running": {
+    "description": "Windows application process control: running."
+  },
+  "launchAnotherInstance": "Launch another instance",
+  "@launchAnotherInstance": {
+    "description": "Windows application process control: launchAnotherInstance."
+  },
+  "forceClose": "Force close",
+  "@forceClose": {
+    "description": "Windows application process control: forceClose."
+  },
+  "clickAction": "click",
+  "@clickAction": {
+    "description": "Windows application process control: clickAction."
+  },
+  "yesAction": "Yes",
+  "@yesAction": {
+    "description": "Windows application process control: yesAction."
+  },
+  "noAction": "No",
+  "@noAction": {
+    "description": "Windows application process control: noAction."
+  },
+  "forceCloseTitle": "Force close {name}?",
+  "@forceCloseTitle": {
+    "description": "Windows application process control: forceCloseTitle.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "forceCloseBody": "Are you sure? All running instances of {name} will be force closed. Unsaved changes will be lost.",
+  "@forceCloseBody": {
+    "description": "Windows application process control: forceCloseBody.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modifierClickHint": "{shortcut} to {action}.",
+  "@modifierClickHint": {
+    "description": "Windows application process control: modifierClickHint.",
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessOperation": "The application processes could not be read or stopped. Check that they are running under your Windows account and try again.",
+  "@errorProcessOperation": {
+    "description": "Windows application process control: errorProcessOperation."
+  },
   "hubUpdateRestart": "Restart to update",
   "@hubUpdateRestart": {
     "description": "Header pill label once the update is downloaded"
@@ -354,5 +420,85 @@
   "dismissNotification": "Dismiss",
   "@dismissNotification": {
     "description": "Label of the button that dismisses an in-app notification"
+  },
+  "setupDownloading": "Downloading… {percent}%",
+  "@setupDownloading": {
+    "description": "Status inside the install/update button while the setup downloads",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "setupInstalling": "Installing…",
+  "@setupInstalling": {
+    "description": "Status inside the install button while the setup runs silently"
+  },
+  "setupUpdating": "Updating…",
+  "@setupUpdating": {
+    "description": "Status inside the update button while the setup runs silently"
+  },
+  "errorSetupFailed": "The setup did not finish. Details are in the log: {path}",
+  "@errorSetupFailed": {
+    "description": "Shown when a silent setup failed or the software is not installed afterwards",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPackageInUse": "The application is running. Close it, then try again.",
+  "@errorPackageInUse": {
+    "description": "Shown when an update is refused because the application runs"
+  },
+  "setupUninstalling": "Uninstalling…",
+  "@setupUninstalling": {
+    "description": "Status shown in place of Launch while the application's uninstaller runs silently"
+  },
+  "installOtherVersion": "Install another version…",
+  "@installOtherVersion": {
+    "description": "Overflow menu item that opens the choice of a specific release to install, older or newer"
+  },
+  "installVersionTitle": "Install a version of {name}",
+  "@installVersionTitle": {
+    "description": "Title of the dialog that lists the releases of an application to install",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "installVersionBody": "The chosen version replaces the installed one. Older versions may not open files saved by newer ones.",
+  "@installVersionBody": {
+    "description": "Explanation in the dialog that lists releases to install"
+  },
+  "installAction": "Install",
+  "@installAction": {
+    "description": "Confirm button of the version choice dialog"
+  },
+  "versionLatest": "latest",
+  "@versionLatest": {
+    "description": "Note beside the newest release in the version choice"
+  },
+  "versionInstalled": "installed",
+  "@versionInstalled": {
+    "description": "Note beside the release installed on this device in the version choice"
+  },
+  "versionNoDownload": "no download for this device",
+  "@versionNoDownload": {
+    "description": "Note beside a release that offers no download this device can run; it cannot be chosen"
+  },
+  "loadingVersions": "Loading versions",
+  "@loadingVersions": {
+    "description": "Accessible label of the spinner while the release list loads"
+  },
+  "setupInstallingVersion": "Installing v{version}…",
+  "@setupInstallingVersion": {
+    "description": "Status shown in place of Launch while a chosen version downloads or installs",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   }
 }

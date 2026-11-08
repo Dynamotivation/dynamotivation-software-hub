@@ -687,6 +687,10 @@ void main() {
     // The message lives in an announced live region and does not steal focus.
     expect(liveRegions, findsWidgets);
     expect(_focusWithin(find.byType(EditableText)), isTrue);
+    expect(
+      tester.widget<Semantics>(toastNode.first).properties.liveRegion,
+      isTrue,
+    );
     final firstKey = tester.widget<Semantics>(toastNode.first).key!;
     // An identical message following the first is a fresh announcement: the
     // live-region node is rebuilt with a new key.
@@ -696,7 +700,7 @@ void main() {
     expect(secondKey, isNot(firstKey));
     // The close control actually dismisses it.
     await tester.tap(
-      find.descendant(of: liveRegions.first, matching: find.byType(IconButton)),
+      find.descendant(of: toastNode.first, matching: find.byType(IconButton)),
     );
     await tester.pumpAndSettle();
     expect(find.byType(InfoBar), findsNothing);

@@ -27,7 +27,7 @@ class RecordingInstaller implements SetupInstaller {
 
   @override
   Future<String> stage(
-    SelfUpdateOffer offer, {
+    SetupOffer offer, {
     void Function(double progress)? onProgress,
   }) async {
     stages.add(offer.version);
@@ -43,12 +43,22 @@ class RecordingInstaller implements SetupInstaller {
 
   @override
   Future<void> clearStaged({String? keep}) async {}
+
+  @override
+  Future<int> run(String stagedFile, {required String logFile}) async => 0;
+
+  @override
+  Future<int> uninstall(String uninstaller, {required String logFile}) async =>
+      0;
+
+  @override
+  Future<void> discard(String stagedFile) async {}
 }
 
 class _FailingInstaller extends RecordingInstaller {
   @override
   Future<String> stage(
-    SelfUpdateOffer offer, {
+    SetupOffer offer, {
     void Function(double progress)? onProgress,
   }) {
     stages.add(offer.version);

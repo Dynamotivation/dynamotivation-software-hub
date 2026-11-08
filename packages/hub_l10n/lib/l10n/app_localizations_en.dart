@@ -337,6 +337,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearSearch => 'Clear search';
 
   @override
+  String get errorInstalledSoftwareUnavailable =>
+      'Installed software could not be read from Windows. Try refreshing the software list.';
+
+  @override
+  String get errorLaunchFailed =>
+      'The application could not be started. Refresh the software list and check that it is still installed.';
+
+  @override
+  String get running => 'Running';
+
+  @override
+  String get launchAnotherInstance => 'Launch another instance';
+
+  @override
+  String get forceClose => 'Force close';
+
+  @override
+  String get clickAction => 'click';
+
+  @override
+  String get yesAction => 'Yes';
+
+  @override
+  String get noAction => 'No';
+
+  @override
+  String forceCloseTitle(String name) {
+    return 'Force close $name?';
+  }
+
+  @override
+  String forceCloseBody(String name) {
+    return 'Are you sure? All running instances of $name will be force closed. Unsaved changes will be lost.';
+  }
+
+  @override
+  String modifierClickHint(String shortcut, String action) {
+    return '$shortcut to $action.';
+  }
+
+  @override
+  String get errorProcessOperation =>
+      'The application processes could not be read or stopped. Check that they are running under your Windows account and try again.';
+
+  @override
   String get hubUpdateRestart => 'Restart to update';
 
   @override
@@ -360,4 +405,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dismissNotification => 'Dismiss';
+
+  @override
+  String setupDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get setupInstalling => 'Installing…';
+
+  @override
+  String get setupUpdating => 'Updating…';
+
+  @override
+  String errorSetupFailed(String path) {
+    return 'The setup did not finish. Details are in the log: $path';
+  }
+
+  @override
+  String get errorPackageInUse =>
+      'The application is running. Close it, then try again.';
+
+  @override
+  String get setupUninstalling => 'Uninstalling…';
+
+  @override
+  String get installOtherVersion => 'Install another version…';
+
+  @override
+  String installVersionTitle(String name) {
+    return 'Install a version of $name';
+  }
+
+  @override
+  String get installVersionBody =>
+      'The chosen version replaces the installed one. Older versions may not open files saved by newer ones.';
+
+  @override
+  String get installAction => 'Install';
+
+  @override
+  String get versionLatest => 'latest';
+
+  @override
+  String get versionInstalled => 'installed';
+
+  @override
+  String get versionNoDownload => 'no download for this device';
+
+  @override
+  String get loadingVersions => 'Loading versions';
+
+  @override
+  String setupInstallingVersion(String version) {
+    return 'Installing v$version…';
+  }
 }

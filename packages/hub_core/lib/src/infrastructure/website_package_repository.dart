@@ -164,6 +164,9 @@ class WebsitePackageRepository
         ? const ReleaseNote(version: '', date: '', highlights: [])
         : releases.first;
     return SoftwarePackage(
+      platformIds: entry['platforms'] is Map
+          ? (entry['platforms'] as Map).keys.cast<String>().toList()
+          : null,
       id: _idFromUrl(source, entry['url']),
       name: entry['name'] as String,
       description: _text(entry, 'description'),

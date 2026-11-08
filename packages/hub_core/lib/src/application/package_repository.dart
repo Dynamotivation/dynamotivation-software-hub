@@ -29,3 +29,10 @@ abstract interface class ReleaseHistorySource {
   /// [CatalogUnavailable] if the history cannot be fetched or understood.
   Future<SoftwarePackage> loadReleaseHistory(String id);
 }
+
+/// Optional capability: a repository whose install state comes from the
+/// device. [rescanDevice] reads the device again and keeps the catalog it
+/// holds, without a network request, e.g. after a setup ran.
+abstract interface class DeviceInventorySource {
+  Future<void> rescanDevice();
+}

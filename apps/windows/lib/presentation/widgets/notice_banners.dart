@@ -3,6 +3,7 @@ import 'package:hub_l10n/hub_l10n.dart';
 
 import '../controllers/hub_controller.dart';
 import '../theme/dynamotivation_theme.dart';
+import 'click_cursor.dart';
 
 /// The in-app notifications: what the background watch announces while the
 /// hub window is focused (the OS toast is for an unfocused or hidden window).
@@ -42,7 +43,7 @@ class NoticeBanners extends StatelessWidget {
                     isLong: true,
                     title: Text(notice.title),
                     content: Text(notice.message),
-                    action: Button(
+                    action: ClickButton(
                       onPressed: () => onDismiss(notice.id),
                       child: Text(context.l10n.dismissNotification),
                     ),

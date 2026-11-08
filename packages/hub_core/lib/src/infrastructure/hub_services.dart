@@ -2,9 +2,14 @@ import 'dart:io';
 
 import '../application/announcement_store.dart';
 import '../application/hub_use_cases.dart';
+import '../application/application_launcher.dart';
+import '../application/application_processes.dart';
+import '../application/installed_application_repository.dart';
 import 'catalog_cache.dart';
 import 'catalog_source.dart';
+import 'device_package_repository.dart';
 import 'file_announcement_store.dart';
+import 'file_install_log.dart';
 import 'icon_cache.dart';
 import 'in_memory_settings_repository.dart';
 import 'setup_installer.dart';
@@ -34,22 +39,43 @@ class HubServices {
   /// The website catalog, cached on disk, with icons cached beside it and
   /// the hub's own updates staged in an `updates` folder inside the cache.
   /// [args] may carry `--catalog-url=<uri>`.
-  factory HubServices.production(List<String> args) {
+  factory HubServices.production(
+    List<String> args, {
+    InstalledApplicationRepository? installations,
+    ApplicationLauncher? launcher,
+    ApplicationProcesses? processes,
+    String? platform,
+    Set<String> excludedPackageIds = const {},
+  }) {
     final cache = cacheDirectory(hubCacheName);
     final catalogCache = CatalogCache(cache);
     final icons = IconCache(
       Directory('${cache.path}${Platform.pathSeparator}icons'),
     );
+    final catalog = WebsitePackageRepository(
+      catalogUriFromArgs(args),
+      fetch: catalogCache.fetch,
+      readCache: catalogCache.readCached,
+    );
     return HubServices(
       useCases: HubUseCases(
-        WebsitePackageRepository(
-          catalogUriFromArgs(args),
-          fetch: catalogCache.fetch,
-          readCache: catalogCache.readCached,
-        ),
+        installations == null
+            ? catalog
+            : DevicePackageRepository(
+                catalog: catalog,
+                installations: installations,
+                platform: platform ?? Platform.operatingSystem,
+                excludedPackageIds: excludedPackageIds,
+              ),
         InMemorySettingsRepository(),
         icons: icons,
+        launcher: launcher,
+        processes: processes,
         installer: StagedSetupInstaller(cache),
+        installLog: FileInstallLog(
+          Directory('${cache.parent.path}${Platform.pathSeparator}Logs'),
+        ),
+        platform: platform,
       ),
       icons: icons,
       announcements: FileAnnouncementStore(cache),

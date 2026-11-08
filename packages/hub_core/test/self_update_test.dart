@@ -138,7 +138,7 @@ void main() {
     test('none when no download fits the device', () {
       final other = DownloadLink(
         platform: 'windows',
-        arch: 'x86',
+        arch: 'arm64',
         url: 'https://example.com/other.exe',
         sha256: 'b' * 64,
       );
@@ -266,6 +266,34 @@ void main() {
       await installer.stage(offerOf(link));
       expect(downloads, 2);
       expect(File(first).readAsBytesSync(), body);
+    });
+
+    test('a package staging folder goes with its last setup', () async {
+      final body = [9, 8];
+      final link = DownloadLink(
+        platform: 'windows',
+        arch: 'x64',
+        url: 'https://example.com/g.exe',
+        sha256: sha256.convert(body).toString(),
+        size: body.length,
+      );
+      final cache = Directory.systemTemp.createTempSync('hub_stage_pkg');
+      final installer = StagedSetupInstaller(cache, download: serve(body));
+      final staged = await installer.stage(
+        SetupOffer(packageId: 'some-game', name: 'Game', version: '1.0.0', setup: link),
+      );
+      final folder = File(staged).parent;
+      expect(folder.path, endsWith('some-game'));
+
+      await installer.discard(staged);
+      expect(folder.existsSync(), isFalse);
+      expect(Directory('${cache.path}${Platform.pathSeparator}updates').existsSync(), isTrue);
+
+      // An empty folder left by an older Hub is removed on the next cleanup.
+      folder.createSync();
+      await installer.clearStaged();
+      expect(folder.existsSync(), isFalse);
+      cache.deleteSync(recursive: true);
     });
 
     test('downloading into Cache\\updates, digest and size verified', () async {

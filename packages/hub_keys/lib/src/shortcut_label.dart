@@ -46,3 +46,7 @@ String _keyName(LogicalKeyboardKey k) {
   final label = k.keyLabel;
   return label.isEmpty ? k.debugName ?? '?' : label.toUpperCase();
 }
+
+/// Pointer shortcut using the modifier printed on the active keyboard layout.
+String controlClickLabel(String click, {int? primaryLanguage}) =>
+    '${ModifierNames.forPrimaryLanguage(primaryLanguage ?? activeKeyboardPrimaryLanguage()).ctrl}+$click';

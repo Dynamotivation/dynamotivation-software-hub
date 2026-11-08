@@ -21,7 +21,10 @@ branded, per-user, per-DPI-crisp setup.
   "restart" or on close, `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`, and reopens
   itself from the app side); apps that hand over to the wizard start it as it is
   and quit (the generator). Setup's own "close applications" page stays the fallback.
-  The uninstaller removes the app's data folder with `[UninstallDelete]`.
+  The uninstaller removes caches and other recreatable files with `[UninstallDelete]`.
+- **Settings and saves are the user's choice:** an app lists the folders holding them
+  in `UserDataDirs`; after the uninstall confirmation a checked "Keep my settings and
+  saved files" box decides. Silent uninstalls keep them unless `/REMOVEUSERDATA=1`.
 
 ## Layout
 

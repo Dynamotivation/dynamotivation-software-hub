@@ -9,5 +9,7 @@ String describeError(AppLocalizations l10n, Object error) => switch (error) {
   CatalogUnavailable() => l10n.errorCatalogUnavailable,
   SetupUnavailable() => l10n.errorSetupUnavailable,
   SetupLaunchFailed() => l10n.errorSetupLaunchFailed,
+  SetupFailed(:final logPath) => l10n.errorSetupFailed(logPath),
+  PackageInUse() => l10n.errorPackageInUse,
   _ => error.toString(),
 };

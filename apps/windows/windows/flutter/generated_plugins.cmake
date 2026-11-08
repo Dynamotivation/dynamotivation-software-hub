@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  screen_retriever_windows
   system_tray
   window_manager
 )

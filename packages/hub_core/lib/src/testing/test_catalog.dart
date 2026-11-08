@@ -5,6 +5,7 @@ List<SoftwarePackage> testCatalog() {
   return [
     SoftwarePackage(
       id: 'geo-background-generator',
+      launchExecutable: r'D:\test-apps\geo-background-generator.exe',
       name: 'Geo Background Generator',
       subtitle:
           'Geometric pattern background generator with customizable gradients',
@@ -48,6 +49,7 @@ List<SoftwarePackage> testCatalog() {
     ),
     SoftwarePackage(
       id: 'joins-the-battle-meme-generator',
+      launchExecutable: r'D:\test-apps\joins-the-battle-meme-generator.exe',
       name: 'Joins the Battle Meme Generator',
       subtitle: 'Create authentic fighting game splash screens and memes',
       description: 'Create custom "Joins the Battle" splash screens, intro cards, and crossover reveals with authentic fonts, flares, and sound effect triggers.',
@@ -85,6 +87,7 @@ List<SoftwarePackage> testCatalog() {
     ),
     SoftwarePackage(
       id: 'stellenwerttafel-plus',
+      launchExecutable: r'D:\test-apps\stellenwerttafel-plus.exe',
       name: 'Stellenwerttafel Plus',
       subtitle: 'Interactive place value chart for binary, decimal, and hex',
       description: 'Educational desktop place value visualizer supporting binary, decimal, octal, and hexadecimal number systems with live bundled tokens.',

@@ -6,6 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hub_keys/hub_keys.dart';
 
 void main() {
+  test('control click uses the active layout modifier spelling', () {
+    expect(controlClickLabel('click', primaryLanguage: 0x07), 'Strg+click');
+    expect(controlClickLabel('click', primaryLanguage: 0x09), 'Ctrl+click');
+  });
   const ctrlR = SingleActivator(LogicalKeyboardKey.keyR, control: true);
   const ctrlComma = SingleActivator(LogicalKeyboardKey.comma, control: true);
   String win(SingleActivator a, int? lang) =>
