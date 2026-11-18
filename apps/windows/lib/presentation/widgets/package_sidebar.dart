@@ -417,15 +417,17 @@ class _PackageTile extends StatelessWidget {
               child: Row(
                 children: [
                   // Package App Icon
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: tokens.cardBorder, width: 1),
+                  packageTile(
+                    package,
+                    38,
+                    (context, child) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: tokens.cardBorder, width: 1),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: child,
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: packageImage(package, BoxFit.cover),
                   ),
 
                   const SizedBox(width: 10),
