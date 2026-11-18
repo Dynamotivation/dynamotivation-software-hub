@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:win32_registry/win32_registry.dart';
 
 import '../application/errors.dart';
 import '../application/installed_application_repository.dart';
@@ -90,52 +90,65 @@ class WindowsInstalledApplicationRepository
     return RegExp(r'^unins\d+\.exe$').hasMatch(name) ? executable : '';
   }
 
+  /// Reads the uninstall registrations in-process (no PowerShell: starting it
+  /// alone cost a few hundred milliseconds on every launch). Current-user keys
+  /// come first, so the user's installation wins over a machine-wide one; the
+  /// 32-bit views are the `WOW6432Node` paths, which also reach them from this
+  /// 64-bit process. Only the fixed uninstall path is read.
   static Future<String> readRegistry() async {
-    final windows = Platform.environment['SystemRoot'] ?? r'C:\Windows';
-    final result = await Process.run(
-      '$windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
-      ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', registryScript],
-      stdoutEncoding: utf8,
-      stderrEncoding: utf8,
-    );
-    if (result.exitCode != 0) {
-      throw InstalledSoftwareUnavailable('Registry scan: ${result.stderr}');
+    const uninstall = r'Software\Microsoft\Windows\CurrentVersion\Uninstall';
+    const uninstall32 =
+        r'Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall';
+    final items = <Map<String, String>>[];
+    try {
+      for (final hive in [RegistryHive.currentUser, RegistryHive.localMachine]) {
+        for (final base in [uninstall, uninstall32]) {
+          items.addAll(_readUninstallKeys(hive, base));
+        }
+      }
+    } catch (error) {
+      throw InstalledSoftwareUnavailable('Registry scan: $error');
     }
-    return result.stdout as String;
+    return jsonEncode(items);
   }
 
-  /// Fixed script; no registry content is interpolated into executable code.
-  static const registryScript = r'''
-$ErrorActionPreference = 'Stop'
-[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-$items = @(
-  foreach ($hive in @('CurrentUser', 'LocalMachine')) {
-    foreach ($view in @('Registry64', 'Registry32')) {
-      $base = [Microsoft.Win32.RegistryKey]::OpenBaseKey($hive, $view)
-      try {
-        $root = $base.OpenSubKey('Software\Microsoft\Windows\CurrentVersion\Uninstall')
-        if ($null -eq $root) { continue }
-        try {
-          foreach ($name in $root.GetSubKeyNames()) {
-            $key = $root.OpenSubKey($name)
-            if ($null -eq $key) { continue }
-            try {
-              if ($key.GetValue('Publisher') -ne 'Dynamotivation') { continue }
-              [PSCustomObject]@{
-                Key = $name
-                Publisher = [string]$key.GetValue('Publisher')
-                DisplayName = [string]$key.GetValue('DisplayName')
-                DisplayVersion = [string]$key.GetValue('DisplayVersion')
-                DisplayIcon = [string]$key.GetValue('DisplayIcon')
-                UninstallString = [string]$key.GetValue('UninstallString')
-              }
-            } finally { $key.Dispose() }
-          }
-        } finally { $root.Dispose() }
-      } finally { $base.Dispose() }
+  static List<Map<String, String>> _readUninstallKeys(
+    RegistryHive hive,
+    String base,
+  ) {
+    final RegistryKey root;
+    try {
+      root = Registry.openPath(hive, path: base);
+    } on Exception {
+      return const []; // This view has no uninstall key.
     }
+    final found = <Map<String, String>>[];
+    try {
+      for (final name in root.subkeyNames) {
+        final RegistryKey key;
+        try {
+          key = Registry.openPath(hive, path: '$base\\$name');
+        } on Exception {
+          continue; // Removed or unreadable meanwhile.
+        }
+        try {
+          String text(String value) => key.getStringValue(value) ?? '';
+          if (text('Publisher') != 'Dynamotivation') continue;
+          found.add({
+            'Key': name,
+            'Publisher': text('Publisher'),
+            'DisplayName': text('DisplayName'),
+            'DisplayVersion': text('DisplayVersion'),
+            'DisplayIcon': text('DisplayIcon'),
+            'UninstallString': text('UninstallString'),
+          });
+        } finally {
+          key.close();
+        }
+      }
+    } finally {
+      root.close();
+    }
+    return found;
   }
-)
-ConvertTo-Json -InputObject $items -Compress
-''';
 }
