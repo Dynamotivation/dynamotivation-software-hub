@@ -91,18 +91,6 @@ void main(List<String> args) async {
     WidgetsBinding.instance.platformDispatcher.locale,
   );
 
-  await controller.load(preferredId: null);
-  await controller.startProcessWatch();
-  if (startDark) {
-    await controller.updateSettings(
-      controller.settings.copyWith(themeMode: AppThemeMode.dark),
-    );
-  } else if (startLight) {
-    await controller.updateSettings(
-      controller.settings.copyWith(themeMode: AppThemeMode.light),
-    );
-  }
-
   // Out here the surface is not a widget: window, tray icon and OS
   // notifications outlive the window being visible.
   late final BackgroundService background;
@@ -119,7 +107,24 @@ void main(List<String> args) async {
   final notifications = HubNotifications(
     onNotificationClicked: () => background.showHub(),
   );
-  await notifications.setup(strings.appName);
+
+  // Window setup, the notification identity and the catalog load do not wait
+  // for each other: they run side by side and the window shows once all are
+  // done, so startup costs the slowest of them rather than their sum.
+  final windowReady = windowManager.waitUntilReadyToShow(windowOptions);
+  final notificationsReady = notifications.setup(strings.appName);
+
+  await controller.load(preferredId: null);
+  await controller.startProcessWatch();
+  if (startDark) {
+    await controller.updateSettings(
+      controller.settings.copyWith(themeMode: AppThemeMode.dark),
+    );
+  } else if (startLight) {
+    await controller.updateSettings(
+      controller.settings.copyWith(themeMode: AppThemeMode.light),
+    );
+  }
 
   background = BackgroundService(
     controller: controller,
@@ -149,10 +154,7 @@ void main(List<String> args) async {
   await background.start();
   instance.listen(() => unawaited(background.showHub()));
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+  await Future.wait([windowReady, notificationsReady]);
 
   // At most one summary of what the user was not told about before the last
   // close, once the catalog settled and the window is up (so a relaunched,
@@ -161,6 +163,7 @@ void main(List<String> args) async {
     startupSettled.future.then((_) => background.watch.announceStartup()),
   );
 
+  // The first frame is built before the window shows, so it never opens blank.
   runApp(
     HubImageScope(
       icons: services.icons,
@@ -171,4 +174,6 @@ void main(List<String> args) async {
       ),
     ),
   );
+  await windowManager.show();
+  await windowManager.focus();
 }

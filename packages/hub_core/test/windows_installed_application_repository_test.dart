@@ -66,7 +66,7 @@ void main() {
   });
 
   test(
-    'native read executes fixed script and returns a parseable inventory',
+    'native registry read returns a parseable inventory',
     () async {
       final apps = await WindowsInstalledApplicationRepository().scan();
       expect(apps.every((a) => a.name.isNotEmpty && a.id.isNotEmpty), isTrue);
