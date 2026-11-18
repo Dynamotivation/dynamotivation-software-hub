@@ -4,3 +4,4 @@ library;
 
 export 'src/disk_cached_image.dart';
 export 'src/hub_icon.dart';
+export 'src/adaptive_hub_icon.dart';

@@ -154,19 +154,17 @@ class _Header extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: white,
-                borderRadius: BorderRadius.circular(26),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x40000000),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: PackageIcon(package: package, size: 116),
+            PackageIcon(
+              package: package,
+              size: 116,
+              backdrop: white,
+              shadow: const [
+                BoxShadow(
+                  color: Color(0x40000000),
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
+                ),
+              ],
             ),
             const SizedBox(width: 22),
             Expanded(

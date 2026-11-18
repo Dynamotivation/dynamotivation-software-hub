@@ -172,27 +172,29 @@ class _PackageDetailPaneState extends State<PackageDetailPane> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Large package icon
-                        Container(
-                          width: 104,
-                          height: 104,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: tokens.cardBorder,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: isDark ? 0.35 : 0.08,
-                                ),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+                        packageTile(
+                          pkg,
+                          104,
+                          (context, child) => Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: tokens.cardBorder,
+                                width: 1.5,
                               ),
-                            ],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(
+                                    alpha: isDark ? 0.35 : 0.08,
+                                  ),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: child,
                           ),
-                          clipBehavior: Clip.antiAlias,
-                          child: packageImage(pkg, BoxFit.cover),
                         ),
 
                         const SizedBox(width: 18),
